@@ -2817,7 +2817,7 @@ function renderHome() {
           <span class="hc-foot">${fm.rallies.length} rally · ${fm.rallies.reduce((a, r) => a + r.tc.length, 0)} sentuhan · lihat statistik →</span></button>` : ''}
       </div>
     </div>
-    <div class="hero-credit"><span>Cuplikan: SEA Games 2025 · Thailand vs Indonesia</span><button class="hv-btn" id="heroVidBtn" data-act="heroVid" hidden>Jeda video</button></div>
+    <div class="hero-credit"><span>Cuplikan: Asian Games 2026 · Indonesia vs Malaysia</span><button class="hv-btn" id="heroVidBtn" data-act="heroVid" hidden>Jeda video</button></div>
     <div class="hero-stats">
       ${open ? [[sm.length, 'Pertandingan'], [rallies, 'Rally'], [touches, 'Sentuhan'], [ath.length, 'Atlet']].map(([v, l]) => `<div><b class="num">${v.toLocaleString('id-ID')}</b><span>${l}</span></div>`).join('')
         : [['3', 'Format: Regu, Double, Quadrant'], ['7', 'Aksi tercatat per sentuhan'], ['6', 'Kode kualitas, # sampai ='], ['18', 'Zona lapangan']].map(([v, l]) => `<div><b class="num">${v}</b><span>${l}</span></div>`).join('')}
@@ -2911,7 +2911,7 @@ function mountHeroVideo() {
     try { stop = matchMedia('(prefers-reduced-motion: reduce)').matches || localStorage.getItem('takraw.heroPause') === '1'; } catch {}
     v.dataset.stop = stop ? '1' : '';
     v.addEventListener('error', () => { v.dataset.failed = '1'; v.hidden = true; const b = $('#heroVidBtn'); if (b) b.hidden = true; }, true);
-    v.src = 'media/hero-seagames.mp4';
+    v.src = 'media/hero-asiangames.mp4';
     heroVidEl = v;
   }
   slot.appendChild(heroVidEl);
