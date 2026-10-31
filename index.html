@@ -187,6 +187,8 @@ body.on-home .foot { margin-top: 0; border-top: 1px solid var(--brand-2); }
 .acc-row { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: var(--r); background: var(--surface); }
 .chip.by { background: var(--surface2); color: var(--ink); font-weight: 600; }
 ol.lg-steps { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: 13px; color: var(--ink2); }
+body.pub .btn.role-cta.pub-only { display: grid !important; }
+body.pub [data-act=newEvent], body.pub [data-act=editEvent], body.pub [data-act=delEvent] { display: none !important; }
 body.pending [data-act=open][data-v=stats], body.pending [data-act=go][data-v=stats], body.pending [data-act=exportAll] { display: none !important; }
 .btn.lg { padding: 11px 18px; font-size: 15px; }
 .btn.ghost-inv { background: transparent; color: var(--brand-ink); border-color: var(--brand-mute); }
@@ -2854,7 +2856,7 @@ function renderHome() {
 
   <section class="sec">
     ${sectionHead('Agenda kejuaraan', 'Hitung mundur menuju kejuaraan berikutnya.', '<button class="btn" data-act="go" data-v="events">Semua agenda →</button>')}
-    ${evShow.length ? `<div class="ev-grid">${evShow.map(e => eventCard(e, true)).join('')}</div>` : `<div class="panel empty"><p>Belum ada agenda. Tambahkan kejuaraan yang akan dianalisis.</p><button class="btn primary" data-act="go" data-v="events">+ Tambah agenda</button></div>`}
+    ${evShow.length ? `<div class="ev-grid">${evShow.map(e => eventCard(e, true)).join('')}</div>` : Store.mode === 'cloud' && !Cloud.user ? '<div class="panel empty"><p>Agenda kejuaraan berikutnya segera diumumkan.</p></div>' : `<div class="panel empty"><p>Belum ada agenda. Tambahkan kejuaraan yang akan dianalisis.</p><button class="btn primary" data-act="go" data-v="events">+ Tambah agenda</button></div>`}
   </section>
 
   <section class="sec">
