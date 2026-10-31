@@ -189,6 +189,36 @@ body.on-home .foot { margin-top: 0; border-top: 1px solid var(--brand-2); }
 .chip.by { background: var(--surface2); color: var(--ink); font-weight: 600; }
 ol.lg-steps { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: 13px; color: var(--ink2); }
 body.pub .btn.role-cta.pub-only { display: grid !important; }
+/* admin vs pengguna biasa */
+body.cloud:not(.admin) [data-act=newEvent], body.cloud:not(.admin) [data-act=editEvent], body.cloud:not(.admin) [data-act=delEvent] { display: none !important; }
+.admin-chip { font-family: var(--f-display); font-weight: 700; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent-ink); background: var(--accent); border-radius: 4px; padding: 2px 7px; }
+.avatar.adm { border-color: var(--accent); box-shadow: 0 0 0 2px var(--brand), 0 0 0 4px var(--accent); }
+.nav-badge.live { background: var(--good); }
+/* pantau live */
+.lv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.lv-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; align-content: start; }
+.lv-card.on { border-left: 4px solid var(--good); }
+.lv-card.idle { border-left: 4px solid var(--accent); }
+.lv-card.off { opacity: .7; }
+.lv-card.watching { box-shadow: 0 0 0 2px var(--accent); }
+.lv-who { display: flex; gap: 10px; align-items: center; min-width: 0; }
+.lv-who b { overflow-wrap: anywhere; }
+.lv-what { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; font-size: 13px; }
+.lv-what .num { font-family: var(--f-mono); color: var(--ink2); }
+.lv-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 8px; }
+.lv-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; background: var(--muted); }
+.lv-dot.on { background: var(--good); box-shadow: 0 0 0 0 var(--good); animation: lvping 1.6s ease-out infinite; }
+.lv-dot.idle { background: var(--accent); }
+@keyframes lvping { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--good) 60%, transparent); } 100% { box-shadow: 0 0 0 9px transparent; } }
+@media (prefers-reduced-motion: reduce) { .lv-dot.on { animation: none; } }
+.lv-watch { display: grid; gap: 12px; margin-block: 14px; border-top: 4px solid var(--accent); }
+.lv-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.lv-watch .scoreboard { margin: 0; }
+.lv-cols { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px; }
+@media (max-width: 860px) { .lv-cols { grid-template-columns: minmax(0, 1fr); } }
+.lv-flow { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 6px; min-height: 30px; }
+.lv-log { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; }
+.lv-log li { display: grid; grid-template-columns: 34px minmax(0, auto) minmax(0, 1fr) auto; gap: 8px; align-items: baseline; font-size: 13px; padding: 4px 0; border-bottom: 1px solid var(--line); }
 body.pub [data-act=newEvent], body.pub [data-act=editEvent], body.pub [data-act=delEvent] { display: none !important; }
 body.pending [data-act=open][data-v=stats], body.pending [data-act=go][data-v=stats], body.pending [data-act=exportAll] { display: none !important; }
 .btn.lg { padding: 11px 18px; font-size: 15px; }
@@ -969,7 +999,7 @@ function setStoreState() {
     const st = !Cloud.online ? ['warn', n ? `Offline · ${n} menunggu` : 'Offline'] : Store.busy || n ? ['busy', 'Menyimpan…'] : ['ok', 'Tersimpan'];
     if (!Cloud.user) { el.innerHTML = `${Cloud.online ? '' : '<span class="dot warn"></span><span>Offline</span>'}<button class="btn sm primary" data-act="go" data-v="login">Masuk</button>`; el.title = 'Masuk untuk mencatat pertandingan'; return; }
     const ini = (Cloud.name || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
-    el.innerHTML = `<span class="dot ${st[0]}" title="${st[1]}"></span><span class="sst">${st[1]}</span><button class="avatar" data-act="userMenu" aria-haspopup="true" title="${esc(Cloud.name)} · ${esc(ROLE_LABEL[Cloud.role] || Cloud.role)}">${esc(ini)}</button>
+    el.innerHTML = `<span class="dot ${st[0]}" title="${st[1]}"></span><span class="sst">${st[1]}</span>${Cloud.role === 'admin' ? '<span class="admin-chip" title="Anda masuk sebagai pemilik platform">Admin</span>' : ''}<button class="avatar${Cloud.role === 'admin' ? ' adm' : ''}" data-act="userMenu" aria-haspopup="true" title="${esc(Cloud.name)} · ${esc(ROLE_LABEL[Cloud.role] || Cloud.role)}">${esc(ini)}</button>
       <div class="umenu" id="umenu" hidden><b>${esc(Cloud.name)}</b><span class="muted small">${esc(Cloud.user.email || '')}</span><span class="chip">${esc(ROLE_LABEL[Cloud.role] || Cloud.role)}</span><span class="muted small">${st[1]}</span><button class="btn sm" data-act="lgOut">Keluar</button></div>`;
     el.title = st[1] + ' — ' + (Cloud.user.email || ''); return;
   }
@@ -2225,14 +2255,17 @@ async function cloudStart(session) {
   document.body.classList.toggle('ro', !!Cloud.user && !canWrite());
   document.body.classList.toggle('pub', !Cloud.user);
   document.body.classList.toggle('pending', !!Cloud.user && !canView());
+  document.body.classList.add('cloud');
+  document.body.classList.toggle('admin', isAdmin());
   await cloudLoad();
-  Cloud.sb.channel('takraw-data')
+  const ch = Cloud.sb.channel('takraw-data')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, p => cloudRemote('matches', p))
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, p => cloudRemote('events', p))
-    .subscribe();
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, p => cloudRemote('events', p));
+  if (isAdmin()) { ch.on('postgres_changes', { event: '*', schema: 'public', table: 'presence' }, livePresence); liveLoad(); }
+  ch.subscribe();
   setStoreState(); renderTabs();
   const h = (location.hash || '').slice(1);
-  const v = ['home', 'list', 'athletes', 'events', 'rules', 'users', 'login'].includes(h) ? h : (S.view === 'login' ? 'home' : S.view);
+  const v = ['home', 'list', 'athletes', 'events', 'rules', 'users', 'live', 'login'].includes(h) ? h : (S.view === 'login' ? 'home' : S.view);
   go(Cloud.user && v === 'login' ? 'home' : v);
   if (Store.queue.size) cloudFlush();
 }
@@ -2389,7 +2422,7 @@ function showLogin() {
     <button class="linkbtn" data-act="lgReset">Lupa kata sandi?</button>`}
     <div class="lg-msg" id="lgMsg" role="status">${esc(Cloud.msg)}</div>
     <ol class="lg-steps"><li><b>Daftar</b> dengan email dan kata sandi Anda sendiri.</li><li><b>Langsung bisa mencatat</b> pertandingan.</li><li><b>Hasil &amp; statistik terbuka</b> setelah pemilik platform menyetujui akun Anda.</li></ol>
-    <p class="note">Pertandingan yang Anda catat hanya terlihat oleh Anda dan pemilik platform.</p>
+    <p class="note">Pertandingan yang Anda catat hanya terlihat oleh Anda dan pemilik platform. Pemilik platform juga dapat memantau secara langsung halaman yang Anda buka dan pencatatan yang sedang berjalan.</p>
     <button class="linkbtn" data-act="go" data-v="home">← Kembali ke beranda</button>
   </div></div>`;
   setStoreState(); renderTabs();
@@ -2524,20 +2557,29 @@ go = function (view) {
     });
     return;
   }
-  if (view === 'users') {
+  if (view === 'users' || view === 'live') {
     if (Cloud.role !== 'admin') view = 'home';
-    else { S.view = 'users'; $('#view').hidden = false; $('#tagView').hidden = true; renderTabs(); renderUsers(); try { history.replaceState(null, '', '#users'); } catch {} window.scrollTo({ top: 0 }); return; }
+    else {
+      S.view = view; document.body.classList.remove('on-home'); $('#view').hidden = false; $('#tagView').hidden = true; renderTabs();
+      if (view === 'users') renderUsers(); else { renderLive(); liveLoad(); }
+      try { history.replaceState(null, '', '#' + view); } catch {} window.scrollTo({ top: 0 }); return;
+    }
   }
   return _go(view);
 };
 const _renderTabs = renderTabs;
 renderTabs = function () {
   _renderTabs();
+  reportPresence();   // renderTabs dipanggil di setiap perpindahan halaman
   if (Store.mode === 'cloud' && Cloud.role === 'admin' && Cloud.user) {
     const t = $('#tabs'); const b = document.createElement('button');
     b.dataset.act = 'go'; b.dataset.v = 'users'; b.textContent = 'Pengguna'; if (S.view === 'users') b.className = 'on';
     if (Cloud.pendingN) { const n = document.createElement('span'); n.className = 'nav-badge'; n.textContent = Cloud.pendingN; n.title = Cloud.pendingN + ' akun menunggu ACC'; b.append(' ', n); }
-    const sep = t.querySelector('.nav-sep'); t.insertBefore(b, sep || null);
+    const lv = document.createElement('button');
+    lv.dataset.act = 'go'; lv.dataset.v = 'live'; lv.textContent = 'Live'; if (S.view === 'live') lv.className = 'on';
+    const an = liveActiveN();
+    if (an) { const n = document.createElement('span'); n.className = 'nav-badge live'; n.textContent = an; n.title = an + ' pengguna sedang aktif'; lv.append(' ', n); }
+    const sep = t.querySelector('.nav-sep'); t.insertBefore(b, sep || null); t.insertBefore(lv, sep || null);
   }
 };
 async function renderUsers() {
@@ -2570,6 +2612,103 @@ async function renderUsers() {
     <p class="note">Data semua pengguna: halaman <b>Pertandingan</b> (saring per pencatat) dan tombol <b>Cadangkan semua</b> untuk mengunduh seluruhnya.</p></div>`;
   renderTabs();
 }
+
+/* ---------- Pantau live (khusus admin) ----------
+   Setiap pengguna yang masuk mengirim status singkat ke tabel presence: halaman yang dibuka, pertandingan, skor,
+   dan sentuhan rally yang sedang dicatat. Database hanya mengizinkan admin membaca semua baris (migrasi-live.sql);
+   admin menerima perubahan status dan pertandingan lewat realtime, jadi layar pantau ikut bergerak. */
+const VIEW_LABEL = { home: 'Beranda', list: 'Pertandingan', athletes: 'Atlet', events: 'Agenda', rules: 'Regulasi', setup: 'Data pertandingan', tag: 'Input', stats: 'Statistik', users: 'Pengguna', live: 'Live', login: 'Masuk' };
+const Live = { rows: new Map(), last: 0, timer: null, sent: '', off: false, err: null };
+function presenceDetail() {
+  if (!S.m || !S.st) return null;
+  const cur = S.st.cur || S.st.sets[S.st.sets.length - 1];
+  return { a: cur ? cur.a : 0, b: cur ? cur.b : 0, set: cur ? cur.n : 1, done: !!S.st.winner, rallies: S.m.rallies.length, srv: S.cur?.srv || null,
+    cur: S.view === 'tag' ? (S.cur?.touches || []).slice(-6).map(t => ({ tm: t.tm, s: t.s, q: t.q, p: t.p ? pLabel(t.p) : '' })) : [] };
+}
+function reportPresence(force) {
+  if (Store.mode !== 'cloud' || !Cloud.user || !Cloud.sb || Live.off || Cloud.role === 'nonaktif' || !Cloud.online) return;
+  const inMatch = ['tag', 'stats', 'setup'].includes(S.view) && S.m;
+  const row = { user_id: Cloud.user.id, view: S.view, match_id: inMatch ? S.m.id : null,
+    match_title: inMatch ? `${S.m.meta.A.name} vs ${S.m.meta.B.name}` : null, detail: inMatch ? presenceDetail() : null };
+  const sig = JSON.stringify(row), now = Date.now();
+  if (!force && sig === Live.sent && now - Live.last < 20000) return;          // tidak berubah: cukup detak tiap 20 detik
+  if (!force && now - Live.last < 2500) { clearTimeout(Live.timer); Live.timer = setTimeout(() => reportPresence(true), 2600 - (now - Live.last)); return; }
+  clearTimeout(Live.timer); Live.last = now; Live.sent = sig;
+  Cloud.sb.from('presence').upsert(row).then(({ error }) => { if (error && /presence|42P01|does not exist|schema cache/i.test(error.message + error.code)) Live.off = true; }, () => {});
+}
+setInterval(() => reportPresence(), 20000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) reportPresence(true); });
+
+async function liveLoad() {
+  const { data, error } = await Cloud.sb.from('presence').select('*');
+  if (error) Live.err = error.message; else { Live.err = null; Live.rows = new Map((data || []).map(r => [r.user_id, r])); }
+  renderTabs(); if (S.view === 'live') renderLive();
+}
+function livePresence(p) {
+  if (p.eventType === 'DELETE') Live.rows.delete(p.old?.user_id);
+  else if (p.new?.user_id) Live.rows.set(p.new.user_id, p.new);
+  if (S.view === 'live') renderLive(); else renderTabs();
+}
+const liveAge = t => { const s = Math.max(0, Math.round((Date.now() - Date.parse(t)) / 1000)); return s < 60 ? s + ' dtk lalu' : s < 3600 ? Math.floor(s / 60) + ' mnt lalu' : new Date(t).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); };
+const liveState = r => { const s = (Date.now() - Date.parse(r.at)) / 1000; return s < 50 ? 'on' : s < 180 ? 'idle' : 'off'; };
+const liveOthers = () => [...Live.rows.values()].filter(r => r.user_id !== Cloud.user?.id);
+const liveActiveN = () => liveOthers().filter(r => liveState(r) === 'on').length;
+setInterval(() => { if (S.view === 'live' && isAdmin()) renderLive(); }, 5000);
+
+function renderLive() {
+  if (!isAdmin()) return go('home');
+  const rows = liveOthers().sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+  const on = rows.filter(r => liveState(r) !== 'off'), off = rows.filter(r => liveState(r) === 'off').slice(0, 12);
+  const w = S.liveWatch;
+  const card = r => {
+    const st = liveState(r), d = r.detail || {}, watching = w && w.uid === r.user_id;
+    return `<article class="lv-card ${st}${watching ? ' watching' : ''}">
+      <div class="lv-who"><span class="lv-dot ${st}" title="${st === 'on' ? 'Aktif' : st === 'idle' ? 'Diam' : 'Offline'}"></span><div style="min-width:0"><b>${esc(r.name || r.email || 'Pengguna')}</b><div class="muted small">${esc(r.email || '')} · ${esc(ROLE_LABEL[ROLE_ALIAS[r.role] || r.role] || r.role || '')}</div></div></div>
+      <div class="lv-what"><span class="chip">${esc(VIEW_LABEL[r.view] || r.view || '—')}</span>${r.match_title ? `<b>${esc(r.match_title)}</b>${r.detail ? `<span class="num">${d.done ? 'Selesai' : 'Set ' + d.set} · ${d.a}–${d.b}</span>` : ''}` : '<span class="muted small">tidak membuka pertandingan</span>'}</div>
+      <div class="lv-foot"><span class="muted small">${st === 'off' ? 'terakhir aktif ' : 'diperbarui '}${esc(liveAge(r.at))}</span>${r.match_id ? `<button class="btn sm ${st === 'on' && !watching ? 'primary' : ''}" data-act="liveWatch" data-u="${r.user_id}" data-id="${esc(r.match_id)}">${watching ? 'Sedang dipantau' : 'Pantau'}</button>` : ''}</div></article>`;
+  };
+  $('#view').innerHTML = `<div class="page-head"><div><h1>Pantau live</h1><div class="muted">${liveActiveN()} pengguna aktif sekarang · layar ini diperbarui otomatis</div></div></div>
+    ${Live.err ? `<div class="banner warn">Status live belum tersedia (${esc(Live.err)}). Jalankan <b>supabase/migrasi-live.sql</b> di Supabase SQL Editor.</div>` : ''}
+    ${w ? liveWatchHtml(w) : ''}
+    <section class="sec"><h2 class="sec-title">Sedang online</h2>${on.length ? `<div class="lv-grid">${on.map(card).join('')}</div>` : '<div class="panel empty"><p>Belum ada pengguna lain yang sedang membuka web.</p></div>'}</section>
+    ${off.length ? `<section class="sec"><h2 class="sec-title">Terakhir aktif</h2><div class="lv-grid">${off.map(card).join('')}</div></section>` : ''}
+    <p class="note">Pantauan hanya untuk dilihat. Pengguna tetap memegang kendali pencatatannya; untuk mengubah data, buka pertandingannya dari halaman Pertandingan.</p>`;
+}
+function liveWatchHtml(w) {
+  const r = Live.rows.get(w.uid), m = Store.get(w.mid);
+  if (!m) return '<section class="panel lv-watch"><p class="muted">Pertandingan ini belum termuat. Tunggu sebentar atau muat ulang halaman.</p><button class="btn sm ghost" data-act="liveStop">Berhenti memantau</button></section>';
+  const st = derive(clone(m)), cur = st.cur || st.sets[st.sets.length - 1];
+  const here = r && r.match_id === w.mid, d = here && r.detail ? r.detail : null, ls = r ? liveState(r) : 'off';
+  const nm = t => m.meta[t].short || m.meta[t].name;
+  const lbl = id => { for (const t of ['A', 'B']) { const p = m.meta[t].players.find(x => x.id === id); if (p) return (p.no ? '#' + p.no + ' ' : '') + (p.name || ''); } return ''; };
+  const dots = t => Array.from({ length: st.need }, (_, i) => `<i class="${t} ${i < (t === 'A' ? st.wA : st.wB) ? 'on' : ''}"></i>`).join('');
+  const prev = st.sets.filter(s => s.win).map(s => `${s.a}–${s.b}`).join(' · ');
+  const log = m.rallies.slice(-8).reverse().map((ra, k) => {
+    const last = ra.tc[ra.tc.length - 1];
+    return `<li><span class="num muted">#${m.rallies.length - k}</span><b class="win-${ra.win}">Poin ${esc(nm(ra.win))}</b><span>${esc(END_LABEL[ra.end] || ra.end)}${last?.p && ra.end !== 'MAN' ? ' · ' + esc(lbl(last.p)) : ''}</span><span class="muted small">${ra.tc.length} sentuhan</span></li>`;
+  }).join('');
+  const flow = d && d.cur?.length ? d.cur.map(t => `<span class="tk ${t.tm}"><b>${esc(SKILLS[t.s]?.name || t.s)}</b> ${esc(t.p || nm(t.tm))} <b>${t.q === '-' ? '−' : esc(t.q)}</b></span>`).join('<span class="arrow" aria-hidden="true">→</span>')
+    : `<span class="muted small">${here && r.view === 'tag' ? 'Menunggu sentuhan pertama rally berikutnya.' : 'Pengguna tidak sedang di halaman Input.'}</span>`;
+  return `<section class="panel lv-watch">
+    <div class="lv-head"><span class="lv-dot ${ls}"></span><b>Memantau ${esc(r?.name || r?.email || 'pengguna')}</b>
+      <span class="muted small">${r ? (here ? 'di halaman ' + esc(VIEW_LABEL[r.view] || r.view) : 'sudah pindah dari pertandingan ini') + ' · ' + esc(liveAge(r.at)) : ''}</span><span class="spacer"></span>
+      <button class="btn sm" data-act="open" data-id="${esc(m.id)}" data-v="stats">Statistik lengkap</button><button class="btn sm ghost" data-act="liveStop">Berhenti memantau</button></div>
+    <div class="scoreboard">
+      <div class="sb-team A"><svg class="srv-ball" ${d?.srv === 'A' && !st.winner ? '' : 'hidden'} aria-label="Servis"><use href="#takraw"/></svg><div><div class="sb-name">${esc(m.meta.A.name)}</div><div class="sb-sets">${dots('A')}</div></div></div>
+      <div class="sb-mid"><div class="sb-score"><span class="A">${cur ? cur.a : 0}</span><span class="sep">:</span><span class="B">${cur ? cur.b : 0}</span></div><div class="sb-meta">${st.winner ? 'Selesai' : 'Set ' + (cur ? cur.n : 1)}${prev ? ' · <span class="prev-sets">' + prev + '</span>' : ''} · ${m.rallies.length} rally</div></div>
+      <div class="sb-team B"><div><div class="sb-name">${esc(m.meta.B.name)}</div><div class="sb-sets" style="justify-content:flex-end">${dots('B')}</div></div><svg class="srv-ball" ${d?.srv === 'B' && !st.winner ? '' : 'hidden'} aria-label="Servis"><use href="#takraw"/></svg></div>
+    </div>
+    <div class="lv-cols"><div><div class="lbl">Rally yang sedang dicatat</div><div class="lv-flow">${flow}</div></div>
+      <div><div class="lbl">Rally terakhir</div><ol class="lv-log">${log || '<li class="muted small">Belum ada rally.</li>'}</ol></div></div>
+  </section>`;
+}
+/* Setiap sentuhan yang dicatat menggambar ulang panel input; saat itu status live ikut dikirim (dibatasi ±2,5 detik sekali). */
+const _renderTagMain = renderTagMain;
+renderTagMain = function () { _renderTagMain(); reportPresence(); };
+Object.assign(ACT, {
+  liveWatch: d => { S.liveWatch = { uid: d.u, mid: d.id }; renderLive(); window.scrollTo({ top: 0, behavior: 'smooth' }); },
+  liveStop: () => { S.liveWatch = null; renderLive(); },
+});
 
 /* ---------- Daftar pertandingan: kunci, data lama, internal ---------- */
 function localMatches() { return lsGet(LS_KEY.matches, []); }
@@ -2851,7 +2990,7 @@ function renderHome() {
 
   <section class="sec">
     ${sectionHead('Agenda kejuaraan', 'Hitung mundur menuju kejuaraan berikutnya.', '<button class="btn" data-act="go" data-v="events">Semua agenda →</button>')}
-    ${evShow.length ? `<div class="ev-grid">${evShow.map(e => eventCard(e, true)).join('')}</div>` : Store.mode === 'cloud' && !Cloud.user ? '<div class="panel empty"><p>Agenda kejuaraan berikutnya segera diumumkan.</p></div>' : `<div class="panel empty"><p>Belum ada agenda. Tambahkan kejuaraan yang akan dianalisis.</p><button class="btn primary" data-act="go" data-v="events">+ Tambah agenda</button></div>`}
+    ${evShow.length ? `<div class="ev-grid">${evShow.map(e => eventCard(e, true)).join('')}</div>` : Store.mode === 'cloud' && !isAdmin() ? '<div class="panel empty"><p>Agenda kejuaraan berikutnya segera diumumkan.</p></div>' : `<div class="panel empty"><p>Belum ada agenda. Tambahkan kejuaraan yang akan dianalisis.</p><button class="btn primary" data-act="go" data-v="events">+ Tambah agenda</button></div>`}
   </section>
 
   <section class="sec">
@@ -3040,7 +3179,7 @@ document.addEventListener('input', e => {
 
 /* ---------- Mulai ---------- */
 Store.onChange = () => {
-  const r = { home: renderHome, list: renderList, athletes: renderAthletes, events: S.evDraft ? null : renderEvents }[S.view];
+  const r = { home: renderHome, list: renderList, athletes: renderAthletes, events: S.evDraft ? null : renderEvents, live: isAdmin() ? renderLive : null }[S.view];
   if (r) r();
 };
 {
