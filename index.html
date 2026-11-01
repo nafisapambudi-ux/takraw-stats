@@ -584,6 +584,93 @@ dl.roles dt { font-weight: 700; } dl.roles dd { margin: 0; color: var(--ink2); }
 .umenu[hidden] { display: none; }
 .umenu .chip { justify-self: start; }
 @media (max-width: 1500px) { .store .sst { display: none; } }
+
+/* ---------- Tampilan HP ---------- */
+.nav { position: relative; }
+.nav.more { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); }
+.nav.less { -webkit-mask-image: linear-gradient(to right, transparent, #000 36px); mask-image: linear-gradient(to right, transparent, #000 36px); }
+.nav.more.less { -webkit-mask-image: linear-gradient(to right, transparent, #000 36px, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to right, transparent, #000 36px, #000 calc(100% - 36px), transparent); }
+/* Kolom pertama tabel lebar tetap terlihat saat digeser ke samping. */
+.tscroll table.dt th:first-child, .tscroll table.dt td:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); box-shadow: 1px 0 0 var(--line); }
+.print-only { display: none; }
+@media (hover: none) and (pointer: coarse) { .shortcuts, .sk kbd, .qb kbd, .btn kbd { display: none; } }
+@media (max-width: 600px) {
+  .top .wrap { padding-block: 8px 0; }
+  .nav { margin-inline: -16px; padding-inline: 10px; width: calc(100% + 32px); max-width: none; }
+  .nav button { font-size: 14px; letter-spacing: .04em; padding: 8px 9px 9px; }
+  .nav-match { font-size: 11px; max-width: 40vw; overflow: hidden; text-overflow: ellipsis; }
+  .page-head { margin-block: 18px 10px; gap: 10px; }
+  .page-head h1 { font-size: 28px; }
+  .page-head h1 .num { white-space: nowrap; }
+  .page-head > .spacer { display: none; }
+  .page-head > .btn { flex: 1 1 calc(50% - 5px); justify-content: center; min-height: 40px; }
+  .page-head > .btn.primary { flex-basis: 100%; }
+  .panel { padding: 12px; }
+  .inp, select.inp, textarea.inp { font-size: 16px; } /* iOS tidak memperbesar layar saat mengetik */
+  .btn { min-height: 36px; }
+  .btn.sm { min-height: 32px; }
+  .filters .tabs { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .filters .tabs::-webkit-scrollbar { display: none; }
+  /* kartu pertandingan: tumpuk, tombol selebar kartu */
+  .mcard { grid-template-columns: minmax(0, 1fr); }
+  .mcard .sc { font-size: 20px; gap: 4px 8px; line-height: 1.15; }
+  .mcard > .row .btn { flex: 1 1 0; justify-content: center; min-height: 40px; }
+  .mcard.intie { margin-left: 0; }
+  /* papan skor: nama tim berdampingan di atas, skor besar di bawah */
+  .scoreboard { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "a b" "m m"; gap: 4px 10px; padding: 10px 12px; }
+  .scoreboard > .sb-team:first-child { grid-area: a; }
+  .scoreboard > .sb-mid { grid-area: m; }
+  .scoreboard > .sb-team.B { grid-area: b; }
+  .sb-name { font-size: 18px; overflow-wrap: break-word; hyphens: auto; }
+  .sb-score { font-size: 48px; justify-content: center; }
+  /* log rally: nomor, skor dan tombol di baris atas; rincian selebar kartu */
+  .lr { grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 10px; }
+  .lr > .n { grid-row: 1; grid-column: 1; }
+  .lr > .s { grid-row: 1; grid-column: 2; }
+  .lr > .row { grid-row: 1; grid-column: 3; flex-wrap: nowrap; }
+  .lr > div:not(.row) { grid-row: 2; grid-column: 1 / -1; }
+  .cmp .r { grid-template-columns: 36px minmax(0, 1fr) minmax(84px, 120px) minmax(0, 1fr) 36px; gap: 6px; }
+  .heat { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+}
+
+/* ---------- Ekspor PDF (cetak → Simpan sebagai PDF) ---------- */
+@page { size: A4 portrait; margin: 12mm 11mm; }
+@media print {
+  :root, :root[data-theme="dark"] {
+    --bg: #fff; --surface: #fff; --surface2: #EEF2F1; --ink: #12201C; --ink2: #33433E; --muted: #5E6C67; --line: #CBD4D1;
+    --accent: #B07806; --teamA: #C93E28; --teamB: #1F58B8;
+    --q1: #0F7B6C; --q2: #6DB8AA; --q3: #A3ABA8; --q4: #E3A160; --q5: #A8501A; color-scheme: light;
+  }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { background: #fff !important; }
+  body { font-size: 11px; }
+  .top, .foot, #tip, .toast, .modal-bg, #tagView, .filters, .page-head .btn, .page-head .spacer, .banner .btn, .no-print { display: none !important; }
+  .print-only { display: block; }
+  .wrap { max-width: none; padding: 0; }
+  #view[data-pdf]::before { content: attr(data-pdf); display: block; font-size: 9.5px; color: var(--muted); border-bottom: 2px solid var(--accent); padding-bottom: 4px; margin-bottom: 8px; letter-spacing: .02em; }
+  .page-head { margin: 0 0 8px; }
+  .page-head h1 { font-size: 26px; }
+  .pdf-set { font-size: 11px; color: var(--ink2); margin: 2px 0 8px; }
+  .st-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+  .st-grid > .st-wide { grid-column: 1 / -1; }
+  .panel { border-radius: 6px; padding: 8px 10px; break-inside: avoid; page-break-inside: avoid; box-shadow: none; }
+  .panel h3 { font-size: 13px; }
+  .note { font-size: 9px; }
+  .cmp .r { font-size: 10px; grid-template-columns: 30px minmax(0, 1fr) minmax(70px, 110px) minmax(0, 1fr) 30px; gap: 4px; }
+  .cmp .r .l { font-size: 9.5px; }
+  .tscroll { overflow: visible !important; }
+  .tscroll table.dt th:first-child, .tscroll table.dt td:first-child { position: static; box-shadow: none; }
+  table.dt { font-size: 9px; }
+  table.dt th { font-size: 7.5px; letter-spacing: .02em; }
+  table.dt th, table.dt td { padding: 2.5px 3px; }
+  table.dt tr { break-inside: avoid; }
+  table.dt .small, .note .small { font-size: 1em; }
+  table.dt thead { display: table-header-group; }
+  .heat { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .chart text { font-size: 10px; }
+  .th-sort { padding: 0; }
+  a[href]::after { content: none !important; }
+}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -1033,6 +1120,15 @@ function renderTabs() {
     [['tag', 'Input'], ['stats', 'Statistik']].map(([v, l]) => `<button class="${S.view === v ? 'on' : ''}" data-act="go" data-v="${v}">${l}</button>`).join('');
   if (S.view === 'setup') html += `<button class="on">Data pertandingan</button>`;
   t.innerHTML = html;
+  const on = t.querySelector('button.on');
+  if (on && t.scrollWidth > t.clientWidth) t.scrollLeft = on.offsetLeft - (t.clientWidth - on.offsetWidth) / 2;
+  navEdge();
+}
+/* Menu atas di HP digeser ke samping; bayangan pudar di tepi menandakan masih ada menu lain. */
+function navEdge() {
+  const t = $('#tabs'); if (!t) return;
+  t.classList.toggle('more', t.scrollWidth - t.clientWidth - t.scrollLeft > 4);
+  t.classList.toggle('less', t.scrollLeft > 4);
 }
 
 function openMatch(id, view) {
@@ -1781,8 +1877,9 @@ function renderStats() {
   const setBtns = ['all', ...st.sets.filter(s => s.a + s.b > 0).map(s => String(s.n))];
   const head = `<div class="page-head"><div><div class="muted small">${esc(M.event)} ${M.round ? '· ' + esc(M.round) : ''} · ${esc(M.date)} · ${esc(FORMATS[M.format]?.label)}</div>
       <h1><span class="win-A">${esc(M.A.name)}</span> <span class="num">${st.wA}–${st.wB}</span> <span class="win-B">${esc(M.B.name)}</span></h1>
-      <div class="prev-sets">${st.sets.filter(s => s.a + s.b > 0).map(s => `Set ${s.n}: ${s.a}–${s.b}`).join(' · ')}</div></div><span class="spacer"></span>
-      <button class="btn" data-act="exportCsv">Ekspor CSV</button><button class="btn" data-act="exportJson">Cadangan JSON</button><button class="btn" data-act="copySummary">Salin ringkasan</button></div>
+      <div class="prev-sets">${st.sets.filter(s => s.a + s.b > 0).map(s => `Set ${s.n}: ${s.a}–${s.b}`).join(' · ')}</div>
+      <div class="print-only pdf-set">Statistik: ${S.statSet === 'all' ? 'semua set' : S.statSet === 'tie' ? 'gabungan ' + tieMs.length + ' regu' : 'set ' + esc(S.statSet)} · ${X.R.length} rally</div></div><span class="spacer"></span>
+      <button class="btn primary" data-act="exportPdf">Ekspor PDF</button><button class="btn" data-act="exportCsv">Ekspor CSV</button><button class="btn" data-act="exportJson">Cadangan JSON</button><button class="btn" data-act="copySummary">Salin ringkasan</button></div>
     <div class="filters"><span class="lbl">Set</span><div class="tabs">${setBtns.map(s => `<button class="${S.statSet === s ? 'on' : ''}" data-act="statSet" data-s="${s}">${s === 'all' ? 'Semua' : 'Set ' + s}</button>`).join('')}${tieMs.length > 1 ? `<button class="${S.statSet === 'tie' ? 'on' : ''}" data-act="statSet" data-s="tie">Gabungan beregu (${tieMs.length} regu)</button>` : ''}</div>
       <span class="muted small">${X.R.length} rally · rata-rata ${X.avgTouches.toFixed(1)} sentuhan per rally</span></div>
     ${X.T.A.liteN ? `<div class="banner warn">${X.T.A.liteN} rally dicatat dengan mode Ringkas dan belum dilengkapi. Poin, ace, serangan poin, blok poin dan error sudah dihitung, tetapi persentase per aksi (penerimaan, kill %, efisiensi, indeks) hanya dari rally yang lengkap. <button class="btn sm" data-act="go" data-v="tag">Lengkapi di Input</button></div>` : ''}
@@ -1842,7 +1939,8 @@ function pointSources(X) {
   ${Object.keys(END_LABEL).filter(k => X.T.A.ends[k] || X.T.B.ends[k]).map(k => `<tr><td>${END_LABEL[k]}${ERR_ENDS.has(k) ? ' <span class="muted small">(error lawan)</span>' : ''}</td><td>${X.T.A.ends[k] || 0}</td><td>${X.T.B.ends[k] || 0}</td></tr>`).join('')}</tbody></table>`;
 }
 function momentum(X) {
-  const W = 900, H = 220, pad = { l: 34, r: 10, t: 12, b: 24 };
+  /* Lebar mengikuti layar supaya teks sumbu tetap terbaca di HP; saat cetak dipakai lebar halaman A4. */
+  const W = S.printing ? 740 : Math.round(Math.min(900, Math.max(300, ($('#view')?.clientWidth || innerWidth) - 32))), H = W < 600 ? 190 : 220, pad = { l: 34, r: 10, t: 12, b: 24 };
   const pts = []; let set = 0;
   X.R.forEach(r => { if (r.set !== set) { set = r.set; pts.push({ sep: true, set }); } const a = r.sA + (r.win === 'A' ? 1 : 0), b = r.sB + (r.win === 'B' ? 1 : 0); pts.push({ d: a - b, a, b, set: r.set, r }); });
   const data = pts.filter(p => !p.sep);
@@ -2081,6 +2179,7 @@ const ACT = {
   vclose: quiet => { const v = $('#vid'); v.pause(); if (v.src) URL.revokeObjectURL(v.src); v.removeAttribute('src'); v.hidden = false; $('#ytWrap').innerHTML = ''; $('#ytWrap').hidden = true; S.yt = null; S.vkind = null; S.video = false; $('#vidBody').hidden = true; $('#vidName').textContent = 'Opsional. Waktu video ikut tercatat di setiap sentuhan.'; if (quiet !== true) renderTag(); },
   ytLoad: () => loadYouTube($('#ytUrl').value || S.m?.meta.video),
   statSet: d => { S.statSet = d.s; renderStats(); },
+  exportPdf: () => exportPdf(),
   exportCsv: () => offer(fileSafe(`${S.m.meta.date}_${S.m.meta.A.name}_vs_${S.m.meta.B.name}`) + '.csv', toCsv()),
   exportJson: () => { const { id, ...rest } = S.m; offer(fileSafe(`${S.m.meta.date}_${S.m.meta.A.name}_vs_${S.m.meta.B.name}`) + '.json', JSON.stringify({ takrawStats: 1, ...rest }, null, 1)); },
   copySummary: () => copy(summaryText()),
@@ -3083,7 +3182,7 @@ function renderAthletes() {
   const cols = [['matches', 'Main'], ['pts', 'Poin'], ['err', 'Err'], ['srv', 'Servis'], ['ace', 'Ace'], ['srvErr', 'S.Err'], ['rcv', 'Terima'], ['rcvPos', 'Pos%'], ['fd', 'Umpan'], ['atk', 'Serang'], ['kill', 'Poin'], ['killPct', 'Kill%'], ['eff', 'Eff'], ['blk', 'Blok poin']];
   const pctK = new Set(['rcvPos', 'killPct', 'eff']);
   $('#view').innerHTML = `
-    <div class="page-head"><div><h1>Database atlet</h1><div class="muted">Rekap otomatis dari ${statMatches().length} pertandingan${statMatches().some(m => m.sample) ? ' (data contoh — tersisih otomatis begitu ada pertandingan sungguhan)' : ''}. Atlet dikenali dari nama tim + nama pemain, jadi tulis nama dengan ejaan yang sama di setiap pertandingan.</div></div></div>
+    <div class="page-head"><div><h1>Database atlet</h1><div class="muted">Rekap otomatis dari ${statMatches().length} pertandingan${statMatches().some(m => m.sample) ? ' (data contoh — tersisih otomatis begitu ada pertandingan sungguhan)' : ''}. Atlet dikenali dari nama tim + nama pemain, jadi tulis nama dengan ejaan yang sama di setiap pertandingan.</div></div><span class="spacer"></span><button class="btn" data-act="exportPdf">Ekspor PDF</button></div>
     <div class="filters"><input class="inp" id="athQ" type="search" placeholder="Cari nama atlet atau tim" value="${esc(S.athQ || '')}" style="max-width:320px"><span class="muted small">${rows.length} atlet · klik judul kolom untuk mengurutkan</span></div>
     <div class="panel tscroll"><table class="dt"><thead><tr><th>Atlet</th><th>Tim</th>${cols.map(([k, l]) => `<th><button class="th-sort ${sortK === k ? 'on' : ''}" data-act="athSort" data-k="${k}">${l}${sortK === k ? ' ↓' : ''}</button></th>`).join('')}</tr></thead>
     <tbody>${rows.map(a => `<tr><td><b>${esc(a.name)}</b> <span class="muted small">${a.no ? '#' + esc(a.no) + ' · ' : ''}${esc(a.pos)}</span>${a.sample ? ' <span class="chip sample">Contoh</span>' : ''}</td><td>${esc(a.team)}</td>${cols.map(([k]) => `<td>${pctK.has(k) ? f0(a[k]) : a[k]}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${cols.length + 2}" class="muted">Belum ada atlet dengan sentuhan tercatat.</td></tr>`}</tbody></table></div>`;
@@ -3176,6 +3275,46 @@ document.addEventListener('input', e => {
   if (el.id === 'athQ') { S.athQ = el.value; const pos = el.selectionStart; renderAthletes(); const n = $('#athQ'); n.focus(); n.setSelectionRange(pos, pos); }
   if (el.dataset.ev && S.evDraft) S.evDraft[el.dataset.ev] = el.value;
 });
+
+/* ---------- Ekspor PDF ----------
+   Memakai dialog cetak bawaan browser (pilih "Simpan sebagai PDF"): hasilnya vektor, tajam, ringan, dan tetap jalan offline.
+   Tampilan cetak diatur oleh @media print; judul dokumen menjadi nama file PDF. */
+let pdfTitle = null;
+window.addEventListener('beforeprint', () => {
+  if (pdfTitle !== null) return;
+  pdfTitle = document.title;
+  const M = S.view === 'stats' ? S.m?.meta : null;
+  const label = M ? 'Laporan statistik pertandingan' : { athletes: 'Database atlet', list: 'Daftar pertandingan', events: 'Agenda kejuaraan', rules: 'Ringkasan regulasi' }[S.view] || '';
+  if (M) document.title = fileSafe(`Statistik ${M.date || ''} ${M.A.name} vs ${M.B.name}`);
+  else if (label) document.title = fileSafe(label + ' Takraw Stats');
+  const when = new Date().toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' });
+  $('#view').dataset.pdf = `Takraw Stats Indonesia${label ? ' · ' + label : ''} · dibuat ${when}`;
+  if (M) { S.printing = true; renderStats(); }
+});
+window.addEventListener('afterprint', () => {
+  if (pdfTitle === null) return;
+  document.title = pdfTitle; pdfTitle = null;
+  delete $('#view').dataset.pdf;
+  if (S.printing) { S.printing = false; if (S.view === 'stats' && S.m) renderStats(); }
+});
+function exportPdf() {
+  if (typeof window.print !== 'function') { toast('Browser ini tidak bisa mencetak. Buka situs di Chrome atau Safari untuk menyimpan PDF.'); return; }
+  toast('Di jendela cetak, pilih tujuan “Simpan sebagai PDF”.');
+  setTimeout(() => window.print(), 60);
+}
+{
+  let w = innerWidth, tm = 0;
+  window.addEventListener('resize', () => {
+    clearTimeout(tm);
+    tm = setTimeout(() => {
+      navEdge();
+      if (S.printing || Math.abs(innerWidth - w) < 40) return;
+      w = innerWidth;
+      if (S.view === 'stats' && S.m) renderStats();
+    }, 200);
+  });
+  $('#tabs').addEventListener('scroll', navEdge, { passive: true });
+}
 
 /* ---------- Mulai ---------- */
 Store.onChange = () => {
