@@ -637,7 +637,7 @@ dl.roles dt { font-weight: 700; } dl.roles dd { margin: 0; color: var(--ink2); }
 #tagView button, #tagView .zone, #tagView .tk { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 #tagMain .pospad, #tagMain .vseg, #tagMain .lite, #tagMain .tpanel { -webkit-user-select: none; user-select: none; }
 .qundo { display: none; }
-@media (max-width: 600px) {
+@media (max-width: 600px), (max-height: 560px) and (orientation: landscape) {
   body.on-tag .top { position: static; }
   body.on-tag .foot { display: none; }
   body.on-tag main.wrap { padding-bottom: 24px; }
@@ -698,6 +698,48 @@ dl.roles dt { font-weight: 700; } dl.roles dd { margin: 0; color: var(--ink2); }
   #tagMain .lite .btn.lt { min-height: 56px; }
   #tagMain .lite .btn.lt2 { min-height: 38px; flex: 1 1 auto; justify-content: center; }
 }
+
+/* ---------- HP mendatar / layar pendek ----------
+   Tinggi layar hanya ±330 px: header tidak menempel dan dibuat ringkas; di halaman Input
+   tombol aksi di kiri lapangan dan kualitas di kanan, sehingga terjangkau kedua jempol. */
+@media (max-height: 560px) and (orientation: landscape) {
+  .top { position: static; }
+  .top .wrap { flex-wrap: nowrap; padding-block: 4px; gap: 8px; }
+  .brand { font-size: 15px; gap: 6px; }
+  .brand small { font-size: 8px; margin-top: 1px; }
+  .brand .ball { width: 26px; height: 26px; }
+  .nav { order: 0; width: auto; flex: 1 1 auto; min-width: 0; }
+  .nav button { font-size: 13px; padding: 6px 8px 8px; letter-spacing: .04em; }
+  .top .spacer { display: none; }
+  .store .sst, .store .admin-chip { display: none; }
+  .page-head { margin-block: 12px 8px; }
+  .page-head h1 { font-size: 26px; }
+  body.on-tag:has(#tagMain .kual) main.wrap { padding-bottom: 24px; }
+  body.on-tag:has(#tagMain .kual) .toast { bottom: calc(18px + env(safe-area-inset-bottom, 0px)); }
+  #tagMain .pospad { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  #tagMain .posbtn { min-height: 48px; padding: 6px 10px; }
+  #tagMain .posbtn .pr { font-size: 15px; }
+  #tagMain .courtrow { grid-template-columns: 104px minmax(0, 1fr) 112px; gap: 8px; }
+  #tagMain .courtrow .courtcol { order: 0; }
+  #tagMain .courtrow .kual { order: 0; position: static; padding: 0; border: 0; box-shadow: none; background: none; }
+  #tagMain .courtrow .aksi, #tagMain .courtrow .kual { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 44px); align-self: start; }
+  #tagMain .courtrow .aksi .vseg { display: grid; gap: 4px; }
+  #tagMain .courtrow .aksi .vseg .sk { width: 100%; min-height: 34px; padding: 4px 9px; }
+  #tagMain .kual .vseg.qseg { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  #tagMain .kual .qb { min-height: 36px; flex-direction: row; justify-content: flex-start; gap: 6px; padding: 6px 9px; font-size: 12px; text-align: left; }
+  #tagMain .kual .qb .sym { font-size: 16px; }
+  .court.vert { height: max(300px, calc(100vh - 48px)); }
+  #tagMain .court-wrap.vert .camlbl { font-size: 11px; }
+  /* papan skor setipis mungkin: satu baris ±38 px */
+  #tagMain .scoreboard { margin: 6px 0; padding: 2px 10px; }
+  #tagMain .sb-name { font-size: 14px; -webkit-line-clamp: 1; }
+  #tagMain .sb-score { font-size: 26px; }
+  #tagMain .sb-score .sep { font-size: 18px; }
+  #tagMain .sb-meta { font-size: 10px; }
+  #tagMain .sb-sets i { width: 7px; height: 7px; }
+}
+/* Ukuran tampilan halaman Input (pengganti zoom-out yang tidak bisa dilakukan di browser HP). */
+.zoomtabs button { min-width: 44px; }
 
 /* ---------- Ekspor PDF (cetak → Simpan sebagai PDF) ---------- */
 @page { size: A4 portrait; margin: 12mm 11mm; }
@@ -1173,6 +1215,7 @@ function go(view) {
   document.body.classList.toggle('on-home', view === 'home');
   document.body.classList.toggle('on-tag', view === 'tag');
   wakeLock(view === 'tag');
+  applyZoom();
   $('#view').hidden = view === 'tag';
   $('#tagView').hidden = view !== 'tag';
   renderTabs();
@@ -1206,6 +1249,11 @@ function tapText(html) {
   if (matchMedia('(max-width: 600px)').matches) html = html.replace(/tombol di kanan lapangan/g, 'tombol di bawah layar');
   return html;
 }
+/* Ukuran tampilan halaman Input: 80 / 90 / 100 %. Disimpan per perangkat; hanya berlaku di halaman Input. */
+const ZOOMS = ['0.8', '0.9', '1'];
+const tagZoom = () => { try { const z = localStorage.getItem('takraw.zoom'); return ZOOMS.includes(z) ? z : '1'; } catch { return '1'; } };
+function applyZoom() { document.documentElement.style.zoom = S.view === 'tag' && tagZoom() !== '1' ? tagZoom() : ''; }
+const zoomTabs = () => isTouchUI() ? `<div class="tabs mode zoomtabs" role="group" aria-label="Ukuran tampilan">${ZOOMS.map(z => `<button class="${tagZoom() === z ? 'on' : ''}" data-act="zoom" data-z="${z}" title="Ukuran tampilan ${Math.round(z * 100)}%">${Math.round(z * 100)}%</button>`).join('')}</div>` : '';
 function renderTabs() {
   const t = $('#tabs');
   const items = [['home', 'Beranda'], ['list', 'Pertandingan'], ['athletes', 'Atlet'], ['events', 'Agenda'], ['rules', 'Regulasi']];
@@ -1499,7 +1547,7 @@ function liteHtml() {
     <div class="lt-s">karena kesalahan ${esc(tname(opp(t)))}:</div>
     <div class="lt-g">${LITE_ENDS.err.map(e => `<button class="btn sm lt2" data-act="lite" data-t="${t}" data-e="${e}" ${e === 'SVE' && S.cur.srv === t ? 'disabled' : ''}>${esc(END_LABEL[e])}</button>`).join('')}
       <button class="btn sm ghost lt2" data-act="lite" data-t="${t}" data-e="MAN">Lainnya</button></div></div>`;
-  return `<div class="ctxbar"><b>Mode Ringkas · servis ${esc(tname(S.cur.srv))} ${esc(pLabel(S.cur.sp))}</b><span class="spacer"></span>${modeTabs()}</div>
+  return `<div class="ctxbar"><b>Mode Ringkas · servis ${esc(tname(S.cur.srv))} ${esc(pLabel(S.cur.sp))}</b><span class="spacer"></span>${modeTabs()}${zoomTabs()}</div>
     <div class="hint">Saat live, cukup catat siapa dapat poin dan caranya. Detail sentuhan dilengkapi nanti dari video lewat tombol <b>Lengkapi</b> di log rally.</div>
     ${S.st.winner ? '' : `<div class="lite">${col('A')}${col('B')}</div>`}
     <div class="actions"><button class="btn" data-act="undo"><kbd>⌫</kbd> Batal poin terakhir</button><button class="btn" data-act="swapSrv">Tukar tim servis</button>${S.st.winner && S.m.meta.tie?.name ? `<button class="btn primary" data-act="nextRegu">Lanjut Regu ${(+S.m.meta.tie.no || 1) + 1} →</button>` : ''}<span class="spacer"></span><button class="btn ghost sm" data-act="editMatch">Ubah data pertandingan</button></div>`;
@@ -1801,7 +1849,7 @@ function renderTagMain() {
   const padLabel = S.blk ? `Pemblok · ${tname(padTeam)} (serangan ${pLabel(S.blk.att.pid)})` : `Bola di ${tname(padTeam)}${S.forceTeam ? ' (dipilih manual)' : ` · sentuhan ke-${c.idx} · ${SKILLS[c.skill].name}`}`;
   const pad = locked() ? '' : `<div class="ctxbar"><span class="sw ${padTeam}"></span><b>${esc(padLabel)}</b><span class="spacer"></span>
       ${modeTabs()}
-      ${S.mode !== 'list' ? `<div class="tabs mode" role="group" aria-label="Kualitas bila dilewati" title="Bila pemain berikutnya dipilih tanpa menekan kualitas, sentuhan sebelumnya disimpan dengan kualitas ini"><button class="${S.quick === '+' ? 'on' : ''}" data-act="quick" data-q="+">Cepat: +</button><button class="${S.quick === '!' ? 'on' : ''}" data-act="quick" data-q="!">Cepat: !</button><button class="${!S.quick ? 'on' : ''}" data-act="quick" data-q="">Mati</button></div>` : ''}</div>
+      ${S.mode !== 'list' ? `<div class="tabs mode" role="group" aria-label="Kualitas bila dilewati" title="Bila pemain berikutnya dipilih tanpa menekan kualitas, sentuhan sebelumnya disimpan dengan kualitas ini"><button class="${S.quick === '+' ? 'on' : ''}" data-act="quick" data-q="+">Cepat: +</button><button class="${S.quick === '!' ? 'on' : ''}" data-act="quick" data-q="!">Cepat: !</button><button class="${!S.quick ? 'on' : ''}" data-act="quick" data-q="">Mati</button></div>` : ''}${zoomTabs()}</div>
     ${S.mode !== 'list' ? `<div class="pospad">${posPlayers(padTeam).map((p, i) => `<button class="posbtn ${padTeam} ${S.sel.pid === p.id || S.blk?.pid === p.id ? 'on' : ''}" data-act="pos" data-i="${i}"><kbd>${i + 1}</kbd><span><span class="pr">${esc(p.pos === 'Pemain' ? 'Pemain ' + (i + 1) : p.pos)}</span><span class="pnm">#${esc(p.no)} ${esc(p.name)}</span></span></button>`).join('')}
       <button class="posbtn flip" data-act="flipTeam" title="Pilih pemain tim lain"><kbd>Tab</kbd><span><span class="pr">Tim lain</span><span class="pnm">${esc(tname(opp(padTeam)))}</span></span></button></div>` : ''}
     ${sk === 'A' && S.sel.pid && !S.blk ? `<button class="btn blkbtn" data-act="block"><kbd>B</kbd> Serangan dihadang blok ${esc(tname(opp(S.sel.tm)))}</button>` : ''}`;
@@ -2224,6 +2272,7 @@ const ACT = {
   undo: () => undo(),
   pos: d => selectPos(+d.i),
   flipTeam: () => { if (S.blk) return; if (S.sel.pid && S.quick && !autoCommit()) return; S.forceTeam = opp(S.forceTeam || ctx().team); clearSelKeepForce(); renderTagMain(); },
+  zoom: d => { try { localStorage.setItem('takraw.zoom', d.z); } catch {} applyZoom(); renderTagMain(); },
   quick: d => { S.quick = d.q; try { localStorage.setItem('takraw.quick', d.q); } catch {} renderTagMain(); },
   block: () => startBlock(),
   orient: d => { S.orient = d.o; try { localStorage.setItem('takraw.orient', d.o); } catch {} renderTagMain(); },
