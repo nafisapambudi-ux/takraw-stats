@@ -916,10 +916,10 @@ dl.roles dt { font-weight: 700; } dl.roles dd { margin: 0; color: var(--ink2); }
 </main>
 <footer class="foot">
   <div class="wrap">
-    <div><h4>Takraw Stats Indonesia</h4><p style="margin:0;max-width:52ch">Platform notational analysis sepak takraw: pencatatan per sentuhan, statistik tim dan atlet, serta agenda kejuaraan. Dibangun untuk analis performa, pelatih, dan pembina sepak takraw Indonesia.</p></div>
+    <div><h4>Takraw Stats Indonesia</h4><p style="margin:0;max-width:52ch">Platform notational analysis sepak takraw: pencatatan per sentuhan, statistik tim dan atlet, serta agenda kejuaraan untuk analis, pelatih, dan pembina.</p></div>
     <div><h4>Menu</h4><ul><li><button class="linkish" data-act="go" data-v="list">Pertandingan</button></li><li><button class="linkish" data-act="go" data-v="athletes">Database atlet</button></li><li><button class="linkish" data-act="go" data-v="events">Agenda</button></li><li><button class="linkish" data-act="go" data-v="rules">Regulasi</button></li></ul></div>
     <div><h4>Rujukan</h4><ul><li><a href="https://sepaktakraw.one/" target="_blank" rel="noopener">ISTAF — situs resmi ↗</a></li><li><a href="https://sepaktakraw.one/istaf-events-2025%2F26" target="_blank" rel="noopener">Kalender ISTAF 2025/26 ↗</a></li></ul></div>
-    <div class="fine">Bukan situs resmi ISTAF maupun PSTI. Aturan diringkas dari ISTAF Law of the Game 2024; dokumen resmi tetap menjadi acuan.</div>
+    <div class="fine">Bukan situs resmi ISTAF maupun PSTI. Regulasi diringkas dari ISTAF Law of the Game 2024; dokumen resmi tetap menjadi acuan.</div>
   </div>
 </footer>
 <div class="tip" id="tip" hidden></div>
@@ -1417,25 +1417,25 @@ function renderList() {
       <div class="row">
         <button class="btn primary" data-act="open" data-id="${m.id}" data-v="tag">Input</button>
         <button class="btn" data-act="open" data-id="${m.id}" data-v="stats">Statistik</button>
-        <button class="btn ${conf ? 'danger' : 'ghost'}" data-act="delMatch" data-id="${m.id}">${conf ? 'Yakin hapus?' : 'Hapus'}</button>
+        <button class="btn ${conf ? 'danger' : 'ghost'}" data-act="delMatch" data-id="${m.id}">${conf ? 'Konfirmasi hapus' : 'Hapus'}</button>
       </div></article>`;
   }).join('');
   $('#view').innerHTML = `
-    <div class="page-head"><div><h1>Pertandingan</h1><div class="muted">Catat setiap sentuhan, lalu baca statistik tim dan pemain.</div></div><span class="spacer"></span>
+    <div class="page-head"><div><h1>Pertandingan</h1><div class="muted">Pencatatan pertandingan dan statistik tim serta pemain.</div></div><span class="spacer"></span>
       ${list.length ? '<button class="btn" data-act="exportAll" title="Semua pertandingan dan agenda dalam satu file JSON">Cadangkan semua</button>' : ''}
       <label class="btn" for="impFile">Impor JSON</label><input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn primary" data-act="newMatch">+ Pertandingan baru</button></div>
-    ${Store.mode === 'local' || Store.mode === 'memory' ? `<div class="banner warn">${Store.mode === 'local' ? 'Data tersimpan di browser ini saja. Tekan "Cadangkan semua" secara berkala.' : 'Mode pratinjau: data hilang saat halaman ditutup.'}</div>` : ''}
-    ${Store.mode === 'db' && !Store.canWrite ? '<div class="banner">Anda melihat dalam mode baca. Untuk mencatat pertandingan, minta pemilik halaman memberi akses Contributor atau Editor.</div>' : ''}
+    ${Store.mode === 'local' || Store.mode === 'memory' ? `<div class="banner warn">${Store.mode === 'local' ? 'Data hanya tersimpan di browser ini. Lakukan "Cadangkan semua" secara berkala.' : 'Mode pratinjau: data tidak disimpan setelah halaman ditutup.'}</div>` : ''}
+    ${Store.mode === 'db' && !Store.canWrite ? '<div class="banner">Mode baca. Akses Contributor atau Editor diperlukan untuk mencatat pertandingan.</div>' : ''}
     ${list.length ? `<div class="mlist">${cards}</div>` : `<div class="panel empty">
       <svg viewBox="0 0 140 60" aria-hidden="true"><rect x="2" y="6" width="136" height="48" rx="2" fill="var(--court)"/><g stroke="var(--court-line)" fill="none" stroke-width="1.5"><rect x="6" y="10" width="128" height="40"/><line x1="70" y1="6" x2="70" y2="54" stroke-width="3"/><circle cx="30" cy="30" r="4"/><circle cx="110" cy="30" r="4"/></g></svg>
-      <h2>Belum ada pertandingan</h2><p>Buat pertandingan baru: isi nama tim, nomor punggung, dan format (Regu, Double, atau Quadrant).</p>
+      <h2>Belum ada pertandingan</h2><p>Buat pertandingan dengan mengisi format, nama tim, dan susunan pemain.</p>
       <button class="btn primary" data-act="newMatch">+ Pertandingan baru</button></div>`}
-    <details class="panel" style="margin-top:16px"><summary><strong>Cara kerja &amp; aturan yang dipakai</strong></summary>
+    <details class="panel" style="margin-top:16px"><summary><strong>Aturan dan kode pencatatan</strong></summary>
       <div class="note" style="margin-top:8px;max-width:75ch;display:grid;gap:6px">
-        <p>Aturan mengikuti ISTAF Law of the Game 2024: set 15 poin; bila 14–14 set dimenangkan oleh tim yang lebih dulu mencapai 17; best of three; servis berganti setiap poin (Regu & Double) dan tetap bergantian tiap poin saat deuce; pindah tempat di set ketiga pada poin 8; penerima servis pertama di set sebelumnya servis duluan di set berikutnya.</p>
-        <p>Double: pemain tim yang servis bergantian menjadi tekong setiap kali timnya servis. Quadrant: dokumen Quad 2024 memuat dua ketentuan berbeda (10.3 tiap 1 poin, 10.4 tiap 3 poin). Bawaan aplikasi 3 poin; ubah di data pertandingan sesuai technical handbook event.</p>
-        <p>Kode kualitas: <b>#</b> sempurna/poin · <b>+</b> baik · <b>!</b> cukup · <b>−</b> buruk · <b>/</b> diblok · <b>=</b> error/gagal. Poin otomatis tercatat saat Ace, Serangan poin, Blok poin, atau saat ada error/pelanggaran.</p>
+        <p>Mengacu pada ISTAF Law of the Game 2024: set 15 poin, deuce 14–14 hingga 17, best of three. Servis berganti setiap poin (Regu dan Double), termasuk saat deuce. Pindah tempat di set ketiga pada poin 8. Tim penerima servis pertama pada set sebelumnya melakukan servis pertama pada set berikutnya.</p>
+        <p>Double: tekong bergantian setiap kali tim mendapat giliran servis. Quadrant: Law 10.3 menetapkan rotasi tiap 1 poin, Law 10.4 tiap 3 poin. Bawaan aplikasi 3 poin dan dapat diubah di data pertandingan sesuai technical handbook.</p>
+        <p>Kode kualitas: <b>#</b> sempurna/poin · <b>+</b> baik · <b>!</b> cukup · <b>−</b> buruk · <b>/</b> diblok · <b>=</b> error. Poin tercatat otomatis untuk ace, serangan poin, blok poin, serta error atau pelanggaran.</p>
       </div></details>`;
 }
 
@@ -1476,7 +1476,7 @@ function renderSetup() {
   };
   const r = M.rules;
   $('#view').innerHTML = `
-    <div class="page-head"><div><h1>${d.id ? 'Ubah data pertandingan' : 'Pertandingan baru'}</h1><div class="muted">Pemain dengan posisi “Cadangan” tetap bisa dipilih saat input, tampil lebih redup.</div></div></div>
+    <div class="page-head"><div><h1>${d.id ? 'Ubah data pertandingan' : 'Pertandingan baru'}</h1><div class="muted">Lengkapi informasi pertandingan dan susunan pemain. Pemain cadangan tetap dapat dipilih saat input.</div></div></div>
     <div class="panel"><div class="form-grid">
       <label class="f">Kejuaraan / event<input class="inp" id="mEvent" data-f="event" list="evList" value="${esc(M.event)}" placeholder="mis. Kejurnas 2026"><datalist id="evList">${Store.events.map(e => `<option value="${esc(e.name)}">`).join('')}</datalist></label>
       <label class="f">Babak<input class="inp" id="mRound" data-f="round" value="${esc(M.round)}" placeholder="Penyisihan grup A"></label>
@@ -1490,7 +1490,7 @@ function renderSetup() {
       <label class="f">Servis pertama (undian)<select class="inp" id="mFirst" data-f="firstServe"><option value="A" ${M.firstServe === 'A' ? 'selected' : ''}>Tim A</option><option value="B" ${M.firstServe === 'B' ? 'selected' : ''}>Tim B</option></select></label>
     </div></div>
     <div class="teams2">${teamBox('A')}${teamBox('B')}</div>
-    <details class="panel"><summary><strong>Aturan skor</strong> <span class="muted small">— bawaan ISTAF 2024, ubah bila event memakai aturan lain</span></summary>
+    <details class="panel"><summary><strong>Aturan skor</strong> <span class="muted small">— bawaan ISTAF 2024; sesuaikan bila diperlukan</span></summary>
       <div class="form-grid" style="margin-top:10px">
         <label class="f">Poin per set<input class="inp num" type="number" id="rPts" data-f="rules.pts" data-num value="${r.pts}"></label>
         <label class="f">Deuce pada<input class="inp num" type="number" id="rDeuce" data-f="rules.deuce" data-num value="${r.deuce}"></label>
@@ -1499,7 +1499,7 @@ function renderSetup() {
         <label class="f">Servis berganti tiap … poin<input class="inp num" type="number" min="1" id="rRot" data-f="rules.rot" data-num value="${r.rot}"></label>
         <label class="f">Pindah tempat set akhir pada<input class="inp num" type="number" id="rSwap" data-f="rules.swap" data-num value="${r.swap}"></label>
       </div>
-      ${M.format === 'quad' ? '<p class="note">Quadrant: Law 10.3 menyebut servis berganti tiap 1 poin, sedangkan 10.4 tiap 3 poin. Sesuaikan dengan keputusan technical meeting.</p>' : ''}
+      ${M.format === 'quad' ? '<p class="note">Quadrant: Law 10.3 menetapkan rotasi servis tiap 1 poin, Law 10.4 tiap 3 poin. Sesuaikan dengan keputusan technical meeting.</p>' : ''}
     </details>
     <label class="f" style="margin-top:14px">Catatan<textarea class="inp" id="mNotes" data-f="notes" rows="2">${esc(M.notes)}</textarea></label>
     <div class="row" style="margin-top:16px"><button class="btn primary" data-act="saveSetup">${d.id ? 'Simpan perubahan' : 'Simpan & mulai input'}</button><button class="btn ghost" data-act="cancelSetup">Batal</button></div>`;
@@ -2122,9 +2122,9 @@ function renderStats() {
       <button class="btn primary" data-act="exportPdf">Ekspor PDF</button><button class="btn" data-act="exportCsv">Ekspor CSV</button><button class="btn" data-act="exportJson">Cadangan JSON</button><button class="btn" data-act="copySummary">Salin ringkasan</button></div>
     <div class="filters"><span class="lbl">Set</span><div class="tabs">${setBtns.map(s => `<button class="${S.statSet === s ? 'on' : ''}" data-act="statSet" data-s="${s}">${s === 'all' ? 'Semua' : 'Set ' + s}</button>`).join('')}${tieMs.length > 1 ? `<button class="${S.statSet === 'tie' ? 'on' : ''}" data-act="statSet" data-s="tie">Gabungan beregu (${tieMs.length} regu)</button>` : ''}</div>
       <span class="muted small">${X.R.length} rally · rata-rata ${X.avgTouches.toFixed(1)} sentuhan per rally</span></div>
-    ${X.T.A.liteN ? `<div class="banner warn">${X.T.A.liteN} rally dicatat dengan mode Ringkas dan belum dilengkapi. Poin, ace, serangan poin, blok poin dan error sudah dihitung, tetapi persentase per aksi (penerimaan, kill %, efisiensi, indeks) hanya dari rally yang lengkap. <button class="btn sm" data-act="go" data-v="tag">Lengkapi di Input</button></div>` : ''}
+    ${X.T.A.liteN ? `<div class="banner warn">${X.T.A.liteN} rally dicatat dalam mode Ringkas. Poin, ace, serangan poin, blok poin, dan error sudah dihitung; persentase per aksi hanya dihitung dari rally yang lengkap. <button class="btn sm" data-act="go" data-v="tag">Lengkapi di Input</button></div>` : ''}
     ${S.statSet === 'tie' ? `<div class="banner">Gabungan ${tieMs.length} regu “${esc(M.tie.name)}”. Tim dicocokkan dari nama; alur skor & peta zona hanya untuk satu regu.</div>` : ''}`;
-  if (!X.R.length) { $('#view').innerHTML = head + '<div class="panel empty"><h2>Belum ada data</h2><p>Statistik muncul setelah rally pertama dicatat.</p><button class="btn primary" data-act="go" data-v="tag">Mulai input</button></div>'; return; }
+  if (!X.R.length) { $('#view').innerHTML = head + '<div class="panel empty"><h2>Belum ada data</h2><p>Statistik tersedia setelah rally pertama dicatat.</p><button class="btn primary" data-act="go" data-v="tag">Mulai input</button></div>'; return; }
   const rowsDef = [
     ['Poin', KA.pts, KB.pts, 'n'],
     ['Ace servis', KA.ace, KB.ace, 'n'],
@@ -2151,9 +2151,9 @@ function renderStats() {
     <section class="panel"><h3>Perbandingan tim</h3><div class="cmp" style="margin-top:10px"><div class="r hd"><span class="v a win-A">${esc(tname('A'))}</span><span></span><span></span><span></span><span class="v b win-B">${esc(tname('B'))}</span></div>${cmp}</div>
       <p class="note">Efisiensi serangan = (poin − error − diblok) ÷ jumlah serangan. Indeks = rata-rata kualitas (# = 100, + = 75, ! = 50, − = 25, = = 0).</p></section>
     <section class="panel"><h3>Sumber poin</h3>${pointSources(X)}</section>
-    ${S.statSet === 'tie' ? '' : `<section class="panel st-wide"><h3>Alur skor</h3><p class="note">Selisih poin ${esc(tname('A'))} terhadap ${esc(tname('B'))} setelah tiap rally. Di atas garis = ${esc(tname('A'))} unggul.</p><div class="chart" id="momentum">${momentum(X)}</div></section>`}
+    ${S.statSet === 'tie' ? '' : `<section class="panel st-wide"><h3>Alur skor</h3><p class="note">Selisih poin ${esc(tname('A'))} terhadap ${esc(tname('B'))} per rally. Di atas garis: ${esc(tname('A'))} unggul.</p><div class="chart" id="momentum">${momentum(X)}</div></section>`}
     ${['A', 'B'].map(t => teamDetail(X, t)).join('')}
-    <section class="panel st-wide"><h3>Zona arah servis & serangan</h3><p class="note">Angka = jumlah bola ke zona itu; warna lebih pekat = lebih sering. Hanya sentuhan yang diberi zona.</p><div class="heat" style="margin-top:8px">${['A', 'B'].map(t => heat(X, t, 'S') + heat(X, t, 'A')).join('')}</div></section>
+    <section class="panel st-wide"><h3>Zona arah servis & serangan</h3><p class="note">Angka menunjukkan jumlah bola ke setiap zona; warna lebih pekat berarti lebih sering. Hanya sentuhan berzona yang dihitung.</p><div class="heat" style="margin-top:8px">${['A', 'B'].map(t => heat(X, t, 'S') + heat(X, t, 'A')).join('')}</div></section>
     ${['A', 'B'].map(t => playerTable(X, t)).join('')}
   </div>`;
   $('#view').innerHTML = S.statSet === 'tie' ? html.replace(/<section class="panel st-wide"><h3>Zona arah[\s\S]*?<\/section>/, '') : html;
@@ -2741,8 +2741,8 @@ function releaseLock() {
 function lockModal(info, mid) {
   const t = info.at ? new Date(info.at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
   modal(`<h2>Sedang dicatat analis lain</h2>
-    <p><b>${esc(info.by || 'Analis lain')}</b> sedang mencatat pertandingan ini${t ? ' (aktif sejak ' + t + ')' : ''}. Supaya data tidak saling menimpa, satu pertandingan hanya bisa dicatat satu orang.</p>
-    <p class="muted small">Kunci terlepas otomatis 2 menit setelah analis itu menutup halaman input.</p>
+    <p><b>${esc(info.by || 'Analis lain')}</b> sedang mencatat pertandingan ini${t ? ' (aktif sejak ' + t + ')' : ''}. Untuk mencegah data saling menimpa, setiap pertandingan hanya dapat dicatat oleh satu analis.</p>
+    <p class="muted small">Kunci terlepas otomatis 2 menit setelah halaman input ditutup.</p>
     <div class="row" style="margin-top:12px"><button class="btn primary" data-act="lockView">Lihat statistik</button>
     ${Cloud.role === 'admin' ? `<button class="btn danger" data-act="lockForce" data-id="${esc(mid)}">Ambil alih (Admin)</button>` : ''}
     <button class="btn ghost" data-act="closeModal">Tutup</button></div>`);
@@ -2757,7 +2757,7 @@ function showLogin() {
   $('#view').innerHTML = `<div class="login-wrap"><div class="panel login">
     <svg class="ball big" aria-hidden="true"><use href="#takraw"/></svg>
     <h1>${rec ? 'Buat kata sandi baru' : 'Masuk'}</h1>
-    <p class="muted">${rec ? 'Ketik kata sandi baru untuk akun Anda.' : 'Masuk untuk mencatat pertandingan dan melihat hasil serta statistiknya. Belum punya akun? Isi email dan kata sandi, lalu tekan "Daftar akun baru".'}</p>
+    <p class="muted">${rec ? 'Masukkan kata sandi baru untuk akun Anda.' : 'Masuk untuk mencatat pertandingan serta melihat hasil dan statistik. Belum memiliki akun? Isi email dan kata sandi, lalu pilih "Daftar akun baru".'}</p>
     ${rec ? `<label class="f">Kata sandi baru<input class="inp" type="password" id="lgPass" autocomplete="new-password" minlength="8"></label>
       <button class="btn primary" data-act="lgNewPass">Simpan kata sandi</button>` : `
     <label class="f">Email<input class="inp" type="email" id="lgEmail" autocomplete="email" placeholder="nama@contoh.ac.id"></label>
@@ -2767,8 +2767,8 @@ function showLogin() {
     <button class="btn ghost" data-act="lgGoogle"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.2-2.1 3.5-5.1 3.5-8.8z"/><path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-2.9l-3.9-3c-1.1.7-2.5 1.2-4.1 1.2-3.1 0-5.8-2.1-6.7-5H1.3v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.3 14.3a7.2 7.2 0 0 1 0-4.6V6.6h-4a12 12 0 0 0 0 10.8l4-3.1z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.3 6.6l4 3.1c.9-2.8 3.6-4.9 6.7-4.9z"/></svg> Masuk dengan Google</button>
     <button class="linkbtn" data-act="lgReset">Lupa kata sandi?</button>`}
     <div class="lg-msg" id="lgMsg" role="status">${esc(Cloud.msg)}</div>
-    <ol class="lg-steps"><li><b>Daftar</b> dengan email dan kata sandi Anda sendiri.</li><li><b>Langsung bisa mencatat</b> pertandingan.</li><li><b>Hasil &amp; statistik terbuka</b> setelah pemilik platform menyetujui akun Anda.</li></ol>
-    <p class="note">Pertandingan dan aktivitas pencatatan Anda tersimpan di server.</p>
+    <ol class="lg-steps"><li><b>Daftar</b> dengan email dan kata sandi.</li><li><b>Mulai mencatat</b> pertandingan.</li><li><b>Akses hasil &amp; statistik</b> setelah akun disetujui.</li></ol>
+    <p class="note">Data pertandingan tersimpan di server.</p>
     <button class="linkbtn" data-act="go" data-v="home">← Kembali ke beranda</button>
   </div></div>`;
   setStoreState(); renderTabs();
@@ -2872,9 +2872,9 @@ function showPending(view) {
   $('#view').hidden = false; $('#tagView').hidden = true; renderTabs();
   $('#view').innerHTML = `<div class="login-wrap"><div class="panel login">
     <svg class="ball big" aria-hidden="true"><use href="#takraw"/></svg>
-    <h1>Menunggu persetujuan</h1>
-    <p>Akun <b>${esc(Cloud.user.email || '')}</b> sudah terdaftar. ${view === 'athletes' ? 'Database atlet' : 'Hasil dan statistik pertandingan'} terbuka setelah pemilik platform menyetujui akun Anda.</p>
-    <p class="muted">Sambil menunggu, Anda tetap bisa mencatat pertandingan. Semua catatan tersimpan dan langsung bisa dibaca begitu akun disetujui.</p>
+    <h1>Akun sedang ditinjau</h1>
+    <p>Akun <b>${esc(Cloud.user.email || '')}</b> telah terdaftar. ${view === 'athletes' ? 'Database atlet' : 'Hasil dan statistik pertandingan'} tersedia setelah akun disetujui.</p>
+    <p class="muted">Selama peninjauan, Anda tetap dapat mencatat pertandingan. Seluruh catatan tersimpan dan dapat diakses setelah akun disetujui.</p>
     <div class="row"><button class="btn primary" data-act="go" data-v="list">Lanjut mencatat</button><button class="btn" data-act="recheck">Periksa status</button></div>
   </div></div>`;
   window.scrollTo({ top: 0 });
@@ -2890,7 +2890,7 @@ go = function (view) {
   if (S.view === 'tag' && view !== 'tag' && Cloud.lock) releaseLock();
   if (view === 'login') { if (Cloud.user) view = 'home'; else { Cloud.msg = ''; return showLogin(); } }
   if (DATA_VIEWS.includes(view)) {
-    if (!Cloud.user) { Cloud.msg = 'Masuk untuk melihat hasil pertandingan, statistik, dan database atlet.'; return showLogin(); }
+    if (!Cloud.user) { Cloud.msg = 'Masuk untuk mengakses hasil pertandingan, statistik, dan database atlet.'; return showLogin(); }
     if (Cloud.role === 'nonaktif') { toast('Akun Anda dinonaktifkan pemilik platform.'); view = 'home'; }
     else if ((view === 'stats' || view === 'athletes') && !canView()) return showPending(view);
   }
@@ -3429,8 +3429,8 @@ function renderAthletes() {
   const cols = [['matches', 'Main'], ['pts', 'Poin'], ['err', 'Err'], ['srv', 'Servis'], ['ace', 'Ace'], ['srvErr', 'S.Err'], ['rcv', 'Terima'], ['rcvPos', 'Pos%'], ['fd', 'Umpan'], ['atk', 'Serang'], ['kill', 'Poin'], ['killPct', 'Kill%'], ['eff', 'Eff'], ['blk', 'Blok poin']];
   const pctK = new Set(['rcvPos', 'killPct', 'eff']);
   $('#view').innerHTML = `
-    <div class="page-head"><div><h1>Database atlet</h1><div class="muted">Rekap otomatis dari ${statMatches().length} pertandingan${statMatches().some(m => m.sample) ? ' (data contoh — tersisih otomatis begitu ada pertandingan sungguhan)' : ''}. Atlet dikenali dari nama tim + nama pemain, jadi tulis nama dengan ejaan yang sama di setiap pertandingan.</div></div><span class="spacer"></span><button class="btn" data-act="exportPdf">Ekspor PDF</button></div>
-    <div class="filters"><input class="inp" id="athQ" type="search" placeholder="Cari nama atlet atau tim" value="${esc(S.athQ || '')}" style="max-width:320px"><span class="muted small">${rows.length} atlet · klik judul kolom untuk mengurutkan</span></div>
+    <div class="page-head"><div><h1>Database atlet</h1><div class="muted">Rekap dari ${statMatches().length} pertandingan${statMatches().some(m => m.sample) ? ' (data contoh)' : ''}. Atlet diidentifikasi dari nama tim dan nama pemain; gunakan ejaan yang konsisten.</div></div><span class="spacer"></span><button class="btn" data-act="exportPdf">Ekspor PDF</button></div>
+    <div class="filters"><input class="inp" id="athQ" type="search" placeholder="Cari nama atlet atau tim" value="${esc(S.athQ || '')}" style="max-width:320px"><span class="muted small">${rows.length} atlet · pilih judul kolom untuk mengurutkan</span></div>
     <div class="panel tscroll"><table class="dt"><thead><tr><th>Atlet</th><th>Tim</th>${cols.map(([k, l]) => `<th><button class="th-sort ${sortK === k ? 'on' : ''}" data-act="athSort" data-k="${k}">${l}${sortK === k ? ' ↓' : ''}</button></th>`).join('')}</tr></thead>
     <tbody>${rows.map(a => `<tr><td><b>${esc(a.name)}</b> <span class="muted small">${a.no ? '#' + esc(a.no) + ' · ' : ''}${esc(a.pos)}</span>${a.sample ? ' <span class="chip sample">Contoh</span>' : ''}</td><td>${esc(a.team)}</td>${cols.map(([k]) => `<td>${pctK.has(k) ? f0(a[k]) : a[k]}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${cols.length + 2}" class="muted">Belum ada atlet dengan sentuhan tercatat.</td></tr>`}</tbody></table></div>`;
 }
@@ -3450,19 +3450,19 @@ function renderEvents() {
       <label class="f">Negara<input class="inp" id="evCountry" data-ev="country" value="${esc(d.country)}"></label>
       <label class="f" style="grid-column:1/-1">Tautan sumber (opsional)<input class="inp" id="evUrl" data-ev="url" value="${esc(d.url)}" placeholder="https://"></label>
     </div>
-    <div class="row" style="margin-top:12px"><button class="btn primary" data-act="saveEvent">Simpan</button><button class="btn ghost" data-act="cancelEvent">Batal</button>${d.id ? `<span class="spacer"></span><button class="btn ${S.confirm === 'ev:' + d.id ? 'danger' : 'ghost'}" data-act="delEvent" data-id="${d.id}">${S.confirm === 'ev:' + d.id ? 'Yakin hapus?' : 'Hapus agenda'}</button>` : ''}</div></section>` : '';
+    <div class="row" style="margin-top:12px"><button class="btn primary" data-act="saveEvent">Simpan</button><button class="btn ghost" data-act="cancelEvent">Batal</button>${d.id ? `<span class="spacer"></span><button class="btn ${S.confirm === 'ev:' + d.id ? 'danger' : 'ghost'}" data-act="delEvent" data-id="${d.id}">${S.confirm === 'ev:' + d.id ? 'Konfirmasi hapus' : 'Hapus agenda'}</button>` : ''}</div></section>` : '';
   $('#view').innerHTML = `
-    <div class="page-head"><div><h1>Agenda kejuaraan</h1><div class="muted">Pertandingan otomatis terhubung ke agenda bila nama event-nya sama.</div></div><span class="spacer"></span><button class="btn primary" data-act="newEvent">+ Tambah agenda</button></div>
+    <div class="page-head"><div><h1>Agenda kejuaraan</h1><div class="muted">Pertandingan terhubung otomatis ke agenda dengan nama kejuaraan yang sama.</div></div><span class="spacer"></span><button class="btn primary" data-act="newEvent">+ Tambah agenda</button></div>
     ${form}
-    <section class="sec"><h2 class="sec-title">Akan datang & berlangsung</h2>${up.length ? `<div class="ev-grid">${up.map(e => eventCard(e)).join('')}</div>` : '<p class="muted">Tidak ada agenda mendatang.</p>'}</section>
-    <section class="sec"><h2 class="sec-title">Sudah selesai</h2>${past.length ? `<div class="ev-grid">${past.map(e => eventCard(e)).join('')}</div>` : '<p class="muted">Belum ada.</p>'}</section>`;
+    <section class="sec"><h2 class="sec-title">Mendatang &amp; berlangsung</h2>${up.length ? `<div class="ev-grid">${up.map(e => eventCard(e)).join('')}</div>` : '<p class="muted">Belum ada agenda mendatang.</p>'}</section>
+    <section class="sec"><h2 class="sec-title">Selesai</h2>${past.length ? `<div class="ev-grid">${past.map(e => eventCard(e)).join('')}</div>` : '<p class="muted">Belum ada agenda yang selesai.</p>'}</section>`;
 }
 
 /* ---------- Regulasi ---------- */
 function renderRules() {
   const qrow = s => SKILLS[s].q.map(q => `<span class="tk"><b>${q === '-' ? '−' : q}</b> ${QL[s][q]}</span>`).join(' ');
   $('#view').innerHTML = `
-    <div class="page-head"><div><h1>Regulasi & kode pencatatan</h1><div class="muted">Ringkasan ISTAF Law of the Game 2024 (berlaku 1 Januari 2024) untuk Regu, Double, dan Quadrant. Dokumen resmi tetap menjadi acuan.</div></div><span class="spacer"></span><a class="btn" href="https://sepaktakraw.one/" target="_blank" rel="noopener">Situs resmi ISTAF ↗</a></div>
+    <div class="page-head"><div><h1>Regulasi &amp; kode pencatatan</h1><div class="muted">Ringkasan ISTAF Law of the Game 2024 (berlaku 1 Januari 2024) untuk Regu, Double, dan Quadrant. Dokumen resmi tetap menjadi acuan.</div></div><span class="spacer"></span><a class="btn" href="https://sepaktakraw.one/" target="_blank" rel="noopener">Situs resmi ISTAF ↗</a></div>
     <div class="fmt-grid">${fmtCards()}</div>
     <div class="st-grid" style="margin-top:14px">
       <section class="panel"><h3>Sistem skor (Law 10 & 12)</h3><ul class="rules">
@@ -3485,10 +3485,10 @@ function renderRules() {
         <tr><td>Rekan setim saat servis</td><td>Di quarter circle</td><td>Diam di lapangan</td><td>Diam di lapangan</td></tr>
         <tr><td>Ganti servis</td><td>Tiap 1 poin</td><td>Tiap 1 poin, tekong bergantian</td><td>10.3: tiap 1 poin · 10.4: tiap 3 poin</td></tr>
         <tr><td>Beregu (team event)</td><td>3 regu, 9–12 pemain</td><td>3 regu, 6–9 pemain</td><td>2 regu, 8–12 pemain</td></tr></tbody></table></div>
-        <p class="note">Dokumen Quad 2024 memuat dua ketentuan rotasi servis yang bertentangan. Aplikasi memakai 3 poin sebagai bawaan; ubah per pertandingan sesuai keputusan technical meeting.</p></section>
+        <p class="note">Regulasi Quadrant 2024 memuat dua ketentuan rotasi servis yang berbeda. Bawaan aplikasi 3 poin dan dapat diubah per pertandingan sesuai keputusan technical meeting.</p></section>
       <section class="panel"><h3>Kode kualitas pencatatan</h3><div style="display:grid;gap:8px;margin-top:8px">
         ${SKILL_ORDER.map(s => `<div><div class="lbl">${SKILLS[s].name}</div><div class="tks" style="display:flex;flex-wrap:wrap;gap:4px">${qrow(s)}</div></div>`).join('')}</div>
-        <p class="note">Poin otomatis: Ace servis, Serangan poin, Blok poin untuk tim pelaku; kode = dan Pelanggaran untuk lawan.</p></section>
+        <p class="note">Poin otomatis: ace servis, serangan poin, dan blok poin untuk tim pelaku; kode = dan pelanggaran untuk tim lawan.</p></section>
     </div>`;
 }
 
