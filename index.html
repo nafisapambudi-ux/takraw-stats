@@ -784,6 +784,49 @@ dl.roles dt { font-weight: 700; } dl.roles dd { margin: 0; color: var(--ink2); }
   .mdock .lbl { font-size: 10px; }
 }
 
+/* ---------- HP: alur rally di samping lapangan, Aksi di bawah lapangan ----------
+   Kolom .courtrow dilebur (display: contents) supaya alur rally dan lapangan bisa berdampingan dalam satu grid. */
+@media (max-width: 600px), (max-height: 560px) and (orientation: landscape) {
+  #tagMain .tag-grid:not(.m-lite):not(.done) .center { grid-template-columns: minmax(0, 44fr) minmax(0, 56fr); row-gap: 0; column-gap: 8px;
+    grid-template-areas: "edit edit" "hint hint" "guide guide" "flow court" "aksi aksi" "tech tech" "cause cause" "act act" "ctx ctx"; }
+  #tagMain .tag-grid:not(.m-lite):not(.done) .center > * { margin-bottom: 10px; }
+  #tagMain .tag-grid:not(.m-lite):not(.done) .center > .courtrow { display: contents; }
+  #tagMain .tag-grid:not(.m-lite):not(.done) .center > .editb { grid-area: edit; }
+  #tagMain .tag-grid:not(.m-lite):not(.done) .center > .hint { grid-area: hint; }
+  #tagMain .tag-grid:not(.m-lite):not(.done) .center > .aguide { grid-area: guide; }
+  #tagMain .tag-grid:not(.m-lite):not(.done) .center > .pospad { grid-area: hint; display: none; }
+  #tagMain .tag-grid:not(.m-lite):not(.done) .center > .blkbtn { grid-area: hint; display: none; }
+  #tagMain .tag-grid:not(.m-lite):not(.done) .courtrow > .courtcol { grid-area: court; margin-bottom: 10px; min-width: 0; }
+  #tagMain .tag-grid:not(.m-lite):not(.done) .courtrow > .aksi { grid-area: aksi; position: static; margin-bottom: 10px; }
+  #tagMain .tag-grid:not(.m-lite):not(.done) .courtrow > .kual { display: none; }
+  #tagMain .tag-grid:not(.m-lite):not(.done) .center > .techrow { grid-area: tech; }
+  #tagMain .tag-grid:not(.m-lite):not(.done) .center > .causerow { grid-area: cause; }
+  #tagMain .tag-grid:not(.m-lite):not(.done) .center > .actions { grid-area: act; }
+  #tagMain .tag-grid:not(.m-lite):not(.done) .center > .ctxbar { grid-area: ctx; }
+  /* alur rally tegak: kartu ditumpuk, panah ke bawah, sentuhan terbaru terlihat */
+  #tagMain .tag-grid:not(.m-lite):not(.done) .center > .flowwrap { grid-area: flow; align-self: start; max-height: 64vh; overflow-y: auto; border-bottom: 0; padding-bottom: 0; scrollbar-width: thin; }
+  #tagMain .flowwrap .flow { flex-direction: column; flex-wrap: nowrap; overflow: visible; gap: 2px; align-items: stretch; padding-bottom: 0; }
+  #tagMain .flowwrap .step { min-width: 0; width: 100%; flex: none; padding: 4px 7px 5px; }
+  #tagMain .flowwrap .farrow { transform: rotate(90deg); align-self: center; line-height: 1; font-size: 12px; }
+  #tagMain .flowwrap .st-h { font-size: 13px; }
+  #tagMain .courthd { flex-wrap: wrap; gap: 4px; }
+  #tagMain .courthd .lbl { flex-basis: 100%; }
+  #tagMain .courthd .tabs.mode button { padding: 4px 8px; font-size: 11px; }
+  /* Aksi sebagai baris tombol di bawah lapangan */
+  #tagMain .tag-grid:not(.m-lite):not(.done) .aksi .vseg { display: flex; flex-wrap: wrap; gap: 5px; }
+  #tagMain .tag-grid:not(.m-lite):not(.done) .aksi .vseg .sk { width: auto; flex: 1 1 auto; justify-content: center; min-height: 38px; padding: 6px 10px; }
+}
+@media (max-width: 600px) {
+  #tagMain .court-wrap.vert { overflow: visible; }
+  #tagMain .court.vert { width: 100%; height: auto; max-height: max(300px, calc(100vh - 400px)); }
+  #tagMain .tag-grid:not(.m-lite):not(.done) .center > .flowwrap { max-height: max(320px, calc(100vh - 360px)); }
+  #tagMain .court-wrap.vert .camlbl { font-size: 11px; }
+}
+@media (max-height: 560px) and (orientation: landscape) {
+  #tagMain .tag-grid:not(.m-lite):not(.done) .center { grid-template-columns: minmax(128px, 32%) minmax(0, 1fr); }
+  #tagMain .tag-grid:not(.m-lite):not(.done) .center > .flowwrap { max-height: calc(100vh - 56px); position: sticky; top: calc(env(safe-area-inset-top, 0px) + 44px); }
+}
+
 /* ---------- Ekspor PDF (cetak → Simpan sebagai PDF) ---------- */
 @page { size: A4 portrait; margin: 12mm 11mm; }
 @media print {
@@ -1289,7 +1332,7 @@ function tapText(html) {
     .replace(/,? ?[Bb]ila dihadang (?:blok|lawan), tekan B(?: \(Blok\))?\./g, ' Bila dihadang blok, ketuk tombol “Serangan dihadang blok”.')
     .replace(/tekan <kbd>B<\/kbd> bila dihadang/g, 'ketuk tombol blok bila dihadang')
     .replace(/\bklik\b/g, 'ketuk').replace(/\bKlik\b/g, 'Ketuk');
-  if (matchMedia('(max-width: 600px)').matches) html = html.replace(/tombol di kanan lapangan/g, 'tombol di bawah layar');
+  if (matchMedia('(max-width: 600px)').matches) html = html.replace(/tombol di kanan lapangan/g, 'tombol di bawah layar').replace(/>Mendatar</g, '>Tetap<');
   return html;
 }
 /* Ukuran tampilan halaman Input: 80 / 90 / 100 %. Disimpan per perangkat; hanya berlaku di halaman Input. */
@@ -1836,10 +1879,12 @@ function courtSvg() {
   const circles = fmt === 'regu'
     ? `<circle cx="122.5" cy="152.5" r="15"/><circle cx="547.5" cy="152.5" r="15"/><path d="M290 0 A45 45 0 0 0 380 0 M290 305 A45 45 0 0 1 380 305"/>`
     : '';
-  const near = S.orient === 'v' ? nearTeam() : null, rot = near === 'A' ? -90 : near === 'B' ? 90 : 0;
+  /* HP tegak: lapangan "Tetap" ditampilkan tegak (tim kiri di atas) agar muat di samping alur rally. */
+  const portrait = S.orient !== 'v' && matchMedia('(max-width: 600px)').matches;
+  const near = S.orient === 'v' ? nearTeam() : portrait ? 'B' : null, rot = near === 'A' ? -90 : near === 'B' ? 90 : 0;
   const up = (x, y) => (rot ? ` transform="rotate(${-rot} ${x} ${y})"` : '');
   cells = cells.replace(/<text x="([\d.]+)" y="([\d.]+)"/g, (m0, x, y) => `<text${up(x, +y + 5)} x="${x}" y="${y}"`);
-  return `<div class="court-wrap${rot ? ' vert' : ''}">${rot ? `<div class="camlbl far">${esc(tname(opp(near)))} · jauh dari kamera</div>` : ''}<svg class="court${rot ? ' vert' : ''}" viewBox="${rot ? '174.5 -196.5 321 698' : '-14 -8 698 321'}" role="group" aria-label="Lapangan: klik zona untuk mencatat arah bola"><g${rot ? ` transform="rotate(${rot} 335 152.5)"` : ''}>
+  return `<div class="court-wrap${rot ? ' vert' : ''}">${rot ? `<div class="camlbl far">${esc(tname(opp(near)))}${portrait ? '' : ' · jauh dari kamera'}</div>` : ''}<svg class="court${rot ? ' vert' : ''}" viewBox="${rot ? '174.5 -196.5 321 698' : '-14 -8 698 321'}" role="group" aria-label="Lapangan: klik zona untuk mencatat arah bola"><g${rot ? ` transform="rotate(${rot} 335 152.5)"` : ''}>
     <rect x="-14" y="-8" width="698" height="321" rx="8" fill="var(--court)"/>
     <g fill="none" stroke="var(--court-line)" stroke-width="3"><rect x="0" y="0" width="${W}" height="${H}"/>${circles}</g>
     <line x1="335" y1="-8" x2="335" y2="313" stroke="var(--court-line)" stroke-width="5"/>
@@ -1848,7 +1893,7 @@ function courtSvg() {
     </g>
     ${cells}
     ${pending.oz && pending.z && pending.ozh !== pending.zh ? (() => { const [x1, y1] = cxy(pending.ozh, pending.oz), [x2, y2] = cxy(pending.zh, pending.z); return `<defs><marker id="zarrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#FFCD50"/></marker></defs><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#FFCD50" stroke-width="4" stroke-dasharray="10 7" marker-end="url(#zarrow)" pointer-events="none"/>`; })() : ''}
-  </g></svg>${rot ? `<div class="camlbl near">${esc(tname(near))} · dekat kamera</div>` : ''}</div>`;
+  </g></svg>${rot ? `<div class="camlbl near">${esc(tname(near))}${portrait ? '' : ' · dekat kamera'}</div>` : ''}</div>`;
 }
 
 function renderTag() {
@@ -1916,7 +1961,7 @@ function renderTagMain() {
         <div class="sb-meta">${st.winner ? 'Selesai' : 'Set ' + (cur ? cur.n : 1)}${prev ? ' · <span class="prev-sets">' + prev + '</span>' : ''}</div></div>
       <div class="sb-team B"><div><div class="sb-name">${esc(M.B.name || 'Tim B')}</div><div class="sb-sets" style="justify-content:flex-end">${Array.from({ length: st.need }, (_, i) => `<i class="B ${i < st.wB ? 'on' : ''}"></i>`).join('')}</div></div><svg class="srv-ball" ${srvT === 'B' && !st.winner ? '' : 'hidden'} aria-label="Servis"><use href="#takraw"/></svg></div>
     </div>
-    <div class="tag-grid m-${S.mode}">
+    <div class="tag-grid m-${S.mode}${locked() ? ' done' : ''}">
       ${teamPanel('A')}
       <div class="center panel">${S.mode === 'lite' && S.editIdx == null ? liteHtml() : `${S.editIdx != null ? ` <div class="banner editb">${S.m.rallies[S.editIdx]?.lite ? 'Melengkapi' : 'Mengubah'} rally #${S.editIdx + 1} dari video — sentuhan lama diganti setelah rally ini selesai dicatat · <button class="btn sm ghost" data-act="cancelEdit">Batal</button></div>` : ''}
         ${flowHtml()}
@@ -2011,7 +2056,7 @@ function areaGuide() {
   const cur = st.findIndex(x => !x[2]);
   return `<div class="aguide">${st.map((x, i) => `<div class="ag ${x[2] ? 'done' : ''} ${i === cur ? 'cur' : ''}"><span class="agn">${x[2] ? '✓' : i + 1}</span><span><b>${x[0]}</b><small>${esc(x[1])}</small></span></div>`).join('<span class="farrow" aria-hidden="true">→</span>')}</div>`;
 }
-function scrollFlow() { const f = document.querySelector('.flow'); if (f) f.scrollLeft = f.scrollWidth; }
+function scrollFlow() { const f = document.querySelector('.flow'); if (f) f.scrollLeft = f.scrollWidth; const w = document.querySelector('.flowwrap'); if (w) w.scrollTop = w.scrollHeight; }
 function tkChip(t, ri, j) {
   const p = pById(t.p);
   return `<span class="tk ${t.tm}${t.auto ? ' auto' : ''}${t.u ? ' unk' : ''}" data-act="tkFlag" data-r="${ri}" data-j="${j}" role="button" title="${esc(SKILLS[t.s].name + ' ' + (QL[t.s][t.q] || '') + (t.u ? ' (TAK TERLIHAT — cek video; klik untuk hapus tanda)' : ' (klik untuk menandai tak terlihat)') + (t.auto ? ' (otomatis, cek dari video)' : '') + (t.tc ? ' · ' + t.tc : '') + (t.z ? ' · ' + zoneName(t.z) : '') + (t.e ? ' · ' + t.e : ''))}">${esc(p?.no ? '#' + p.no : '?')} ${esc(SKILLS[t.s].name)} <b>${t.q === '-' ? '−' : t.q}</b>${t.u ? '<i class="unk">?</i>' : ''}</span>`;
@@ -3513,6 +3558,7 @@ function exportPdf() {
       if (S.printing || Math.abs(innerWidth - w) < 40) return;
       w = innerWidth;
       if (S.view === 'stats' && S.m) renderStats();
+      if (S.view === 'tag' && S.m) renderTagMain();
     }, 200);
   });
   $('#tabs').addEventListener('scroll', navEdge, { passive: true });
