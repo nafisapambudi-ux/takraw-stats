@@ -741,6 +741,49 @@ dl.roles dt { font-weight: 700; } dl.roles dd { margin: 0; color: var(--ink2); }
 /* Ukuran tampilan halaman Input (pengganti zoom-out yang tidak bisa dilakukan di browser HP). */
 .zoomtabs button { min-width: 44px; }
 
+/* ---------- Dok HP: pemain kiri, kualitas kanan ---------- */
+.mdock { display: none; }
+.mdp { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 4px 8px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); text-align: left; min-width: 0; color: var(--ink); }
+.mdp b { font-family: var(--f-display); font-size: 22px; line-height: 1; min-width: 22px; text-align: center; flex: none; }
+.mdp.A b { color: var(--teamA); } .mdp.B b { color: var(--teamB); }
+.mdp.A { box-shadow: inset 4px 0 0 var(--teamA); } .mdp.B { box-shadow: inset 4px 0 0 var(--teamB); }
+.mdp.on.A { border-color: var(--teamA); box-shadow: inset 0 0 0 2px var(--teamA); background: color-mix(in srgb, var(--teamA) 10%, var(--surface)); }
+.mdp.on.B { border-color: var(--teamB); box-shadow: inset 0 0 0 2px var(--teamB); background: color-mix(in srgb, var(--teamB) 10%, var(--surface)); }
+.mdp span { display: block; font-weight: 600; font-size: 13px; line-height: 1.15; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mdp small { display: block; font-weight: 400; font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+.mdp.flip { background: var(--surface2); justify-content: center; font-size: 12px; font-weight: 600; min-height: 36px; box-shadow: none; }
+.mdp.blk { justify-content: center; font-size: 12px; font-weight: 700; min-height: 38px; border: 1.5px solid var(--q4); box-shadow: none; }
+.md-l, .md-r { display: grid; gap: 5px; align-content: start; min-width: 0; }
+.md-q { display: grid; gap: 5px; }
+.md-q .qb { justify-content: center; text-align: center; min-width: 0; }
+.md-q .qb .end { display: none; }
+@media (max-width: 600px) {
+  #tagMain:has(.mdock) .tag-grid.m-list .center { order: -1; } /* pemain sudah ada di dok */
+  #tagMain:has(.mdock) .courtrow .kual, #tagMain:has(.mdock) .center > .pospad, #tagMain:has(.mdock) .center > .blkbtn { display: none !important; }
+  body.on-tag:has(#tagMain .mdock) main.wrap { padding-bottom: calc(260px + env(safe-area-inset-bottom, 0px)); }
+  body.on-tag:has(#tagMain .mdock) .toast { bottom: calc(250px + env(safe-area-inset-bottom, 0px)); }
+  .mdock { display: grid; grid-template-columns: minmax(0, 45fr) minmax(0, 55fr); gap: 8px; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; background: var(--surface); border-top: 1px solid var(--line); box-shadow: 0 -4px 16px rgb(0 0 0 / .14); padding: 6px 8px calc(8px + env(safe-area-inset-bottom, 0px)); }
+  .md-q { grid-template-columns: 1fr 1fr; }
+  .md-q .qb { min-height: 50px; flex-direction: column; gap: 0; padding: 4px; font-size: 11px; line-height: 1.1; }
+  .md-q .qb .sym { font-size: 18px; }
+  .mdock .lbl { font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
+@media (max-height: 560px) and (orientation: landscape) {
+  #tagMain:has(.mdock) .courtrow .kual, #tagMain:has(.mdock) .center > .pospad, #tagMain:has(.mdock) .center > .blkbtn { display: none !important; }
+  body.on-tag:has(#tagMain .mdock) main.wrap { padding-inline: calc(132px + env(safe-area-inset-left, 0px)) calc(132px + env(safe-area-inset-right, 0px)); }
+  body.on-tag:has(#tagMain .mdock) .top { position: relative; z-index: 31; }
+  #tagMain:has(.mdock) .courtrow { grid-template-columns: 96px minmax(0, 1fr); }
+  .mdock { display: block; }
+  .md-l, .md-r { position: fixed; top: 0; bottom: 0; z-index: 30; width: calc(124px + env(safe-area-inset-left, 0px)); background: var(--surface); padding: 48px 8px calc(8px + env(safe-area-inset-bottom, 0px)); overflow-y: auto; gap: 4px; box-shadow: 0 0 14px rgb(0 0 0 / .12); }
+  .md-l { left: 0; padding-left: calc(8px + env(safe-area-inset-left, 0px)); border-right: 1px solid var(--line); }
+  .md-r { right: 0; width: calc(124px + env(safe-area-inset-right, 0px)); padding-right: calc(8px + env(safe-area-inset-right, 0px)); border-left: 1px solid var(--line); }
+  .md-q { grid-template-columns: 1fr; gap: 4px; }
+  .md-q .qb { min-height: 38px; justify-content: flex-start; text-align: left; gap: 6px; padding: 4px 8px; font-size: 12px; }
+  .md-q .qb .sym { font-size: 16px; }
+  .mdp { min-height: 42px; }
+  .mdock .lbl { font-size: 10px; }
+}
+
 /* ---------- Ekspor PDF (cetak → Simpan sebagai PDF) ---------- */
 @page { size: A4 portrait; margin: 12mm 11mm; }
 @media print {
@@ -1853,6 +1896,19 @@ function renderTagMain() {
     ${S.mode !== 'list' ? `<div class="pospad">${posPlayers(padTeam).map((p, i) => `<button class="posbtn ${padTeam} ${S.sel.pid === p.id || S.blk?.pid === p.id ? 'on' : ''}" data-act="pos" data-i="${i}"><kbd>${i + 1}</kbd><span><span class="pr">${esc(p.pos === 'Pemain' ? 'Pemain ' + (i + 1) : p.pos)}</span><span class="pnm">#${esc(p.no)} ${esc(p.name)}</span></span></button>`).join('')}
       <button class="posbtn flip" data-act="flipTeam" title="Pilih pemain tim lain"><kbd>Tab</kbd><span><span class="pr">Tim lain</span><span class="pnm">${esc(tname(opp(padTeam)))}</span></span></button></div>` : ''}
     ${sk === 'A' && S.sel.pid && !S.blk ? `<button class="btn blkbtn" data-act="block"><kbd>B</kbd> Serangan dihadang blok ${esc(tname(opp(S.sel.tm)))}</button>` : ''}`;
+  const qBtns = (sk ? SKILLS[sk].q : ['#', '+', '!', '-', '=']).map(q => {
+    const term = sk && touchResult({ tm: 'A', s: sk, q });
+    return `<button class="qb ${term ? 'term' : ''}" data-act="q" data-q="${q}" ${S.sel.pid ? '' : 'disabled style="opacity:.5"'}><span class="sym">${q === '-' ? '−' : q}</span>${sk ? QL[sk][q] : ''}${term ? `<span class="end">poin ${term === 'A' ? 'tim ini' : 'lawan'}</span>` : ''}</button>`;
+  }).join('') + `<button class="qb qundo" data-act="undo" aria-label="Batal sentuhan terakhir"><span class="sym">⌫</span>Batal</button>`;
+  /* Dok HP: pemain di kiri, kualitas di kanan — dua ketukan jempol per sentuhan tanpa menggulir. Tampil hanya di HP (CSS). */
+  const dock = locked() || (S.mode === 'lite' && S.editIdx == null) ? '' : `<div class="mdock" role="group" aria-label="Pilih pemain dan kualitas">
+      <div class="md-l"><div class="lbl">${S.blk ? 'Pemblok' : 'Pemain'} · <span class="win-${padTeam}">${esc(tname(padTeam))}</span></div>
+        ${posPlayers(padTeam).map((p, i) => { const role = p.pos === 'Pemain' ? 'Posisi ' + (i + 1) : p.pos; return `<button class="mdp ${padTeam} ${S.sel.pid === p.id || S.blk?.pid === p.id ? 'on' : ''}" data-act="pos" data-i="${i}"><b>${esc(p.no || i + 1)}</b><span>${esc(p.name && p.name !== '—' ? p.name : role)}${p.name && p.name !== '—' ? `<small>${esc(role)}</small>` : ''}</span></button>`; }).join('')}
+        ${S.blk ? '' : `<button class="mdp flip" data-act="flipTeam">⇄ Tim lain · ${esc(tname(opp(padTeam)))}</button>`}
+        ${sk === 'A' && S.sel.pid && !S.blk ? `<button class="mdp blk" data-act="block">Dihadang blok ${esc(tname(opp(S.sel.tm)))}</button>` : ''}
+      </div>
+      <div class="md-r"><div class="lbl">Kualitas${sk ? ' · ' + SKILLS[sk].name : ''}</div><div class="md-q">${qBtns}</div></div>
+    </div>`;
   $('#tagMain').innerHTML = tapText(`
     <div class="scoreboard">
       <div class="sb-team A"><svg class="srv-ball" ${srvT === 'A' && !st.winner ? '' : 'hidden'} aria-label="Servis"><use href="#takraw"/></svg><div><div class="sb-name">${esc(M.A.name || 'Tim A')}</div><div class="sb-sets">${Array.from({ length: st.need }, (_, i) => `<i class="A ${i < st.wA ? 'on' : ''}"></i>`).join('')}</div></div></div>
@@ -1870,10 +1926,7 @@ function renderTagMain() {
         <div class="courtrow">
         <div class="sidecol aksi"><div class="lbl">Aksi</div><div class="vseg">${SKILL_ORDER.map(k => `<button class="sk ${S.sel.skill === k ? 'on' : ''} ${!S.sel.skill && sk === k ? 'sug' : ''}" data-act="skill" data-k="${k}">${SKILLS[k].name} <kbd>${SKILLS[k].key.toUpperCase()}</kbd></button>`).join('')}</div></div>
         <div class="courtcol"><div class="courthd"><div class="lbl">${S.mode === 'area' ? 'Lapangan · klik area sentuhan, lalu area tujuan' : `Zona ${S.sel.pid ? '(arah/tempat bola)' : '(sentuhan terakhir)'} — opsional`}</div><span class="spacer"></span><div class="tabs mode sm" role="group" aria-label="Arah lapangan"><button class="${S.orient !== 'v' ? 'on' : ''}" data-act="orient" data-o="h" title="Lapangan mendatar: ${esc(tname('A'))} kiri, ${esc(tname('B'))} kanan">Mendatar</button><button class="${S.orient === 'v' ? 'on' : ''}" data-act="orient" data-o="v" title="Ikuti kamera siaran dari belakang garis akhir. Sisi bertukar otomatis tiap set.">Ikuti kamera <kbd>V</kbd></button></div>${S.orient === 'v' ? `<button class="btn sm ghost" data-act="camFlip" title="Tukar tim yang dekat kamera">⇅ Tukar sisi</button>` : ''}</div>${courtSvg()}</div>
-        <div class="sidecol kual"><div class="lbl">Kualitas ${sk ? '· ' + SKILLS[sk].name : ''}</div><div class="vseg qseg">${(sk ? SKILLS[sk].q : ['#', '+', '!', '-', '=']).map(q => {
-          const term = sk && touchResult({ tm: 'A', s: sk, q });
-          return `<button class="qb ${term ? 'term' : ''}" data-act="q" data-q="${q}" ${S.sel.pid ? '' : 'disabled style="opacity:.5"'}><span class="sym">${q === '-' ? '−' : q}</span>${sk ? QL[sk][q] : ''}${term ? `<span class="end">poin ${term === 'A' ? 'tim ini' : 'lawan'}</span>` : ''}</button>`;
-        }).join('')}<button class="qb qundo" data-act="undo" aria-label="Batal sentuhan terakhir"><span class="sym">⌫</span>Batal</button></div></div>
+        <div class="sidecol kual"><div class="lbl">Kualitas ${sk ? '· ' + SKILLS[sk].name : ''}</div><div class="vseg qseg">${qBtns}</div></div>
         </div>
         ${techSkill ? `<div class="techrow"><div class="lbl">Teknik · ${SKILLS[techSkill].name}${S.sel.pid ? '' : ' (sentuhan terakhir)'}</div><div class="seg">${SKILLS[techSkill].tech.map(x => `<button class="tchip ${techVal === x ? 'on' : ''}" data-act="tech" data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>` : ''}
         ${causeFor ? `<div class="causerow"><div class="lbl">Penyebab error · ${SKILLS[causeFor.s].name}</div><div class="seg">${ERR_CAUSE[causeFor.s].map(x => `<button class="tchip ${causeFor.e === x ? 'on' : ''}" data-act="cause" data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>` : ''}
@@ -1889,7 +1942,7 @@ function renderTagMain() {
         <div class="shortcuts">${S.mode !== 'list' ? '<span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> posisi pemain tim yang memegang bola</span><span><kbd>Tab</kbd> tim lain</span><span><kbd>B</kbd> serangan dihadang blok</span><span><kbd>U</kbd> tak terlihat</span><span><kbd>V</kbd> ikuti kamera</span>' : '<span><kbd>1</kbd>–<kbd>6</kbd> pemain A</span><span><kbd>7</kbd>–<kbd>0</kbd> pemain B</span>'}<span><kbd>S</kbd><kbd>R</kbd><kbd>F</kbd><kbd>A</kbd><kbd>B</kbd><kbd>D</kbd><kbd>X</kbd> aksi</span><span>Kualitas: <kbd>#</kbd><kbd>+</kbd><kbd>!</kbd><kbd>-</kbd><kbd>/</kbd><kbd>=</kbd> atau <kbd>H</kbd><kbd>J</kbd><kbd>K</kbd><kbd>L</kbd><kbd>;</kbd><kbd>'</kbd></span><span><kbd>Spasi</kbd> video · <kbd>←</kbd><kbd>→</kbd> 2 s</span></div>`}
       </div>
       ${teamPanel('B')}
-    </div>`);
+    </div>${dock}`);
   scrollFlow();
 }
 function subForm(t) {
