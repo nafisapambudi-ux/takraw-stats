@@ -3274,12 +3274,12 @@ function renderHome() {
   const src = `${esc(fm.meta.A.name)} vs ${esc(fm.meta.B.name)}${isSample ? ' · data contoh' : ''}`;
   const killers = demo || isSample && !top(a => a.kill).length ? DEMO.killers : top(a => a.kill).slice(0, 3);
   const locked = (what) => `<div class="panel lockbox"><svg class="ball" aria-hidden="true"><use href="#takraw"/></svg><div><b>${what}</b>
-      <p class="muted">${Store.mode === 'cloud' && Cloud.user ? 'Akun Anda menunggu persetujuan pemilik platform. Sambil menunggu, Anda sudah bisa mencatat pertandingan.' : 'Masuk atau daftar dengan email Anda. Setelah disetujui pemilik platform, hasil pertandingan dan statistik terbuka.'}</p></div>
+      <p class="muted">${Store.mode === 'cloud' && Cloud.user ? 'Akun Anda sedang ditinjau. Pencatatan pertandingan sudah dapat digunakan.' : 'Masuk atau daftar. Hasil dan statistik terbuka setelah akun disetujui.'}</p></div>
       ${Store.mode === 'cloud' && Cloud.user ? '<button class="btn" data-act="recheck">Periksa status</button>' : '<button class="btn primary" data-act="go" data-v="login">Masuk / Daftar</button>'}</div>`;
   const roleCtas = `<div class="hero-cta">
-      <button class="btn primary role-cta" data-act="newMatch"><small>Untuk analis</small><b>Catat pertandingan</b></button>
-      <button class="btn ghost-inv role-cta" data-act="go" data-v="list"><small>Untuk pelatih &amp; pembina</small><b>Lihat hasil &amp; statistik</b></button>
-      <button class="btn ghost-inv role-cta pub-only" data-act="go" data-v="login"><small>Sudah punya akun</small><b>Masuk analis</b></button></div>`;
+      <button class="btn primary role-cta" data-act="newMatch"><small>Analis</small><b>Catat pertandingan</b></button>
+      <button class="btn ghost-inv role-cta" data-act="go" data-v="list"><small>Pelatih &amp; pembina</small><b>Lihat statistik</b></button>
+      <button class="btn ghost-inv role-cta pub-only" data-act="go" data-v="login"><small>Sudah terdaftar</small><b>Masuk</b></button></div>`;
   const pillar = (no, tag, title, body, points, cta, vis, rev) => `<article class="pillar${rev ? ' rev' : ''}">
       <div class="pl-copy"><div class="pl-tag"><span>${no}</span>${tag}</div><h2 class="pl-title">${title}</h2><p>${body}</p>
         <ul>${points.map(p => `<li>${p}</li>`).join('')}</ul>${cta}</div>
@@ -3290,9 +3290,9 @@ function renderHome() {
     <div class="hero-media" id="heroMedia"></div>
     <div class="hero-in">
       <div class="hero-copy">
-        <div class="eyebrow">Platform analisis sepak takraw Indonesia</div>
-        <h1 class="hero-title">Setiap sentuhan<br>tercatat, setiap poin<br>terbaca.</h1>
-        <p class="hero-sub">Untuk analis yang mencatat di pinggir lapangan dan pelatih yang memutuskan dari data. Regu, Double, dan Quadrant, sesuai Law of the Game ISTAF 2024.</p>
+        <div class="eyebrow">Notational analysis sepak takraw</div>
+        <h1 class="hero-title">Setiap sentuhan<br>tercatat. Setiap<br>poin terukur.</h1>
+        <p class="hero-sub">Pencatatan dan analisis pertandingan Regu, Double, dan Quadrant sesuai ISTAF Law of the Game 2024.</p>
         ${roleCtas}
       </div>
       <div class="hero-vis">
@@ -3305,48 +3305,48 @@ function renderHome() {
     <div class="hero-credit"><span>Cuplikan: Asian Games 2026 · Indonesia vs Malaysia</span><button class="hv-btn" id="heroVidBtn" data-act="heroVid" hidden>Jeda video</button></div>
     <div class="hero-stats">
       ${open ? [[sm.length, 'Pertandingan'], [rallies, 'Rally'], [touches, 'Sentuhan'], [ath.length, 'Atlet']].map(([v, l]) => `<div><b class="num">${v.toLocaleString('id-ID')}</b><span>${l}</span></div>`).join('')
-        : [['3', 'Format: Regu, Double, Quadrant'], ['7', 'Aksi tercatat per sentuhan'], ['6', 'Kode kualitas, # sampai ='], ['18', 'Zona lapangan']].map(([v, l]) => `<div><b class="num">${v}</b><span>${l}</span></div>`).join('')}
+        : [['3', 'Format pertandingan'], ['7', 'Jenis aksi'], ['6', 'Tingkat kualitas'], ['18', 'Zona lapangan']].map(([v, l]) => `<div><b class="num">${v}</b><span>${l}</span></div>`).join('')}
     </div>
   </section>
 
   <section class="cover-band" aria-label="Cakupan">
-    <span class="cb-lbl">Siap untuk</span>
-    ${['Regu', 'Double', 'Quadrant', 'Pertandingan beregu', 'Pencatatan live ringkas', 'Analisis dari video', 'Law of the Game 2024'].map(x => `<span class="cb-item">${x}</span>`).join('<span class="cb-dot" aria-hidden="true"></span>')}
+    <span class="cb-lbl">Mendukung</span>
+    ${['Regu', 'Double', 'Quadrant', 'Beregu', 'Input live', 'Analisis video', 'ISTAF 2024'].map(x => `<span class="cb-item">${x}</span>`).join('<span class="cb-dot" aria-hidden="true"></span>')}
   </section>
 
   <div class="pillars">
-    ${pillar('01', 'Catat', 'Rekam tiap sentuhan, bukan hanya skor.',
-      'Klik area lapangan, lalu aplikasi menebak atlet dan aksinya dari urutan bola. Saat live, cukup catat siapa dapat poin dan caranya; detail sentuhan dilengkapi nanti dari video.',
-      ['Empat cara input: Area, Posisi, Daftar, dan Ringkas', 'Skor, pergantian servis, deuce, dan pindah tempat dihitung otomatis', 'Tetap tersimpan di perangkat saat sinyal venue putus'],
+    ${pillar('01', 'Catat', 'Rekam setiap sentuhan.',
+      'Ketuk area lapangan; atlet dan aksi terisi otomatis dari urutan bola. Saat live, catat poinnya saja dan lengkapi detailnya dari video.',
+      ['Empat mode input: Area, Posisi, Daftar, Ringkas', 'Skor, servis, deuce, dan pindah tempat otomatis', 'Tetap berjalan saat offline'],
       '<button class="btn primary" data-act="newMatch">Catat pertandingan</button>',
-      flow ? `<div class="pl-cap"><span>${flow.cap}</span><span>${src}</span></div>${flow.html}<div class="pl-end">${esc(flow.end)}</div>` : emptyVis('Alur rally pertama Anda akan tampil di sini.'))}
-    ${pillar('02', 'Baca', 'Lihat di mana pertandingan berbalik.',
-      'Alur skor, sumber poin, dan kualitas penerimaan tersusun begitu rally selesai dicatat. Tidak ada rekap manual setelah pertandingan.',
-      ['Perbandingan tim: kill %, efisiensi serangan, indeks servis dan umpan', 'Kualitas penerimaan dihubungkan ke hasil rally', 'Statistik per set dan gabungan beregu'],
-      real ? `<button class="btn primary" data-act="open" data-id="${real.id}" data-v="stats">Buka statistik pertandingan ini</button>` : '<button class="btn primary" data-act="go" data-v="list">Lihat pertandingan</button>',
-      mom ? `<div class="pl-cap"><span>Selisih poin setelah tiap rally</span><span>${src}</span></div>${mom}` : emptyVis('Grafik alur skor muncul setelah dua rally tercatat.'), true)}
-    ${pillar('03', 'Putuskan', 'Bawa angka ke sesi latihan berikutnya.',
-      'Peta zona menunjukkan ke mana serangan diarahkan, dan database atlet merekap semua pertandingan. Bahan diskusi pelatih jadi jelas dan bisa dicek ulang.',
-      ['Peta zona arah servis dan serangan', 'Rekap atlet lintas pertandingan dan kejuaraan', 'Ekspor CSV satu baris per sentuhan untuk Excel atau SPSS'],
+      flow ? `<div class="pl-cap"><span>${flow.cap}</span><span>${src}</span></div>${flow.html}<div class="pl-end">${esc(flow.end)}</div>` : emptyVis('Alur rally pertama akan tampil di sini.'))}
+    ${pillar('02', 'Analisis', 'Temukan titik balik pertandingan.',
+      'Alur skor, sumber poin, dan kualitas penerimaan tersedia segera setelah rally dicatat, tanpa rekap manual.',
+      ['Kill %, efisiensi serangan, indeks servis dan umpan', 'Kualitas penerimaan terhadap hasil rally', 'Statistik per set dan gabungan beregu'],
+      real ? `<button class="btn primary" data-act="open" data-id="${real.id}" data-v="stats">Buka statistik</button>` : '<button class="btn primary" data-act="go" data-v="list">Lihat pertandingan</button>',
+      mom ? `<div class="pl-cap"><span>Selisih poin setelah tiap rally</span><span>${src}</span></div>${mom}` : emptyVis('Grafik alur skor tampil setelah dua rally.'), true)}
+    ${pillar('03', 'Evaluasi', 'Data untuk program latihan.',
+      'Peta zona serangan dan rekap atlet lintas pertandingan menjadi dasar evaluasi yang terukur.',
+      ['Peta zona arah servis dan serangan', 'Rekap atlet lintas pertandingan dan kejuaraan', 'Laporan PDF dan data CSV per sentuhan'],
       '<button class="btn primary" data-act="go" data-v="athletes">Buka database atlet</button>',
       heat ? `<div class="pl-cap"><span>Arah serangan · ${heat.n} serangan berzona · net di atas</span><span>${!open || !miniHeat(sm) || sm.some(m => m.sample) ? 'data contoh' : sm.length + ' pertandingan'}</span></div>
         <div class="pl-split">${heat.html}<ol class="pl-rank">${killers.map((a, i) => `<li><span class="num">${i + 1}</span><span><b>${esc(a.name)}</b><small>${esc(a.team)}</small></span><span class="num pr-v">${a.kill}</span></li>`).join('') || '<li class="muted-inv small">Belum ada serangan poin</li>'}<li class="pr-note">Serangan poin terbanyak</li></ol></div>`
-        : emptyVis('Peta zona terisi saat serangan diberi area tujuan.'))}
+        : emptyVis('Peta zona terisi setelah serangan diberi zona tujuan.'))}
   </div>
 
   <section class="sec">
-    ${sectionHead('Agenda kejuaraan', 'Hitung mundur menuju kejuaraan berikutnya.', '<button class="btn" data-act="go" data-v="events">Semua agenda →</button>')}
-    ${evShow.length ? `<div class="ev-grid">${evShow.map(e => eventCard(e, true)).join('')}</div>` : Store.mode === 'cloud' && !isAdmin() ? '<div class="panel empty"><p>Agenda kejuaraan berikutnya segera diumumkan.</p></div>' : `<div class="panel empty"><p>Belum ada agenda. Tambahkan kejuaraan yang akan dianalisis.</p><button class="btn primary" data-act="go" data-v="events">+ Tambah agenda</button></div>`}
+    ${sectionHead('Agenda kejuaraan', 'Kejuaraan mendatang dan terkini.', '<button class="btn" data-act="go" data-v="events">Semua agenda →</button>')}
+    ${evShow.length ? `<div class="ev-grid">${evShow.map(e => eventCard(e, true)).join('')}</div>` : Store.mode === 'cloud' && !isAdmin() ? '<div class="panel empty"><p>Agenda berikutnya akan segera diumumkan.</p></div>' : `<div class="panel empty"><p>Belum ada agenda.</p><button class="btn primary" data-act="go" data-v="events">+ Tambah agenda</button></div>`}
   </section>
 
   <section class="sec">
     ${sectionHead('Hasil terbaru', '', '<button class="btn" data-act="go" data-v="list">Semua pertandingan →</button>')}
-    ${!open ? locked('Hasil pertandingan hanya untuk akun yang sudah disetujui.') : recent.length ? `<div class="rc-grid">${recent.map(resultCard).join('')}</div>` : `<div class="panel empty"><p>Belum ada pertandingan.</p><div class="row" style="justify-content:center"><button class="btn primary" data-act="newMatch">+ Pertandingan baru</button>${Store.mode === 'local' ? '<button class="btn" data-act="loadSample">Muat data contoh</button>' : ''}</div></div>`}
+    ${!open ? locked('Hasil pertandingan tersedia untuk akun terverifikasi.') : recent.length ? `<div class="rc-grid">${recent.map(resultCard).join('')}</div>` : `<div class="panel empty"><p>Belum ada pertandingan.</p><div class="row" style="justify-content:center"><button class="btn primary" data-act="newMatch">+ Pertandingan baru</button>${Store.mode === 'local' ? '<button class="btn" data-act="loadSample">Muat data contoh</button>' : ''}</div></div>`}
   </section>
 
   <section class="sec">
-    ${sectionHead('Atlet teratas', 'Akumulasi dari semua pertandingan yang tercatat.', '<button class="btn" data-act="go" data-v="athletes">Database atlet →</button>')}
-    ${!open ? locked('Peringkat atlet dihitung dari pertandingan Anda setelah akun disetujui.') : `<div class="lb-grid">
+    ${sectionHead('Atlet teratas', 'Akumulasi seluruh pertandingan tercatat.', '<button class="btn" data-act="go" data-v="athletes">Database atlet →</button>')}
+    ${!open ? locked('Peringkat atlet tersedia untuk akun terverifikasi.') : `<div class="lb-grid">
       ${leaderboard('Poin', top(a => a.pts), a => a.pts)}
       ${leaderboard('Ace servis', top(a => a.ace), a => a.ace)}
       ${leaderboard('Serangan poin', top(a => a.kill), a => a.kill)}
@@ -3355,27 +3355,27 @@ function renderHome() {
   </section>
 
   <section class="sec">
-    ${sectionHead('Bekerja dengan alat yang sudah Anda pakai', 'Tanpa perangkat khusus. Cukup laptop, tablet, atau HP.')}
+    ${sectionHead('Terintegrasi dengan alur kerja Anda', 'Tanpa perangkat khusus: laptop, tablet, atau HP.')}
     <div class="eco">
-      ${[['Video', 'File rekaman', 'Putar video dari perangkat; waktu video ikut tercatat di setiap sentuhan.'],
-         ['YouTube', 'Link siaran', 'Simpan link siaran, lalu buka tiap rally langsung di YouTube dari log.'],
-         ['CSV', 'Excel & SPSS', 'Satu baris per sentuhan, siap diolah untuk riset atau laporan.'],
-         ['JSON', 'Cadangan', 'Semua pertandingan dan agenda dalam satu file untuk dipindah atau disimpan.'],
-         ['Layar', 'Laptop, tablet, HP', 'Pintasan keyboard di laptop, tombol besar di layar sentuh.'],
-         ['Offline', 'Sinyal putus', 'Catatan disimpan di perangkat dan dikirim otomatis saat online.']]
+      ${[['Video', 'Rekaman', 'Waktu video tersimpan di setiap sentuhan.'],
+         ['YouTube', 'Siaran', 'Buka setiap rally langsung dari log.'],
+         ['CSV', 'Excel & SPSS', 'Satu baris per sentuhan, siap diolah.'],
+         ['PDF', 'Laporan', 'Statistik pertandingan siap cetak dan dibagikan.'],
+         ['Multi-perangkat', 'Laptop, tablet, HP', 'Pintasan keyboard di laptop, kontrol sentuh di HP.'],
+         ['Offline', 'Tanpa sinyal', 'Data tersimpan di perangkat dan tersinkron saat online.']]
         .map(([k, t, d]) => `<article class="eco-i"><span class="eco-k">${k}</span><h3>${t}</h3><p>${d}</p></article>`).join('')}
     </div>
   </section>
 
   <section class="sec">
-    ${sectionHead('Regulasi yang dipakai', 'Ringkasan ISTAF Law of the Game 2024.', '<button class="btn" data-act="go" data-v="rules">Ringkasan lengkap →</button>')}
+    ${sectionHead('Regulasi', 'Ringkasan ISTAF Law of the Game 2024.', '<button class="btn" data-act="go" data-v="rules">Ringkasan lengkap →</button>')}
     <div class="fmt-grid">${fmtCards()}</div>
   </section>
 
   <section class="closing">
     <div class="closing-in">
-      <div><div class="eyebrow">Siap bertanding</div><h2 class="closing-t">Pertandingan berikutnya dimulai dari catatan pertama.</h2>
-        <p class="hero-sub">Buat pertandingan, isi nomor punggung, lalu mulai dari servis. Statistik tersusun sendiri.</p></div>
+      <div><div class="eyebrow">Mulai sekarang</div><h2 class="closing-t">Analisis dimulai dari sentuhan pertama.</h2>
+        <p class="hero-sub">Buat pertandingan, isi susunan pemain, dan mulai mencatat.</p></div>
       ${roleCtas}
     </div>
   </section>`;
