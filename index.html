@@ -3528,6 +3528,7 @@ function updateOffbar() {
   if (Store.mode === 'cloud') {
     if (Cloud.needLogin) msg = `<span>Sesi login berakhir. ${n ? n + ' catatan tersimpan aman di perangkat.' : ''}</span><button class="btn sm" data-act="relogin">Masuk untuk mengirim</button>`;
     else if (Cloud.reconnecting) msg = '<span>Sinyal kembali — menyambungkan akun…</span>';
+    else if ((!Cloud.online || Cloud.offlineAuth) && !Cloud.user) msg = '<span><b>Mode offline.</b> Menampilkan halaman tersimpan. Masuk dan data terbaru tersedia lagi saat sinyal kembali.</span>';
     else if (!Cloud.online || Cloud.offlineAuth) msg = `<span><b>Mode offline.</b> Pencatatan tetap berjalan; ${n ? n + ' catatan menunggu dikirim' : 'catatan disimpan di perangkat'} dan terkirim otomatis saat sinyal kembali.</span>`;
   } else if (Store.mode === 'db' && Store.offline) msg = `<span><b>Mode offline.</b> ${n} perubahan menunggu dikirim.</span>`;
   b.hidden = !msg; if (msg) b.innerHTML = msg;
