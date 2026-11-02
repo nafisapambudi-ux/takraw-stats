@@ -59,6 +59,8 @@ button { cursor: pointer; }
 .intro-btn.primary { background: #E20303; border-color: #E20303; }
 .intro-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 html.intro-on { overflow: hidden; }
+.intro-play { display: none; position: absolute; width: 84px; height: 84px; border-radius: 50%; border: 0; background: #E20303; color: #fff; font-size: 30px; padding-left: 6px; cursor: pointer; box-shadow: 0 0 0 10px rgb(226 3 3 / .25); }
+.intro.blocked .intro-play { display: grid; place-items: center; }
 @media (prefers-reduced-motion: reduce) { .intro { transition: none; } }
 .wordmark { display: block; height: 24px; width: auto; }
 .tabs { display: flex; gap: 2px; background: var(--surface2); border-radius: 999px; padding: 3px; }
@@ -917,6 +919,7 @@ dl.roles dt { font-weight: 700; } dl.roles dd { margin: 0; color: var(--ink2); }
 
 <div id="intro" class="intro" role="dialog" aria-label="Pembuka TAKRA">
   <video id="introVid" muted playsinline preload="auto" aria-hidden="true"></video>
+  <button class="intro-play" id="introPlay" type="button" aria-label="Putar video pembuka">▶</button>
   <div class="intro-ctl"><button class="intro-btn" id="introSound" type="button">Nyalakan suara</button><button class="intro-btn primary" id="introSkip" type="button">Lewati</button></div>
 </div>
 <script>
@@ -926,26 +929,39 @@ dl.roles dt { font-weight: 700; } dl.roles dd { margin: 0; color: var(--ink2); }
   const el = document.getElementById('intro'), v = document.getElementById('introVid');
   let seen = false; try { seen = sessionStorage.getItem('takra.intro') === '1'; } catch {}
   const mq = q => { try { return matchMedia(q).matches; } catch { return false; } };
-  if (seen || mq('(prefers-reduced-motion: reduce)')) { el.remove(); return; }
+  if (seen) { el.remove(); return; }
+  const still = mq('(prefers-reduced-motion: reduce)');   // pengguna memilih kurangi gerakan: tampil diam, putar lewat tombol
   try { sessionStorage.setItem('takra.intro', '1'); } catch {}
   v.muted = true;   // putar otomatis hanya diizinkan tanpa suara; suara dinyalakan lewat tombol
-  v.src = mq('(max-aspect-ratio: 4/5)') ? 'media/takra-intro-9x16.mp4' : 'media/takra-intro-16x9.mp4';
+  const ori = mq('(max-aspect-ratio: 4/5)') ? '9x16' : '16x9';
+  v.poster = 'media/takra-intro-' + ori + '.jpg';   // langsung terlihat selagi video dimuat
+  v.src = 'media/takra-intro-' + ori + '.mp4';
   document.documentElement.classList.add('intro-on');
+  window.__takraIntro = true;   // video latar beranda menunggu sampai pembuka selesai agar tidak berebut sinyal
   let done = false;
   const close = () => {
     if (done) return; done = true;
     el.classList.add('out'); document.documentElement.classList.remove('intro-on');
+    window.__takraIntro = false; window.dispatchEvent(new Event('takra-intro-done'));
     setTimeout(() => { try { v.pause(); } catch {} el.remove(); }, 450);
   };
+  // Browser menolak putar otomatis (mis. mode hemat energi): tetap tampilkan, putar lewat tombol.
+  const blocked = () => { if (!done) el.classList.add('blocked'); };
+  document.getElementById('introPlay').addEventListener('click', () => {
+    el.classList.remove('blocked'); v.muted = false; document.getElementById('introSound').textContent = 'Matikan suara';
+    try { const p = v.play(); if (p && p.catch) p.catch(close); } catch { close(); }
+  });
   v.addEventListener('ended', close); v.addEventListener('error', close);
   document.getElementById('introSkip').addEventListener('click', close);
   document.getElementById('introSound').addEventListener('click', e => {
     v.muted = !v.muted; e.currentTarget.textContent = v.muted ? 'Nyalakan suara' : 'Matikan suara';
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
-  try { const p = v.play(); if (p && p.catch) p.catch(close); } catch { close(); }
-  setTimeout(() => { if (!done && v.currentTime < 0.2) close(); }, 6000);   // sinyal terlalu lambat: langsung ke beranda
-  setTimeout(close, 15000);
+  if (still) blocked();
+  else try { const p = v.play(); if (p && p.catch) p.catch(blocked); } catch { blocked(); }
+  // Sinyal sangat lambat: bila video belum mulai setelah 12 detik, langsung ke beranda.
+  setTimeout(() => { if (!done && v.currentTime < 0.2 && !el.classList.contains('blocked')) close(); }, 12000);
+  setTimeout(close, 25000);
 })();
 </script>
 <header class="top">
@@ -3696,7 +3712,9 @@ function mountHeroVideo() {
     try { stop = matchMedia('(prefers-reduced-motion: reduce)').matches || localStorage.getItem('takraw.heroPause') === '1'; } catch {}
     v.dataset.stop = stop ? '1' : '';
     v.addEventListener('error', () => { v.dataset.failed = '1'; v.hidden = true; const b = $('#heroVidBtn'); if (b) b.hidden = true; }, true);
-    v.src = 'media/hero-asiangames.mp4';
+    // Selama layar pembuka diputar, video latar belum diunduh supaya pembuka tampil lebih cepat.
+    const load = () => { v.src = 'media/hero-asiangames.mp4'; if (!v.dataset.stop && v.isConnected) safePlay(v); };
+    if (window.__takraIntro) window.addEventListener('takra-intro-done', load, { once: true }); else load();
     heroVidEl = v;
   }
   slot.appendChild(heroVidEl);
