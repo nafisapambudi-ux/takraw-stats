@@ -1,4 +1,4 @@
-# Takraw Stats Indonesia
+# TAKRA
 
 Platform notational analysis sepak takraw: pencatatan per sentuhan, statistik tim dan atlet, agenda kejuaraan.
 Aturan mengikuti ISTAF Law of the Game 2024 (Regu, Double, Quadrant).
