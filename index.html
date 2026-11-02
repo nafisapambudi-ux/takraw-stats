@@ -353,7 +353,9 @@ label.f { display: grid; gap: 4px; font-size: 12px; color: var(--ink2); font-wei
 /* tagging */
 .scoreboard { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 12px; align-items: center; margin-block: 14px 12px; padding: 10px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
 .sb-team { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.sb-team.B { justify-content: flex-end; text-align: right; }
+.sb-team.R { justify-content: flex-end; text-align: right; }
+.sb-flip { margin-top: 4px; border: 1px solid var(--line); background: var(--surface); color: var(--ink2); border-radius: 999px; font-size: 11px; font-weight: 600; padding: 2px 10px; cursor: pointer; }
+.sb-flip:hover { border-color: var(--ink2); color: var(--ink); }
 .sb-name { font-family: var(--f-display); font-size: 22px; font-weight: 700; line-height: 1.05; overflow-wrap: anywhere; }
 .sb-sets { display: flex; gap: 3px; }
 .sb-sets i { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid var(--line); display: inline-block; }
@@ -675,7 +677,7 @@ dl.roles dt { font-weight: 700; } dl.roles dd { margin: 0; color: var(--ink2); }
   .scoreboard { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "a b" "m m"; gap: 4px 10px; padding: 10px 12px; }
   .scoreboard > .sb-team:first-child { grid-area: a; }
   .scoreboard > .sb-mid { grid-area: m; }
-  .scoreboard > .sb-team.B { grid-area: b; }
+  .scoreboard > .sb-team.R { grid-area: b; }
   .sb-name { font-size: 18px; overflow-wrap: break-word; hyphens: auto; }
   .sb-score { font-size: 48px; justify-content: center; }
   /* log rally: nomor, skor dan tombol di baris atas; rincian selebar kartu */
@@ -1797,7 +1799,7 @@ function liteHtml() {
       <button class="btn sm ghost lt2" data-act="lite" data-t="${t}" data-e="MAN">Lainnya</button></div></div>`;
   return `<div class="ctxbar"><b>Mode Ringkas · servis ${esc(tname(S.cur.srv))} ${esc(pLabel(S.cur.sp))}</b><span class="spacer"></span>${modeTabs()}${zoomTabs()}</div>
     <div class="hint">Saat live, cukup catat siapa dapat poin dan caranya. Detail sentuhan dilengkapi nanti dari video lewat tombol <b>Lengkapi</b> di log rally.</div>
-    ${S.st.winner ? '' : `<div class="lite">${col('A')}${col('B')}</div>`}
+    ${S.st.winner ? '' : `<div class="lite">${col(sideLeft())}${col(opp(sideLeft()))}</div>`}
     <div class="actions"><button class="btn" data-act="undo"><kbd>⌫</kbd> Batal poin terakhir</button><button class="btn" data-act="swapSrv">Tukar tim servis</button><button class="btn" data-act="scoreFix" ${S.st.winner ? 'disabled' : ''} title="Bila ada poin yang terlewat dicatat">± Koreksi skor</button>${S.st.winner && S.m.meta.tie?.name ? `<button class="btn primary" data-act="nextRegu">Lanjut Regu ${(+S.m.meta.tie.no || 1) + 1} →</button>` : ''}<span class="spacer"></span><button class="btn ghost sm" data-act="editMatch">Ubah data pertandingan</button></div>`;
 }
 const modeTabs = () => `<div class="tabs mode" role="group" aria-label="Cara input"><button class="${S.mode === 'area' ? 'on' : ''}" data-act="mode" data-m="area">Area</button><button class="${S.mode === 'pos' ? 'on' : ''}" data-act="mode" data-m="pos">Posisi</button><button class="${S.mode === 'list' ? 'on' : ''}" data-act="mode" data-m="list">Daftar</button><button class="${S.mode === 'lite' ? 'on' : ''}" data-act="mode" data-m="lite" title="Live: hanya pemenang + cara poin">Ringkas</button></div>`;
@@ -2095,17 +2097,19 @@ function nearTeam() {
   if (cur.n === r.sets && Math.max(cur.a, cur.b) >= r.swap) flip = !flip;
   return flip ? opp(base) : base;
 }
+const sideLeft = () => (S.m?.meta.cam?.left === 'B' ? 'B' : 'A');
 function courtSvg() {
   const fmt = S.m.meta.format;
   const W = 670, H = 305, cw = W / 6, ch = H / 3;
   const pending = S.blk?.pid ? { z: S.blk.z, zh: S.blk.zh } : S.sel.pid || S.sel.oz ? { z: S.sel.z, zh: S.sel.zh, oz: S.sel.oz, ozh: S.sel.ozh } : (targetTouch() || {});
   const awaitHalf = S.mode === 'area' && S.sel.pid && needsTarget(currentSkill()) && !S.blk && !S.sel.z ? opp(S.sel.tm) : null;
-  const cxy = (h, z) => { const d = Math.floor((z - 1) / 3), lr = (z - 1) % 3; const cx = h === 'A' ? 2 - d : d + 3, cy = h === 'A' ? lr : 2 - lr; return [cx * cw + cw / 2, cy * ch + ch / 2]; };
+  const L = sideLeft(), Rt = opp(L);
+  const cxy = (h, z) => { const d = Math.floor((z - 1) / 3), lr = (z - 1) % 3; const cx = h === L ? 2 - d : d + 3, cy = h === L ? lr : 2 - lr; return [cx * cw + cw / 2, cy * ch + ch / 2]; };
   let cells = '';
   for (let cx = 0; cx < 6; cx++) for (let cy = 0; cy < 3; cy++) {
-    const half = cx < 3 ? 'A' : 'B';
-    const depth = half === 'A' ? 2 - cx : cx - 3;
-    const lr = half === 'A' ? cy : 2 - cy;
+    const half = cx < 3 ? L : Rt;
+    const depth = cx < 3 ? 2 - cx : cx - 3;
+    const lr = cx < 3 ? cy : 2 - cy;
     const z = depth * 3 + lr + 1;
     const on = pending.z === z && pending.zh === half, org = pending.oz === z && pending.ozh === half;
     cells += `<rect class="zone ${on ? 'on' : ''} ${org ? 'org' : ''} ${awaitHalf === half ? 'await' : ''}" x="${cx * cw}" y="${cy * ch}" width="${cw}" height="${ch}" data-act="zone" data-h="${half}" data-z="${z}"><title>${tname(half)} · ${zoneName(z)}</title></rect>
@@ -2116,7 +2120,7 @@ function courtSvg() {
     : '';
   /* HP tegak: lapangan "Tetap" ditampilkan tegak (tim kiri di atas) agar muat di samping alur rally. */
   const portrait = S.orient !== 'v' && matchMedia('(max-width: 600px)').matches;
-  const near = S.orient === 'v' ? nearTeam() : portrait ? 'B' : null, rot = near === 'A' ? -90 : near === 'B' ? 90 : 0;
+  const near = S.orient === 'v' ? nearTeam() : portrait ? Rt : null, rot = near ? (near === L ? -90 : 90) : 0;
   const up = (x, y) => (rot ? ` transform="rotate(${-rot} ${x} ${y})"` : '');
   cells = cells.replace(/<text x="([\d.]+)" y="([\d.]+)"/g, (m0, x, y) => `<text${up(x, +y + 5)} x="${x}" y="${y}"`);
   return `<div class="court-wrap${rot ? ' vert' : ''}">${rot ? `<div class="camlbl far">${esc(tname(opp(near)))}${portrait ? '' : ' · jauh dari kamera'}</div>` : ''}<svg class="court${rot ? ' vert' : ''}" viewBox="${rot ? '174.5 -196.5 321 698' : '-14 -8 698 321'}" role="group" aria-label="Lapangan: klik zona untuk mencatat arah bola"><g${rot ? ` transform="rotate(${rot} 335 152.5)"` : ''}>
@@ -2189,15 +2193,22 @@ function renderTagMain() {
       </div>
       <div class="md-r"><div class="lbl">Kualitas${sk ? ' · ' + SKILLS[sk].name : ''}</div><div class="md-q">${qBtns}</div></div>
     </div>`;
+  const sbVal = t => (cur ? (t === 'A' ? cur.a : cur.b) : 0);
+  const sbTeam = (t, side) => {
+    const ball = `<svg class="srv-ball" ${srvT === t && !st.winner ? '' : 'hidden'} aria-label="Servis"><use href="#takraw"/></svg>`;
+    const info = `<div><div class="sb-name">${esc(M[t].name || 'Tim ' + t)}</div><div class="sb-sets"${side === 'R' ? ' style="justify-content:flex-end"' : ''}>${Array.from({ length: st.need }, (_, i) => `<i class="${t} ${i < (t === 'A' ? st.wA : st.wB) ? 'on' : ''}"></i>`).join('')}</div></div>`;
+    return `<div class="sb-team ${t} ${side}">${side === 'L' ? ball + info : info + ball}</div>`;
+  };
   $('#tagMain').innerHTML = tapText(`
     <div class="scoreboard">
-      <div class="sb-team A"><svg class="srv-ball" ${srvT === 'A' && !st.winner ? '' : 'hidden'} aria-label="Servis"><use href="#takraw"/></svg><div><div class="sb-name">${esc(M.A.name || 'Tim A')}</div><div class="sb-sets">${Array.from({ length: st.need }, (_, i) => `<i class="A ${i < st.wA ? 'on' : ''}"></i>`).join('')}</div></div></div>
-      <div class="sb-mid"><div class="sb-score"><span class="A">${cur ? cur.a : 0}</span><span class="sep">:</span><span class="B">${cur ? cur.b : 0}</span></div>
-        <div class="sb-meta">${st.winner ? 'Selesai' : 'Set ' + (cur ? cur.n : 1)}${prev ? ' · <span class="prev-sets">' + prev + '</span>' : ''}</div></div>
-      <div class="sb-team B"><div><div class="sb-name">${esc(M.B.name || 'Tim B')}</div><div class="sb-sets" style="justify-content:flex-end">${Array.from({ length: st.need }, (_, i) => `<i class="B ${i < st.wB ? 'on' : ''}"></i>`).join('')}</div></div><svg class="srv-ball" ${srvT === 'B' && !st.winner ? '' : 'hidden'} aria-label="Servis"><use href="#takraw"/></svg></div>
+      ${sbTeam(sideLeft(), 'L')}
+      <div class="sb-mid"><div class="sb-score"><span class="${sideLeft()}">${sbVal(sideLeft())}</span><span class="sep">:</span><span class="${opp(sideLeft())}">${sbVal(opp(sideLeft()))}</span></div>
+        <div class="sb-meta">${st.winner ? 'Selesai' : 'Set ' + (cur ? cur.n : 1)}${prev ? ' · <span class="prev-sets">' + prev + '</span>' : ''}</div>
+        <button class="sb-flip" data-act="sideFlip" title="Tukar posisi tim kiri dan kanan di layar">⇄ Tukar posisi</button></div>
+      ${sbTeam(opp(sideLeft()), 'R')}
     </div>
     <div class="tag-grid m-${S.mode}${locked() ? ' done' : ''}">
-      ${teamPanel('A')}
+      ${teamPanel(sideLeft())}
       <div class="center panel">${S.mode === 'lite' && S.editIdx == null ? liteHtml() : `${S.editIdx != null ? ` <div class="banner editb">${S.m.rallies[S.editIdx]?.lite ? 'Melengkapi' : 'Mengubah'} rally #${S.editIdx + 1} dari video — sentuhan lama diganti setelah rally ini selesai dicatat · <button class="btn sm ghost" data-act="cancelEdit">Batal</button></div>` : ''}
         ${flowHtml()}
         ${pad}
@@ -2223,7 +2234,7 @@ function renderTagMain() {
         </div>
         <div class="shortcuts">${S.mode !== 'list' ? '<span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> posisi pemain tim yang memegang bola</span><span><kbd>Tab</kbd> tim lain</span><span><kbd>B</kbd> serangan dihadang blok</span><span><kbd>N</kbd> langsung ke lawan</span><span><kbd>U</kbd> tak terlihat</span><span><kbd>V</kbd> ikuti kamera</span>' : '<span><kbd>1</kbd>–<kbd>6</kbd> pemain A</span><span><kbd>7</kbd>–<kbd>0</kbd> pemain B</span>'}<span><kbd>S</kbd><kbd>R</kbd><kbd>F</kbd><kbd>A</kbd><kbd>B</kbd><kbd>D</kbd><kbd>X</kbd> aksi</span><span>Kualitas: <kbd>#</kbd><kbd>+</kbd><kbd>!</kbd><kbd>-</kbd><kbd>/</kbd><kbd>=</kbd> atau <kbd>H</kbd><kbd>J</kbd><kbd>K</kbd><kbd>L</kbd><kbd>;</kbd><kbd>'</kbd></span><span><kbd>Spasi</kbd> video · <kbd>←</kbd><kbd>→</kbd> 2 s</span></div>`}
       </div>
-      ${teamPanel('B')}
+      ${teamPanel(opp(sideLeft()))}
     </div>${dock}`);
   scrollFlow();
 }
@@ -2787,7 +2798,7 @@ const ACT = {
   quick: d => { S.quick = d.q; try { localStorage.setItem('takraw.quick', d.q); } catch {} renderTagMain(); },
   block: () => startBlock(),
   orient: d => { S.orient = d.o; try { localStorage.setItem('takraw.orient', d.o); } catch {} renderTagMain(); },
-  camFlip: () => { const M = S.m.meta; M.cam = { near: opp(M.cam?.near || 'A') }; persist(); renderTagMain(); toast(`${tname(nearTeam())} sekarang di sisi dekat kamera`); },
+  camFlip: () => { const M = S.m.meta; M.cam = { ...(M.cam || {}), near: opp(M.cam?.near || 'A') }; persist(); renderTagMain(); toast(`${tname(nearTeam())} sekarang di sisi dekat kamera`); },
   direct: () => {
     if (!S.sel.pid) return toast('Pilih pemainnya dulu, lalu tekan N bila bolanya langsung ke lawan.');
     if (S.sel.x2) { S.sel.x2 = false; S.sel.skill = null; S.sel.z = S.sel.zh = null; return renderTagMain(); }   // batal
@@ -2852,6 +2863,7 @@ const ACT = {
   copyText: () => { const ta = $('#dlText'); copy(ta.value); },
   closeModal: () => closeModal(),
   logAll: () => { S.logAll = !S.logAll; renderLog(); },
+  sideFlip: () => { const M = S.m.meta; M.cam = { ...(M.cam || {}), left: opp(sideLeft()) }; persist(); renderTagMain(); toast(`${tname(sideLeft())} sekarang di kiri, ${tname(opp(sideLeft()))} di kanan`); },
   scoreFix: () => scoreFixModal(),
   scoreFixSave: () => scoreFixSave(),
   foreignLoad: () => { closeModal(); const r = Store.get(S.m.id); if (!r) return; S.editIdx = null; S.m = clone(r); S.st = derive(S.m); resetCur(); renderTag(); toast('Versi terbaru dimuat'); },
@@ -3561,7 +3573,7 @@ function liveWatchHtml(w) {
     <div class="scoreboard">
       <div class="sb-team A"><svg class="srv-ball" ${d?.srv === 'A' && !st.winner ? '' : 'hidden'} aria-label="Servis"><use href="#takraw"/></svg><div><div class="sb-name">${esc(m.meta.A.name)}</div><div class="sb-sets">${dots('A')}</div></div></div>
       <div class="sb-mid"><div class="sb-score"><span class="A">${cur ? cur.a : 0}</span><span class="sep">:</span><span class="B">${cur ? cur.b : 0}</span></div><div class="sb-meta">${st.winner ? 'Selesai' : 'Set ' + (cur ? cur.n : 1)}${prev ? ' · <span class="prev-sets">' + prev + '</span>' : ''} · ${m.rallies.length} rally</div></div>
-      <div class="sb-team B"><div><div class="sb-name">${esc(m.meta.B.name)}</div><div class="sb-sets" style="justify-content:flex-end">${dots('B')}</div></div><svg class="srv-ball" ${d?.srv === 'B' && !st.winner ? '' : 'hidden'} aria-label="Servis"><use href="#takraw"/></svg></div>
+      <div class="sb-team B R"><div><div class="sb-name">${esc(m.meta.B.name)}</div><div class="sb-sets" style="justify-content:flex-end">${dots('B')}</div></div><svg class="srv-ball" ${d?.srv === 'B' && !st.winner ? '' : 'hidden'} aria-label="Servis"><use href="#takraw"/></svg></div>
     </div>
     <div class="lv-cols"><div><div class="lbl">Rally yang sedang dicatat</div><div class="lv-flow">${flow}</div></div>
       <div><div class="lbl">Rally terakhir</div><ol class="lv-log">${log || '<li class="muted small">Belum ada rally.</li>'}</ol></div></div>
