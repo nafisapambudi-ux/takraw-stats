@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><link rel="icon" href="favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="media/favicon-32.png"><link rel="apple-touch-icon" href="media/apple-touch-icon.png"><meta name="theme-color" content="#0C1319"></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><link rel="icon" href="favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="media/favicon-32.png"><link rel="apple-touch-icon" href="media/apple-touch-icon.png"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="TAKRA"><meta name="theme-color" content="#0C1319"></head><body>
 <title>TAKRA</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -59,6 +59,9 @@ button { cursor: pointer; }
 .intro-btn.primary { background: #E20303; border-color: #E20303; }
 .intro-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 html.intro-on { overflow: hidden; }
+.offbar { display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: center; align-items: center; text-align: center; background: #FFC94A; color: #2A1E00; font-size: 13px; padding-block: 8px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); border-bottom: 1px solid #E0A800; }
+.offbar[hidden] { display: none; }
+.offbar .btn { background: #2A1E00; color: #FFC94A; border-color: #2A1E00; }
 .intro-play { display: none; position: absolute; width: 84px; height: 84px; border-radius: 50%; border: 0; background: #E20303; color: #fff; font-size: 30px; padding-left: 6px; cursor: pointer; box-shadow: 0 0 0 10px rgb(226 3 3 / .25); }
 .intro.blocked .intro-play { display: grid; place-items: center; }
 .intro-enter { display: none; position: absolute; left: 50%; bottom: calc(13% + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); align-items: center; gap: 10px; white-space: nowrap; font: 700 19px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: #fff; background: #E20303; border: 0; border-radius: 999px; padding: 14px 32px; cursor: pointer; box-shadow: 0 12px 34px rgb(226 3 3 / .35); animation: introIn .5s ease both; }
@@ -988,6 +991,7 @@ dl.roles dt { font-weight: 700; } dl.roles dd { margin: 0; color: var(--ink2); }
     <span class="store" id="storeState"><span class="dot"></span><span>Menyiapkan penyimpanan…</span></span>
   </div>
 </header>
+<div id="offbar" class="offbar" role="status" hidden></div>
 
 <main class="wrap">
   <section id="view"></section>
@@ -1024,7 +1028,7 @@ dl.roles dt { font-weight: 700; } dl.roles dd { margin: 0; color: var(--ink2); }
 <footer class="foot">
   <div class="wrap">
     <div><h4>TAKRA</h4><p style="margin:0;max-width:52ch">Platform notational analysis sepak takraw: pencatatan per sentuhan, statistik tim dan atlet, serta agenda kejuaraan untuk analis, pelatih, dan pembina.</p></div>
-    <div><h4>Menu</h4><ul><li><button class="linkish" data-act="go" data-v="list">Pertandingan</button></li><li><button class="linkish" data-act="go" data-v="athletes">Database atlet</button></li><li><button class="linkish" data-act="go" data-v="events">Agenda</button></li><li><button class="linkish" data-act="go" data-v="rules">Regulasi</button></li></ul></div>
+    <div><h4>Menu</h4><ul><li><button class="linkish" data-act="go" data-v="list">Pertandingan</button></li><li><button class="linkish" data-act="go" data-v="athletes">Database atlet</button></li><li><button class="linkish" data-act="go" data-v="events">Agenda</button></li><li><button class="linkish" data-act="go" data-v="rules">Regulasi</button></li><li><button class="linkish" id="installBtn" data-act="installApp" hidden>Pasang aplikasi TAKRA ↓</button></li></ul></div>
     <div><h4>Rujukan</h4><ul><li><a href="https://sepaktakraw.one/" target="_blank" rel="noopener">ISTAF — situs resmi ↗</a></li><li><a href="https://sepaktakraw.one/istaf-events-2025%2F26" target="_blank" rel="noopener">Kalender ISTAF 2025/26 ↗</a></li></ul></div>
     <div class="fine">Bukan situs resmi ISTAF maupun PSTI. Regulasi diringkas dari ISTAF Law of the Game 2024; dokumen resmi tetap menjadi acuan.</div>
   </div>
@@ -2899,21 +2903,93 @@ Store.init = async function () {
   this.mode = 'cloud'; setStoreState();
   registerSW();
   try { await loadScript(CLOUD.lib); }
-  catch { // tanpa pustaka (offline & belum tersimpan): tampilkan salinan terakhir
+  catch { // tanpa pustaka (offline & belum tersimpan): pakai akun terakhir di perangkat, atau salinan terakhir
+    const u = offlineIdentity(); if (u) return cloudStartOffline(u);
     const c = lsGet('takraw.cache.last', null);
     if (c) { Store.setArr('matches', c.matches || []); Store.setArr('events', c.events || []); Cloud.online = false; }
     else { toast('Tidak ada koneksi — memakai penyimpanan perangkat.'); return _storeInit(); }
     setStoreState(); Store.onChange('matches'); return;
   }
+  cloudClient();
+  // Sesi login perlu diperbarui lewat internet tiap ±1 jam. Bila gagal karena offline, jangan anggap keluar.
+  const r = await Promise.race([Cloud.sb.auth.getSession(), new Promise(ok => setTimeout(() => ok({ data: {}, error: { message: 'timeout' } }), 6000))]);
+  const session = r.data?.session || null;
+  if (!session && (navigator.onLine === false || (r.error && netErr(r.error)) || r.error?.message === 'timeout')) {
+    const u = offlineIdentity(); if (u) return cloudStartOffline(u);
+  }
+  await cloudStart(session);
+};
+function cloudClient() {
+  if (Cloud.sb) return;
   Cloud.sb = window.supabase.createClient(CLOUD.url, CLOUD.key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   Cloud.sb.auth.onAuthStateChange((ev, session) => {
     if (ev === 'PASSWORD_RECOVERY') { Cloud.recovery = true; go('login'); return; }
+    if (ev === 'SIGNED_IN' && session && Cloud.offlineAuth) { if (session.user.id === Cloud.user?.id) cloudBackOnline(session); else location.replace(appUrl()); return; }
     if (ev === 'SIGNED_IN' && session && !Cloud.user) cloudStart(session);
-    if (ev === 'SIGNED_OUT' && Cloud.user) location.replace(appUrl());
+    if (ev === 'SIGNED_OUT' && Cloud.user && !Cloud.offlineAuth) location.replace(appUrl());
   });
-  const { data } = await Cloud.sb.auth.getSession();
-  await cloudStart(data.session);
-};
+}
+
+/* ---------- Mode offline ----------
+   Akun terakhir yang belum keluar di perangkat ini dipakai saat tidak ada sinyal: analis tetap bisa membuka data
+   tersimpan dan mencatat. Catatan masuk antrian perangkat dan baru dikirim setelah login diperbarui secara online,
+   jadi database tetap hanya menerima tulisan dari sesi yang sah. */
+const LAST_USER = 'takraw.lastUser';
+function offlineIdentity() {
+  const u = lsGet(LAST_USER, null); if (!u || !u.id) return null;
+  let signedIn = false; try { signedIn = Object.keys(localStorage).some(k => /^sb-.+-auth-token$/.test(k)); } catch {}
+  return signedIn ? u : null;
+}
+function cloudUi() {
+  document.body.classList.toggle('ro', !!Cloud.user && !canWrite());
+  document.body.classList.toggle('pub', !Cloud.user);
+  document.body.classList.toggle('pending', !!Cloud.user && !canView());
+  document.body.classList.add('cloud');
+  document.body.classList.toggle('admin', isAdmin());
+}
+function cloudRoute() {
+  const h = (location.hash || '').slice(1);
+  const v = ['home', 'list', 'athletes', 'events', 'rules', 'users', 'live', 'login'].includes(h) ? h : (S.view === 'login' ? 'home' : S.view);
+  go(Cloud.user && v === 'login' ? 'home' : v);
+}
+function cloudSubscribe() {
+  const ch = Cloud.sb.channel('takraw-data')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, p => cloudRemote('matches', p))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, p => cloudRemote('events', p));
+  if (isAdmin()) { ch.on('postgres_changes', { event: '*', schema: 'public', table: 'presence' }, livePresence); liveLoad(); }
+  ch.subscribe();
+}
+async function cloudStartOffline(u) {
+  Cloud.started = true; Cloud.offlineAuth = true; Cloud.online = false;
+  Cloud.user = { id: u.id, email: u.email }; Cloud.role = ROLE_ALIAS[u.role] || u.role || 'menunggu'; Cloud.name = u.name || u.email;
+  restoreQueue();
+  const c = lsGet(cacheKey(), null) || lsGet('takraw.cache.last', null);
+  if (c) { Store.setArr('matches', c.matches || []); Store.setArr('events', c.events || []); }
+  Store.queue.forEach((body, path) => { const [col, id] = splitPath(path); const a = Store.arr(col).filter(x => x.id !== id); a.push(clone(body)); Store.setArr(col, a); });
+  cloudUi(); setStoreState(); renderTabs(); cloudRoute(); Store.onChange('matches');
+  toast('Mode offline — memakai akun ' + (u.email || 'terakhir') + '. Catatan dikirim otomatis saat online.');
+}
+/* Sinyal kembali: perbarui login, lalu kirim antrian. Bila login sudah kedaluwarsa, minta masuk lagi tanpa membuang catatan. */
+async function cloudReconnect() {
+  if (!Cloud.offlineAuth || Cloud.reconnecting) return;
+  Cloud.reconnecting = true; setStoreState();
+  try {
+    if (!window.supabase) await loadScript(CLOUD.lib);
+    cloudClient();
+    const { data, error } = await Cloud.sb.auth.getSession();
+    if (data?.session && data.session.user.id === Cloud.user.id) await cloudBackOnline(data.session);
+    else if (!error || !netErr(error)) { Cloud.needLogin = true; toast('Sesi login berakhir. Masuk lagi untuk mengirim catatan yang tersimpan di perangkat.'); }
+  } catch {} finally { Cloud.reconnecting = false; setStoreState(); }
+}
+async function cloudBackOnline(session) {
+  Cloud.offlineAuth = false; Cloud.needLogin = false; Cloud.online = true; Cloud.user = session.user;
+  const { data: prof } = await Cloud.sb.from('profiles').select('role,name,email').eq('id', Cloud.user.id).maybeSingle();
+  if (prof) { Cloud.role = ROLE_ALIAS[prof.role] || prof.role; Cloud.name = prof.name || Cloud.user.email; lsSet('takraw.profile.' + Cloud.user.id, prof); }
+  rememberUser(); cloudUi(); cloudSubscribe(); await cloudLoad(); cloudFlush();
+  if (S.view === 'login') go('home'); else { setStoreState(); renderTabs(); }
+  toast('Kembali online' + (Store.queue.size ? ' — mengirim ' + Store.queue.size + ' catatan…' : ''));
+}
+const rememberUser = () => { if (Cloud.user) lsSet(LAST_USER, { id: Cloud.user.id, email: Cloud.user.email, role: Cloud.role, name: Cloud.name }); };
 
 async function cloudStart(session) {
   if (Cloud.started && !session) return;
@@ -2928,23 +3004,14 @@ async function cloudStart(session) {
     if (Cloud.role === 'nonaktif') toast('Akun Anda dinonaktifkan pemilik. Hubungi pemilik platform bila ini keliru.');
     restoreQueue();
     if (Cloud.role === 'admin') refreshPendingCount();
+    rememberUser();
   }
   // Pengunjung tetap melihat tombol "Catat pertandingan"; tombol itu membawanya ke halaman Masuk / Daftar.
-  document.body.classList.toggle('ro', !!Cloud.user && !canWrite());
-  document.body.classList.toggle('pub', !Cloud.user);
-  document.body.classList.toggle('pending', !!Cloud.user && !canView());
-  document.body.classList.add('cloud');
-  document.body.classList.toggle('admin', isAdmin());
+  cloudUi();
   await cloudLoad();
-  const ch = Cloud.sb.channel('takraw-data')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, p => cloudRemote('matches', p))
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, p => cloudRemote('events', p));
-  if (isAdmin()) { ch.on('postgres_changes', { event: '*', schema: 'public', table: 'presence' }, livePresence); liveLoad(); }
-  ch.subscribe();
+  cloudSubscribe();
   setStoreState(); renderTabs();
-  const h = (location.hash || '').slice(1);
-  const v = ['home', 'list', 'athletes', 'events', 'rules', 'users', 'live', 'login'].includes(h) ? h : (S.view === 'login' ? 'home' : S.view);
-  go(Cloud.user && v === 'login' ? 'home' : v);
+  cloudRoute();
   if (Store.queue.size) cloudFlush();
 }
 /* Baris server → dokumen aplikasi. _own/_by (pemilik & email pencatat) hanya untuk tampilan, tidak ikut disimpan. */
@@ -3007,7 +3074,7 @@ Store.save = function (m, col = 'matches') {
 };
 async function cloudFlush() {
   clearTimeout(Cloud.timer);
-  if (!Cloud.sb || !Cloud.user) return;
+  if (!Cloud.sb || !Cloud.user || Cloud.offlineAuth) return;   // mode offline: tunggu login diperbarui
   if (Store.busy) { Cloud.timer = setTimeout(cloudFlush, 400); return; }
   if (!Cloud.online) { setStoreState(); return; }
   Store.busy = true; setStoreState();
@@ -3032,7 +3099,7 @@ function saveConflictCopy(body) {
   Store.save(copy);
   toast('Pertandingan ini sedang dicatat analis lain. Catatan Anda disimpan sebagai salinan terpisah.');
 }
-window.addEventListener('online', () => { Cloud.online = true; setStoreState(); if (Store.mode === 'cloud') { cloudFlush(); if (S.view === 'tag' && S.m) claimLock(S.m.id, false, true); } });
+window.addEventListener('online', () => { Cloud.online = true; setStoreState(); if (Store.mode === 'cloud' && Cloud.offlineAuth) { cloudReconnect(); return; } if (Store.mode === 'cloud') { cloudFlush(); if (S.view === 'tag' && S.m) claimLock(S.m.id, false, true); } });
 window.addEventListener('offline', () => { Cloud.online = false; setStoreState(); });
 window.addEventListener('beforeunload', e => {
   if (Store.mode === 'db' && Store.queue.size) { e.preventDefault(); e.returnValue = ''; return; }
@@ -3151,7 +3218,8 @@ Object.assign(ACT, {
   },
   lgOut: async () => {
     if (Store.queue.size) { await cloudFlush(); if (Store.queue.size && !confirm('Ada ' + Store.queue.size + ' perubahan yang belum terkirim (offline). Tetap keluar? Perubahan tetap tersimpan di perangkat ini dan dikirim saat Anda masuk lagi.')) return; }
-    releaseLock(); await Cloud.sb.auth.signOut(); location.replace(appUrl());
+    try { localStorage.removeItem(LAST_USER); } catch {}
+    releaseLock(); if (Cloud.sb) await Cloud.sb.auth.signOut(); location.replace(appUrl());
   },
   setRole: async (d, el) => {
     const role = el.value;
@@ -3424,6 +3492,34 @@ renderList = function () {
   const div = document.createElement('div'); div.className = 'banner';
   div.innerHTML = `Ada ${n} pertandingan yang dulu tersimpan di browser ini. <button class="btn sm primary" data-act="uploadLocal">Unggah ke akun saya</button>`;
   $('#view .page-head')?.after(div);
+};
+
+/* ---------- Bilah mode offline ---------- */
+function updateOffbar() {
+  const b = $('#offbar'); if (!b) return;
+  const n = Store.queue.size;
+  let msg = '';
+  if (Store.mode === 'cloud') {
+    if (Cloud.needLogin) msg = `<span>Sesi login berakhir. ${n ? n + ' catatan tersimpan aman di perangkat.' : ''}</span><button class="btn sm" data-act="relogin">Masuk untuk mengirim</button>`;
+    else if (Cloud.reconnecting) msg = '<span>Sinyal kembali — menyambungkan akun…</span>';
+    else if (!Cloud.online || Cloud.offlineAuth) msg = `<span><b>Mode offline.</b> Pencatatan tetap berjalan; ${n ? n + ' catatan menunggu dikirim' : 'catatan disimpan di perangkat'} dan terkirim otomatis saat sinyal kembali.</span>`;
+  } else if (Store.mode === 'db' && Store.offline) msg = `<span><b>Mode offline.</b> ${n} perubahan menunggu dikirim.</span>`;
+  b.hidden = !msg; if (msg) b.innerHTML = msg;
+}
+const _setStoreState = setStoreState;
+setStoreState = function () { _setStoreState(); updateOffbar(); };
+ACT.relogin = () => { Cloud.msg = 'Masuk lagi untuk mengirim catatan yang tersimpan di perangkat.'; showLogin(); };
+
+/* ---------- Pasang sebagai aplikasi ---------- */
+let installEvt = null;
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+const standalone = () => { try { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch { return false; } };
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; const b = $('#installBtn'); if (b) b.hidden = false; });
+window.addEventListener('appinstalled', () => { installEvt = null; const b = $('#installBtn'); if (b) b.hidden = true; toast('TAKRA terpasang sebagai aplikasi.'); });
+if (isIOS && !standalone() && cloudWanted()) { const b = $('#installBtn'); if (b) b.hidden = false; }
+ACT.installApp = async () => {
+  if (installEvt) { installEvt.prompt(); try { await installEvt.userChoice; } catch {} installEvt = null; $('#installBtn').hidden = true; return; }
+  toast(isIOS ? 'Di Safari: ketuk tombol Bagikan, lalu "Tambahkan ke Layar Utama".' : 'Buka menu browser (⋮), lalu pilih "Instal TAKRA" atau "Tambahkan ke layar utama".');
 };
 
 /* ---------- Aplikasi bisa dipasang & dibuka offline (PWA) ---------- */
