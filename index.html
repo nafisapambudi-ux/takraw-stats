@@ -524,6 +524,13 @@ table.dt td:first-child { font-family: var(--f-body); }
 .ar-circle { fill: var(--surface); fill-opacity: .55; stroke: var(--ink); stroke-width: 2; }
 .ar-legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12px; color: var(--ink2); }
 .ar-legend span { display: inline-flex; gap: 6px; align-items: center; }
+.ar-grid.one { grid-template-columns: minmax(0, 1fr); max-width: 780px; }
+.ar-cell { cursor: pointer; }
+.ar-cell:hover { stroke: var(--ink); stroke-width: 1.5; }
+.ar-selcell { fill: none; stroke: var(--accent); stroke-width: 3.5; }
+.ar-selbar { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; margin-block: 6px 0; }
+table.ar-pl { margin-top: 6px; }
+table.ar-pl td:first-child { white-space: nowrap; }
 .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-block: 14px; }
 
 .modal-bg { position: fixed; inset: 0; background: rgb(0 0 0 / .45); z-index: 60; display: grid; place-items: center; padding: 16px; }
@@ -1093,7 +1100,7 @@ function pct(a, b) { return b ? (100 * a) / b : null; }
 function computeStats(m, sf) {
   const st = derive(m);
   const R = m.rallies.filter(r => !r.extra && (sf === 'all' || r.set === +sf));
-  const mk = () => ({ pts: 0, srvN: 0, srvW: 0, rcvN: 0, rcvW: 0, sk: {}, tech: {}, ends: {}, given: 0, faults: {}, zones: { S: {}, A: {} }, atk: [], rcvQ: {}, streak: 0, lite: {}, liteN: 0 });
+  const mk = () => ({ pts: 0, srvN: 0, srvW: 0, rcvN: 0, rcvW: 0, sk: {}, tech: {}, ends: {}, given: 0, faults: {}, zones: { S: {}, A: {} }, ev: [], rcvQ: {}, streak: 0, lite: {}, liteN: 0 });
   const T = { A: mk(), B: mk() };
   const P = {};
   const players = {};
@@ -1140,21 +1147,39 @@ function computeStats(m, sf) {
         z.n++; if (q === '#') z.k++; if (q === '=') z.e++;
       }
       /* Satu catatan per servis/serangan: area asal di lapangan sendiri (o) dan area tujuan di lapangan lawan (z). */
-      if (t.s === 'S' || t.s === 'A') {
-        // Umpan: sentuhan F terakhir oleh tim yang sama sebelum serangan ini (lokasinya oz di mode Area, atau zona yang diberi).
-        let hasF = false, f = null, fpos = null;
-        if (t.s === 'A') for (let j = i - 1; j >= 0 && r.tc[j].tm === t.tm; j--) {
-          const u = r.tc[j]; if (u.s !== 'F') continue;
-          hasF = true; fpos = players[u.p]?.pos || null;
-          f = u.oz && (!u.ozh || u.ozh === t.tm) ? u.oz : u.z && (!u.zh || u.zh === t.tm) ? u.z : null;
-          break;
+      /* Satu catatan per servis/terima/umpan/smash/blok untuk peta area & tabel pemain.
+         loc = tempat sentuhan di lapangan sendiri, z = sasaran di lapangan lawan (servis, smash) atau arah bola hasil blok. */
+      if ('SRFAB'.includes(t.s)) {
+        const ownZ = (z, h) => (z && (!h || h === t.tm) ? z : null);
+        const e = { s: t.s, q, tc: t.tc || null, p: t.p || null, pos: players[t.p]?.pos || null, loc: null, src: null, z: null, zo: false };
+        if (t.s !== 'S') { e.loc = ownZ(t.oz, t.ozh); if (e.loc) e.src = 'rec'; }
+        if (t.s === 'S' || t.s === 'A') e.z = t.z && (!t.zh || t.zh !== t.tm) ? t.z : null;
+        if ((t.s === 'R' || t.s === 'F') && !e.loc) { e.loc = ownZ(t.z, t.zh); if (e.loc) e.src = 'rec'; }
+        if (t.s === 'R' && !e.loc) {   // terima tanpa zona: pakai sasaran servis lawan
+          const sv = r.tc.slice(0, i).reverse().find(u => u.s === 'S');
+          if (sv && sv.z && (!sv.zh || sv.zh === t.tm)) { e.loc = sv.z; e.src = 'srv'; }
         }
-        T[t.tm].atk.push({
-          s: t.s, q, tc: t.tc || null, pos: players[t.p]?.pos || null,
-          o: t.oz && (!t.ozh || t.ozh === t.tm) ? t.oz : null,
-          z: t.z && (!t.zh || t.zh !== t.tm) ? t.z : null,
-          hasF, f, fpos,
-        });
+        if (t.s === 'B' && t.z) { e.z = t.z; e.zo = !!t.zh && t.zh !== t.tm; }
+        if (t.s === 'B') {   // penyerang lawan yang diblok: posisinya menentukan posisi blok di seberang net
+          const at = r.tc.slice(0, i).reverse().find(u => u.s === 'A' && u.tm !== t.tm);
+          if (at) { e.att = at.oz && (!at.ozh || at.ozh === at.tm) ? at.oz : null; e.attPos = players[at.p]?.pos || null; }
+        }
+        if (t.s === 'A') {   // umpan: sentuhan F terakhir tim yang sama sebelum smash ini
+          e.o = e.loc;
+          for (let j = i - 1; j >= 0 && r.tc[j].tm === t.tm; j--) {
+            const u = r.tc[j]; if (u.s !== 'F') continue;
+            e.hasF = true; e.fpos = players[u.p]?.pos || null; e.fp = u.p || null;
+            e.f = ownZ(u.oz, u.ozh) || ownZ(u.z, u.zh);
+            break;
+          }
+        }
+        if (t.s === 'F') {   // smash yang menyusul umpan ini
+          for (let j = i + 1; j < r.tc.length && r.tc[j].tm === t.tm; j++) {
+            const u = r.tc[j]; if (u.s !== 'A') continue;
+            e.nx = ownZ(u.oz, u.ozh); e.nxPos = players[u.p]?.pos || null; e.hasNx = true; break;
+          }
+        }
+        T[t.tm].ev.push(e);
       }
       if (t.s === 'X') T[t.tm].faults[t.tc || 'Lainnya'] = (T[t.tm].faults[t.tc || 'Lainnya'] || 0) + 1;
       if (pr) {
@@ -1769,8 +1794,15 @@ function zonePlayer(team, z) {
   return (pl.find(p => p.pos === role) || pl[0]).id;
 }
 const needsTarget = sk => sk === 'A' || sk === 'S';
+/* Arah blok: setelah pemblok dipilih, klik area tempat bola hasil blok jatuh/mengarah (lapangan mana pun). Klik lagi untuk batal. */
+function blockDir(half, z) {
+  const b = S.blk;
+  if (b.z === z && b.zh === half) { b.z = null; b.zh = null; } else { b.z = z; b.zh = half; }
+  renderTagMain();
+}
 function areaZone(half, z) {
-  if (locked() || S.blk) return;
+  if (locked()) return;
+  if (S.blk) { if (S.blk.pid) blockDir(half, z); return; }
   const c = ctx();
   if (S.sel.pid) {
     const sk = currentSkill();
@@ -1792,6 +1824,7 @@ function areaZone(half, z) {
 }
 function setZone(half, z) {
   if (S.mode === 'area') return areaZone(half, z);
+  if (S.blk && S.blk.pid) return blockDir(half, z);
   const t = targetTouch();
   if (S.sel.pid || !t) { if (S.sel.z === z && S.sel.zh === half) { S.sel.z = S.sel.zh = null; } else { S.sel.z = z; S.sel.zh = half; } }
   else { if (t.z === z && t.zh === half) { t.z = null; t.zh = null; } else { t.z = z; t.zh = half; } if (!S.cur.touches.includes(t)) persist(); }
@@ -1843,6 +1876,7 @@ function commitBlock(q) {
   if (a.oz) { at.oz = a.oz; at.ozh = a.ozh; }
   if (at.z == null) { delete at.z; delete at.zh; }
   const bt = { tm: b.tm, p: b.pid, s: 'B', q, tc: b.tech || null, vt };
+  if (b.z) { bt.z = b.z; bt.zh = b.zh; }   // arah bola hasil blok
   if (S.sel.u) { at.u = 1; bt.u = 1; }
   if (!S.cur.touches.length) { S.cur.ts = Date.now(); S.cur.vt0 = vt; }
   if (at.tc) S.lastTech[at.p + 'A'] = at.tc;
@@ -1903,7 +1937,7 @@ function nearTeam() {
 function courtSvg() {
   const fmt = S.m.meta.format;
   const W = 670, H = 305, cw = W / 6, ch = H / 3;
-  const pending = S.sel.pid || S.sel.oz ? { z: S.sel.z, zh: S.sel.zh, oz: S.sel.oz, ozh: S.sel.ozh } : (targetTouch() || {});
+  const pending = S.blk?.pid ? { z: S.blk.z, zh: S.blk.zh } : S.sel.pid || S.sel.oz ? { z: S.sel.z, zh: S.sel.zh, oz: S.sel.oz, ozh: S.sel.ozh } : (targetTouch() || {});
   const awaitHalf = S.mode === 'area' && S.sel.pid && needsTarget(currentSkill()) && !S.blk && !S.sel.z ? opp(S.sel.tm) : null;
   const cxy = (h, z) => { const d = Math.floor((z - 1) / 3), lr = (z - 1) % 3; const cx = h === 'A' ? 2 - d : d + 3, cy = h === 'A' ? lr : 2 - lr; return [cx * cw + cw / 2, cy * ch + ch / 2]; };
   let cells = '';
@@ -1970,7 +2004,7 @@ function renderTagMain() {
   else if (S.mode === 'area' && S.sel.pid && !S.blk && needsTarget(currentSkill()) && !S.sel.z) hint = `${pLabel(S.sel.pid)} · ${SKILLS[currentSkill()].name} → klik area ${currentSkill() === 'S' ? 'tujuan servis' : 'serangan'} di sisi ${tname(opp(S.sel.tm))}, lalu kualitas.${currentSkill() === 'A' ? ' Bila dihadang blok, tekan B.' : ''}`;
   else if (!S.sel.pid) hint = S.cur.touches.length ? 'Pilih pemain berikutnya. Teknik/zona/penyebab di bawah akan diterapkan ke sentuhan terakhir.' : `Servis: ${tname(srvT)} ${pLabel(S.cur.sp)}. Tekan S lalu kualitas, atau pilih pemain.`;
   else if (S.blk && !S.blk.pid) hint = `Serangan ${pLabel(S.blk.att.pid)} dihadang. Pilih pemblok ${tname(opp(S.blk.att.tm))} (tekan 1–${posPlayers(opp(S.blk.att.tm)).length}).`;
-  else if (S.blk) hint = `Blok ${pLabel(S.blk.pid)} atas serangan ${pLabel(S.blk.att.pid)} → pilih hasil blok. Kualitas serangan dicatat otomatis.`;
+  else if (S.blk) hint = S.blk.z ? `Blok ${pLabel(S.blk.pid)} · bola hasil blok ke ${zoneName(S.blk.z)} (${tname(S.blk.zh)}) → pilih hasil blok.` : `Blok ${pLabel(S.blk.pid)} atas serangan ${pLabel(S.blk.att.pid)} → klik area jatuhnya bola hasil blok (opsional), lalu pilih hasil blok.`;
   else hint = `${pLabel(S.sel.pid)} · ${SKILLS[sk].name} → pilih kualitas${S.mode !== 'list' && S.quick && sk !== 'X' ? `, atau langsung pilih pemain berikutnya (tercatat ${AUTO_Q[sk] || S.quick})` : ''}.${sk === 'A' ? ' Bila dihadang lawan, tekan B (Blok).' : ''}`;
   const c = ctx();
   const padTeam = S.blk ? opp(S.blk.att.tm) : (S.mode === 'area' && S.sel.pid) ? S.sel.tm : (S.forceTeam || c.team);
@@ -2193,10 +2227,10 @@ function renderStats() {
     <section class="panel"><h3>Sumber poin</h3>${pointSources(X)}</section>
     ${S.statSet === 'tie' ? '' : `<section class="panel st-wide"><h3>Alur skor</h3><p class="note">Selisih poin ${esc(tname('A'))} terhadap ${esc(tname('B'))} per rally. Di atas garis: ${esc(tname('A'))} unggul.</p><div class="chart" id="momentum">${momentum(X)}</div></section>`}
     ${['A', 'B'].map(t => teamDetail(X, t)).join('')}
-    <section class="panel st-wide"><h3>Area menyerang & area diserang</h3><p class="note">Satu lapangan per tim. Kiri: area di lapangan sendiri tempat bola dipukul. Kanan: area lapangan lawan yang dituju. Warna lebih pekat = lebih sering; panah = tiga rute terbanyak. Arahkan kursor ke kotak untuk melihat poin dan error.</p>${areaPanel(X)}</section>
+    <section class="panel st-wide"><h3>Peta area & pemain</h3><p class="note">Satu lapangan per tim. Kiri: lapangan tim itu, tempat bola disentuh. Kanan: lapangan lawan, tempat bola diarahkan. Pilih jenis aksi, lalu klik satu area untuk melihat rinciannya. Warna lebih pekat = lebih sering; panah = rute terbanyak.</p>${areaPanel(X)}</section>
     ${['A', 'B'].map(t => playerTable(X, t)).join('')}
   </div>`;
-  $('#view').innerHTML = S.statSet === 'tie' ? html.replace(/<section class="panel st-wide"><h3>Area menyerang[\s\S]*?<\/section>/, '') : html;
+  $('#view').innerHTML = S.statSet === 'tie' ? html.replace(/<section class="panel st-wide"><h3>Peta area[\s\S]*?<\/section>/, '') : html;
   if (S.statSet !== 'tie') bindMomentum(X);
 }
 const QCOL = { '#': 'var(--q1)', '+': 'var(--q2)', '!': 'var(--q3)', '-': 'var(--q4)', '/': 'var(--q4)', '=': 'var(--q5)' };
@@ -2283,121 +2317,197 @@ function teamDetail(X, t) {
 /* ---------- Area menyerang & area diserang ----------
    Satu lapangan per tim: kiri = lapangan sendiri (area tempat bola dipukul), kanan = lapangan lawan (area yang dituju).
    Zona dihitung dari sudut pandang pemilik setengah lapangan itu (menghadap net), sama seperti saat input. */
-/* Lokasi yang tidak dicatat diperkirakan dari posisi pemain:
-   titik smash — apit kiri/kanan di depan, tekong di depan-tengah; umpan — tekong di tengah, apit di tengah sisi masing-masing.
+/* Lokasi yang tidak dicatat diperkirakan dari posisi pemain dan ditandai "~":
+   titik smash — apit kiri/kanan di depan, tekong depan-tengah; umpan — tekong di tengah, apit di tengah sisinya;
+   terima — tekong belakang-tengah, apit di tengah sisinya; blok — di depan, berseberangan dengan penyerang lawan.
    Servis selalu digambar dari titik servis: lingkaran servis (Regu) atau belakang garis (Double/Quadrant). */
-function estOrigin(a) { return { 'Apit Kiri': 1, 'Apit Kanan': 3, 'Tekong': 2 }[a.pos] || null; }
-function estFeed(a) { return a.hasF ? ({ 'Tekong': 5, 'Apit Kiri': 4, 'Apit Kanan': 6 }[a.fpos] || 5) : null; }
-const AREA_F = [['all', 'Semua'], ['S', 'Servis'], ['A', 'Smash / serangan']];
-function areaPanel(X) {
-  const f = S.areaF || 'all', tf = f === 'A' ? S.areaT || '' : '';
-  const techs = [...new Set(['A', 'B'].flatMap(t => (X.T[t].atk || []).filter(a => a.s === 'A' && a.tc).map(a => a.tc)))];
-  const pick = a => (f === 'all' || a.s === f) && (!tf || a.tc === tf);
-  return `<div class="filters ar-filter"><span class="lbl">Jenis serangan</span><div class="tabs">${AREA_F.map(([k, l]) => `<button class="${f === k ? 'on' : ''}" data-act="areaF" data-f="${k}">${l}</button>`).join('')}</div>
-      ${f === 'A' && techs.length ? `<label class="row small" for="areaTech">Teknik <select class="inp" id="areaTech" style="width:auto"><option value="">Semua teknik</option>${techs.map(x => `<option ${tf === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></label>` : ''}</div>
-    <div class="ar-grid">${['A', 'B'].map(t => areaCourt(X, t, pick)).join('')}</div>`;
+const EST_SMASH = { 'Apit Kiri': 1, 'Apit Kanan': 3, 'Tekong': 2 };
+const EST_FEED = { 'Tekong': 5, 'Apit Kiri': 4, 'Apit Kanan': 6 };
+const EST_RCV = { 'Tekong': 8, 'Apit Kiri': 4, 'Apit Kanan': 6 };
+function estLoc(e) {
+  if (e.s === 'A') return EST_SMASH[e.pos] || null;
+  if (e.s === 'F') return EST_FEED[e.pos] || 5;
+  if (e.s === 'R') return EST_RCV[e.pos] || null;
+  if (e.s === 'B') {   // pemblok berdiri di depan, berseberangan: kiri penyerang = kanan pemblok
+    const a = e.att || EST_SMASH[e.attPos];
+    return a ? 2 - ((a - 1) % 3) + 1 : EST_SMASH[e.pos] || 2;
+  }
+  return null;
 }
-function areaCourt(X, t, pick) {
-  const fmt = S.m.meta.format, mode = S.areaF || 'all', list = (X.T[t].atk || []).filter(pick), o2 = opp(t);
-  const srv = list.filter(a => a.s === 'S'), atk = list.filter(a => a.s === 'A');
-  const O = {}, Z = {}, F = {}, SR = {}, AR = {};
-  let estO = 0, estF = 0, noO = 0, noZ = 0;
-  const add = (M, k, a, isEst) => { const c = (M[k] ||= { n: 0, k: 0, e: 0, b: 0, est: 0 }); c.n++; if (a.q === '#') c.k++; else if (a.q === '=') c.e++; else if (a.q === '/') c.b++; if (isEst) c.est++; };
-  list.forEach(a => { if (a.z) add(Z, a.z, a); else noZ++; });
-  srv.forEach(a => { if (a.z) SR[a.z] = (SR[a.z] || 0) + 1; });
-  atk.forEach(a => {
-    let o = a.o, oe = false, fz = a.f, fe = false;
-    if (!o) { o = estOrigin(a); if (o) { estO++; oe = true; } else noO++; }
-    if (!fz && a.hasF) { fz = estFeed(a); fe = true; estF++; }
-    if (o) add(O, o, a, oe);
-    if (fz) add(F, fz, a, fe);
-    if (o && a.z) { const k = (fz || 0) + '>' + o + '>' + a.z; (AR[k] ||= { n: 0, est: false }).n++; if (oe || fe) AR[k].est = true; }
+const AREA_F = [['all', 'Semua serangan'], ['S', 'Servis'], ['A', 'Smash'], ['R', 'Terima'], ['F', 'Umpan'], ['B', 'Blok']];
+const AREA_WHAT = { all: 'servis dan smash', S: 'servis', A: 'smash', R: 'terima', F: 'umpan', B: 'blok' };
+function areaPanel(X) {
+  const f = S.areaF || 'all', tf = f === 'A' ? S.areaT || '' : '', team = S.areaTeam || 'both';
+  const techs = [...new Set(['A', 'B'].flatMap(t => (X.T[t].ev || []).filter(e => e.s === 'A' && e.tc).map(e => e.tc)))];
+  const sel = S.areaSel;
+  const teams = team === 'both' ? ['A', 'B'] : [team];
+  return `<div class="filters ar-filter"><span class="lbl">Jenis</span><div class="tabs">${AREA_F.map(([k, l]) => `<button class="${f === k ? 'on' : ''}" data-act="areaF" data-f="${k}">${l}</button>`).join('')}</div>
+      ${f === 'A' && techs.length ? `<label class="row small" for="areaTech">Teknik <select class="inp" id="areaTech" style="width:auto"><option value="">Semua teknik</option>${techs.map(x => `<option ${tf === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></label>` : ''}</div>
+    <div class="filters ar-filter"><span class="lbl">Tim</span><div class="tabs">${[['both', 'Kedua tim'], ['A', tname('A')], ['B', tname('B')]].map(([k, l]) => `<button class="${team === k ? 'on' : ''}" data-act="areaTeam" data-v="${k}">${esc(l)}</button>`).join('')}</div>
+      <span class="muted small">Klik satu area di lapangan untuk melihat rincian area itu saja.</span></div>
+    ${sel ? `<div class="banner ar-selbar">Area dipilih: <b>${esc(zoneName(sel.z))}</b> di lapangan <b>${esc(tname(sel.h === 'own' ? sel.t : opp(sel.t)))}</b> (${esc(tname(sel.t))} ${sel.h === 'own' ? 'menyentuh bola di sini' : 'mengarahkan bola ke sini'}). <button class="btn sm" data-act="areaClear">Hapus pilihan</button></div>` : ''}
+    <div class="ar-grid${teams.length === 1 ? ' one' : ''}">${teams.map(t => areaCourt(X, t)).join('')}</div>`;
+}
+function areaCourt(X, t) {
+  const fmt = S.m.meta.format, mode = S.areaF || 'all', o2 = opp(t), tf = mode === 'A' ? S.areaT || '' : '';
+  const kinds = mode === 'all' ? ['S', 'A'] : [mode];
+  let list = (X.T[t].ev || []).filter(e => kinds.includes(e.s) && (!tf || e.tc === tf)).map(e => {
+    let L = e.loc, Le = false, F = null, Fe = false, N = null, Ne = false;
+    if (!L && e.s !== 'S') { L = estLoc(e); Le = !!L; }
+    if (e.s === 'A' && e.hasF) { F = e.f || EST_FEED[e.fpos] || 5; Fe = !e.f; }
+    if (e.s === 'F' && e.hasNx) { N = e.nx || EST_SMASH[e.nxPos] || null; Ne = !e.nx; }
+    return { ...e, L, Le, F, Fe, N, Ne };
   });
-  const what = { all: 'servis dan serangan', S: 'servis', A: 'serangan' }[mode];
-  if (!list.length) return `<article class="ar-card"><h4 class="win-${t}">${esc(S.m.meta[t].name)}</h4><p class="muted">Belum ada ${what} tercatat.</p></article>`;
-
+  const sel = S.areaSel && S.areaSel.t === t ? S.areaSel : null;
+  if (sel) list = list.filter(e => sel.h === 'own' ? e.L === sel.z : (e.s === 'B' ? e.zo && e.z === sel.z : e.z === sel.z));
+  const what = AREA_WHAT[mode];
+  const head = `<h4 class="win-${t}">${esc(S.m.meta[t].name)} <span class="muted small">· ${list.length} ${what}${sel ? ' di area ini' : ''}</span></h4>`;
   const cw = 62, ch = 50, gap = 12, W = cw * 3, H = ch * 3, ox = W + gap;
   const own = z => { const d = Math.floor((z - 1) / 3), l = (z - 1) % 3; return [(2 - d) * cw, l * ch]; };
   const oppXY = z => { const d = Math.floor((z - 1) / 3), l = (z - 1) % 3; return [ox + d * cw, (2 - l) * ch]; };
   const center = (xy, z) => { const [x, y] = xy(z); return [x + cw / 2, y + ch / 2]; };
-  // Titik servis: lingkaran servis berjarak 2,45 m dari garis belakang (setengah lapangan 6,70 m); Double/Quad dari belakang garis.
-  const SP = fmt === 'regu' ? [W * 2.45 / 6.7, H / 2] : [3, H / 2];
+  // Lingkaran servis 2,45 m dari garis belakang (setengah lapangan 6,70 m); Double/Quad servis dari belakang garis.
+  const k245 = 2.45 / 6.7;
+  const SP = fmt === 'regu' ? [W * k245, H / 2] : [3, H / 2];               // titik servis tim ini (kiri)
+  const SPo = fmt === 'regu' ? [ox + W - W * k245, H / 2] : [ox + W - 3, H / 2];   // titik servis lawan (kanan)
 
-  const half = (M, xy, label) => {
+  // Peta kiri: tempat tim ini menyentuh bola. Peta kanan: sasaran di lapangan lawan (servis/smash) atau arah blok.
+  const Lm = {}, Rm = {};
+  const add = (M, k, e, est) => { const c = (M[k] ||= { n: 0, q: {}, est: 0 }); c.n++; c.q[e.q] = (c.q[e.q] || 0) + 1; if (est) c.est++; };
+  list.forEach(e => {
+    if (e.L && e.s !== 'S') add(Lm, e.L, e, e.Le);
+    if (e.z && (e.s === 'S' || e.s === 'A' || (e.s === 'B' && e.zo))) add(Rm, e.z, e);
+  });
+  const good = c => (c.q['#'] || 0) + (mode === 'R' || mode === 'F' ? c.q['+'] || 0 : 0);
+  const goodLbl = { R: 'baik', F: 'baik', B: 'poin', S: 'ace' }[mode] || 'poin';
+  const cellNote = c => { const g = good(c); return g ? `${g} ${goodLbl}` : ''; };
+  const leftLabel = { all: 'Titik smash', S: '', A: 'Titik smash', R: 'Terima di', F: 'Umpan dari', B: 'Blok di' }[mode];
+  const half = (M, xy, h) => {
     const mx = Math.max(1, ...Object.values(M).map(v => v.n));
     let s = '', tx = '';
+    const clickable = h === 'own' ? mode !== 'S' : ['all', 'S', 'A', 'B'].includes(mode);
     for (let z = 1; z <= 9; z++) {
       const v = M[z], [x, y] = xy(z), a = v ? 0.14 + 0.8 * (v.n / mx) : 0, light = a > 0.55;
-      const tip = v ? `${label} ${zoneName(z)}: ${v.n} bola · ${v.k} poin · ${v.e} error${v.b ? ' · ' + v.b + ' diblok' : ''}${v.est ? ' · ' + v.est + ' lokasi diperkirakan' : ''}` : `${zoneName(z)}: belum ada`;
-      s += `<rect x="${x}" y="${y}" width="${cw}" height="${ch}" fill="var(--team${t})" fill-opacity="${a}" stroke="var(--line)" ${v && v.est === v.n ? 'stroke-dasharray="4 3"' : ''} data-tip="${esc(tip)}"/>`;
-      if (v) tx += `<text x="${x + cw / 2}" y="${y + ch / 2 + (v.k ? 1 : 6)}" text-anchor="middle" font-size="17" font-weight="600" font-family="var(--f-mono)" fill="${light ? '#fff' : 'var(--ink)'}" pointer-events="none">${v.est === v.n ? '~' : ''}${v.n}</text>${v.k ? `<text x="${x + cw / 2}" y="${y + ch / 2 + 15}" text-anchor="middle" font-size="9.5" fill="${light ? '#fff' : 'var(--ink2)'}" pointer-events="none">${v.k} poin</text>` : ''}`;
+      const isSel = sel && sel.h === h && sel.z === z;
+      const tip = v ? `${h === 'own' ? leftLabel : 'Ke'} ${zoneName(z)}: ${v.n}× · ${Object.entries(v.q).map(([q, n]) => `${q === '-' ? '−' : q} ${n}`).join(' · ')}${v.est ? ' · ' + v.est + ' lokasi diperkirakan' : ''}${clickable ? ' — klik untuk memilih' : ''}` : `${zoneName(z)}: belum ada`;
+      s += `<rect x="${x}" y="${y}" width="${cw}" height="${ch}" fill="var(--team${t})" fill-opacity="${a}" stroke="var(--line)" ${v && v.est === v.n ? 'stroke-dasharray="4 3"' : ''} data-tip="${esc(tip)}"${clickable ? ` data-act="areaZone" data-t="${t}" data-h="${h}" data-z="${z}" class="ar-cell"` : ''}/>`;
+      if (isSel) tx += `<rect x="${x + 1.5}" y="${y + 1.5}" width="${cw - 3}" height="${ch - 3}" class="ar-selcell" pointer-events="none"/>`;
+      if (v) { const nt = cellNote(v); tx += `<text x="${x + cw / 2}" y="${y + ch / 2 + (nt ? 1 : 6)}" text-anchor="middle" font-size="17" font-weight="600" font-family="var(--f-mono)" fill="${light ? '#fff' : 'var(--ink)'}" pointer-events="none">${v.est === v.n ? '~' : ''}${v.n}</text>${nt ? `<text x="${x + cw / 2}" y="${y + ch / 2 + 15}" text-anchor="middle" font-size="9.5" fill="${light ? '#fff' : 'var(--ink2)'}" pointer-events="none">${nt}</text>` : ''}`; }
     }
     return [s, tx];
   };
-  // Garis berhenti sebelum angka sasaran agar angka tetap terbaca.
-  const seg = (ax, ay, bx, by, cut0, cut1) => { const L = Math.hypot(bx - ax, by - ay) || 1, ux = (bx - ax) / L, uy = (by - ay) / L; return [ax + ux * cut0, ay + uy * cut0, bx - ux * cut1, by - uy * cut1].map(v => v.toFixed(1)); };
+  const seg = (ax, ay, bx, by, c0, c1) => { const L = Math.hypot(bx - ax, by - ay) || 1, ux = (bx - ax) / L, uy = (by - ay) / L; return [ax + ux * c0, ay + uy * c0, bx - ux * c1, by - uy * c1].map(v => v.toFixed(1)); };
+  const arrow = (ax, ay, bx, by, cls, w, title, c0 = 9, c1 = 22) => { const [x1, y1, x2, y2] = seg(ax, ay, bx, by, c0, c1);
+    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="${cls}" stroke-width="${w.toFixed(1)}" marker-end="url(#arw${t})"><title>${esc(title)}</title></line>`; };
+  const tally = (keyOf, n) => { const R = {}; list.forEach(e => { const k = keyOf(e); if (k) (R[k] ||= { n: 0, est: false }).n++, R[k].est ||= !!(e.Le || e.Fe || e.Ne); }); return Object.entries(R).sort((a, b) => b[1].n - a[1].n).slice(0, n); };
+  const wOf = (r, mx) => 1.1 + 2.6 * r.n / mx;
 
-  // Servis: dari titik servis ke setiap area sasaran (mode Semua: tiga terbanyak).
-  const sList = Object.entries(SR).sort((a, b) => b[1] - a[1]).slice(0, mode === 'S' ? 9 : 3);
-  const smx = sList.length ? sList[0][1] : 1;
-  const srvArrows = sList.map(([z, n]) => { const [bx, by] = center(oppXY, +z), [x1, y1, x2, y2] = seg(SP[0], SP[1], bx, by, 10, 22);
-    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="ar-srv" stroke-width="${1.1 + 2.6 * n / smx}" marker-end="url(#arw${t})"><title>Servis → ${esc(zoneName(+z))}: ${n}×</title></line>`; }).join('');
-
-  // Smash: umpan (○) → titik smash (●) → sasaran (panah). Mode Smash: lima rute terbanyak, mode Semua: tiga.
-  const aList = Object.entries(AR).sort((a, b) => b[1].n - a[1].n).slice(0, mode === 'A' ? 5 : 3);
-  const amx = aList.length ? aList[0][1].n : 1;
-  const atkPaths = aList.map(([k, r]) => {
-    const [fz, o, z] = k.split('>').map(Number), [px, py] = center(own, o), [bx, by] = center(oppXY, z), w = (1.1 + 2.6 * r.n / amx).toFixed(1);
-    const [s1, s2, s3, s4] = seg(px, py, bx, by, 9, 22);
-    let feed = '';
-    if (fz && fz !== o) { const [fx, fy] = center(own, fz), [f1, f2, f3, f4] = seg(fx, fy, px, py, 6, 6);
-      feed = `<line x1="${f1}" y1="${f2}" x2="${f3}" y2="${f4}" class="ar-feed" stroke-width="${Math.max(1, w * 0.6).toFixed(1)}"/><circle cx="${fx}" cy="${fy}" r="5.5" class="ar-feed-pt"/>`; }
-    else if (fz) feed = `<circle cx="${px}" cy="${py}" r="8" class="ar-feed-pt"/>`;
-    const title = `${fz ? 'Umpan ' + zoneName(fz) + ' → ' : ''}smash ${zoneName(o)} → ${zoneName(z)}: ${r.n}×${r.est ? ' (sebagian lokasi diperkirakan)' : ''}`;
-    return `<g class="ar-path${r.est ? ' est' : ''}"><title>${esc(title)}</title>${feed}<line x1="${s1}" y1="${s2}" x2="${s3}" y2="${s4}" class="ar-atk" stroke-width="${w}" marker-end="url(#arw${t})"/><circle cx="${px}" cy="${py}" r="4" class="ar-hit"/></g>`;
-  }).join('');
-
-  const [oR, oT] = half(O, own, 'Titik smash'), [zR, zT] = half(Z, oppXY, 'Diserang di');
-  const serveMark = srv.length || mode !== 'A' ? (fmt === 'regu'
-    ? `<circle cx="${SP[0].toFixed(1)}" cy="${SP[1]}" r="9" class="ar-circle"><title>Lingkaran servis · ${srv.length} servis</title></circle>`
-    : `<rect x="-3" y="${SP[1] - 9}" width="6" height="18" rx="2" class="ar-circle"><title>Servis dari belakang garis · ${srv.length} servis</title></rect>`) : '';
-
-  const top = (M, by) => { const e = Object.entries(M).filter(([, v]) => by !== 'eff' || v.n >= 3); if (!e.length) return null;
-    e.sort((a, b) => by === 'eff' ? b[1].k / b[1].n - a[1].k / a[1].n || b[1].n - a[1].n : b[1].n - a[1].n); return e[0]; };
-  const most = top(Z), eff = top(Z, 'eff'), from = top(O), feedTop = top(F);
-  const pc = v => Math.round(100 * v.k / v.n) + '%';
-  const zn = z => esc(zoneName(+z));
-  const sum = [];
-  if (sList.length && mode !== 'A') { const SZ = {}; srv.forEach(a => a.z && add(SZ, a.z, a)); const sTop = top(SZ);
-    sum.push(`Servis paling sering ke: <b>${zn(sTop[0])}</b> (${sTop[1].n} bola, ${sTop[1].k} ace)`); }
-  if (mode !== 'S') {
-    if (feedTop) sum.push(`Umpan paling sering dari: <b>${zn(feedTop[0])}</b> (${feedTop[1].n}×)`);
-    if (from) sum.push(`Titik smash terbanyak: <b>${zn(from[0])}</b> (${from[1].n} bola)`);
-    if (aList.length) { const [fz, o, z] = aList[0][0].split('>'); sum.push(`Rute smash terbanyak: <b>${+fz ? 'umpan ' + zn(fz) + ' → ' : ''}smash ${zn(o)} → ${zn(z)}</b> (${aList[0][1].n}×)`); }
+  let lines = '', marks = '';
+  const circleAt = (x, y, label) => fmt === 'regu' ? `<circle cx="${x.toFixed(1)}" cy="${y}" r="9" class="ar-circle"><title>${esc(label)}</title></circle>` : `<rect x="${(x - 3).toFixed(1)}" y="${y - 9}" width="6" height="18" rx="2" class="ar-circle"><title>${esc(label)}</title></rect>`;
+  if (mode === 'S' || mode === 'all') {
+    const R = tally(e => e.s === 'S' && e.z ? String(e.z) : null, mode === 'S' ? 9 : 3), mx = R.length ? R[0][1].n : 1;
+    if (list.some(e => e.s === 'S')) marks += circleAt(SP[0], SP[1], 'Titik servis');
+    lines += R.map(([z, r]) => { const [bx, by] = center(oppXY, +z); return arrow(SP[0], SP[1], bx, by, 'ar-srv', wOf(r, mx), `Servis → ${zoneName(+z)}: ${r.n}×`, 10); }).join('');
   }
-  if (most) sum.push(`Paling sering diserang: <b>${zn(most[0])}</b> (${most[1].n} bola, ${most[1].k} poin)`);
-  if (eff) sum.push(`Paling mematikan: <b>${zn(eff[0])}</b> (${pc(eff[1])} jadi poin dari ${eff[1].n} bola)`);
+  if (mode === 'A' || mode === 'all') {
+    const R = tally(e => e.s === 'A' && e.L && e.z ? (e.F || 0) + '>' + e.L + '>' + e.z : null, mode === 'A' ? 5 : 3), mx = R.length ? R[0][1].n : 1;
+    lines += R.map(([k, r]) => {
+      const [fz, o, z] = k.split('>').map(Number), [px, py] = center(own, o), [bx, by] = center(oppXY, z), w = wOf(r, mx);
+      let feed = '';
+      if (fz && fz !== o) { const [fx, fy] = center(own, fz), [f1, f2, f3, f4] = seg(fx, fy, px, py, 6, 6);
+        feed = `<line x1="${f1}" y1="${f2}" x2="${f3}" y2="${f4}" class="ar-feed" stroke-width="${Math.max(1, w * 0.6).toFixed(1)}"/><circle cx="${fx}" cy="${fy}" r="5.5" class="ar-feed-pt"/>`; }
+      else if (fz) feed = `<circle cx="${px}" cy="${py}" r="8" class="ar-feed-pt"/>`;
+      return `<g class="ar-path${r.est ? ' est' : ''}">${feed}${arrow(px, py, bx, by, 'ar-atk', w, `${fz ? 'Umpan ' + zoneName(fz) + ' → ' : ''}smash ${zoneName(o)} → ${zoneName(z)}: ${r.n}×`)}<circle cx="${px}" cy="${py}" r="4" class="ar-hit"/></g>`;
+    }).join('');
+  }
+  if (mode === 'R') {   // servis lawan → tempat diterima
+    const R = tally(e => e.L ? String(e.L) : null, 9), mx = R.length ? R[0][1].n : 1;
+    if (list.length) marks += circleAt(SPo[0], SPo[1], 'Titik servis lawan');
+    lines += R.map(([z, r]) => { const [bx, by] = center(own, +z); return arrow(SPo[0], SPo[1], bx, by, 'ar-srv', wOf(r, mx), `Servis lawan diterima di ${zoneName(+z)}: ${r.n}×`, 10); }).join('');
+  }
+  if (mode === 'F') {   // umpan → titik smash berikutnya
+    const R = tally(e => e.L && e.N ? e.L + '>' + e.N : null, 5), mx = R.length ? R[0][1].n : 1;
+    lines += R.map(([k, r]) => { const [a, b] = k.split('>').map(Number);
+      if (a === b) { const [x, y] = center(own, a); return `<circle cx="${x}" cy="${y}" r="10" class="ar-feed-pt" fill-opacity="0"><title>Umpan & smash di ${esc(zoneName(a))}: ${r.n}×</title></circle>`; }
+      const [ax, ay] = center(own, a), [bx, by] = center(own, b);
+      return `<g class="ar-path${r.est ? ' est' : ''}">${arrow(ax, ay, bx, by, 'ar-atk', wOf(r, mx), `Umpan ${zoneName(a)} → smash ${zoneName(b)}: ${r.n}×`, 10, 18)}<circle cx="${ax}" cy="${ay}" r="5.5" class="ar-feed-pt"/></g>`; }).join('');
+  }
+  if (mode === 'B') {   // posisi blok → arah bola hasil blok (ke lapangan lawan atau jatuh di lapangan sendiri)
+    const R = tally(e => e.L && e.z ? e.L + '>' + (e.zo ? 'o' : 's') + e.z : null, 5), mx = R.length ? R[0][1].n : 1;
+    lines += R.map(([k, r]) => { const [a, d] = k.split('>'), z = +d.slice(1), [ax, ay] = center(own, +a), [bx, by] = d[0] === 'o' ? center(oppXY, z) : center(own, z);
+      return `<g class="ar-path">${arrow(ax, ay, bx, by, 'ar-atk', wOf(r, mx), `Blok ${zoneName(+a)} → bola ke ${zoneName(z)} (${d[0] === 'o' ? 'lapangan lawan' : 'lapangan sendiri'}): ${r.n}×`, 8, 18)}<circle cx="${ax}" cy="${ay}" r="4" class="ar-hit"/></g>`; }).join('');
+  }
 
-  const notes = [];
-  if (estO || estF) notes.push(`<b>~</b> ${[estO ? `${estO} titik smash` : '', estF ? `${estF} posisi umpan` : ''].filter(Boolean).join(' dan ')} diperkirakan dari posisi pemain karena dicatat tanpa klik area. Pakai mode <b>Area</b> saat input agar tercatat tepat.`);
-  if (noO) notes.push(`${noO} serangan tanpa titik smash.`);
-  if (noZ) notes.push(`${noZ} tanpa area sasaran tidak masuk peta kanan.`);
-
-  return `<article class="ar-card"><h4 class="win-${t}">${esc(S.m.meta[t].name)} <span class="muted small">· ${list.length} ${what}</span></h4>
-    <div class="ar-labels"><span>Area menyerang <small>lapangan ${esc(tname(t))}</small></span><span>Area diserang <small>lapangan ${esc(tname(o2))}</small></span></div>
-    <svg class="ar-court" viewBox="-6 -4 ${ox + W + 10} ${H + 8}" role="img" aria-label="Area menyerang dan area diserang ${esc(S.m.meta[t].name)}">
+  const [lR, lT] = half(Lm, own, 'own'), [rR, rT] = half(Rm, oppXY, 'opp');
+  const court = `<svg class="ar-court" viewBox="-6 -4 ${ox + W + 10} ${H + 8}" role="img" aria-label="Peta area ${esc(what)} ${esc(S.m.meta[t].name)}">
       <defs><marker id="arw${t}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ink)"/></marker></defs>
       <rect x="-6" y="-4" width="${ox + W + 10}" height="${H + 8}" rx="6" fill="var(--surface2)"/>
-      ${oR}${zR}
-      <line x1="${W + gap / 2}" y1="-4" x2="${W + gap / 2}" y2="${H + 4}" stroke="var(--ink2)" stroke-width="3"/>
-      ${serveMark}${srvArrows}${atkPaths}${oT}${zT}
-    </svg>
+      ${lR}${rR}<line x1="${W + gap / 2}" y1="-4" x2="${W + gap / 2}" y2="${H + 4}" stroke="var(--ink2)" stroke-width="3"/>
+      ${marks}${lines}${lT}${rT}</svg>`;
+
+  // Ringkasan & tabel pemain
+  const top = (M, by) => { const e = Object.entries(M).filter(([, v]) => by !== 'eff' || v.n >= 3); if (!e.length) return null;
+    e.sort((a, b) => by === 'eff' ? good(b[1]) / b[1].n - good(a[1]) / a[1].n || b[1].n - a[1].n : by === 'bad' ? (b[1].q['='] || 0) / b[1].n - (a[1].q['='] || 0) / a[1].n || b[1].n - a[1].n : b[1].n - a[1].n); return e[0]; };
+  const zn = z => esc(zoneName(+z)), pc = (a, b) => b ? Math.round(100 * a / b) + '%' : '–';
+  const sum = [];
+  const L1 = top(Lm), R1 = top(Rm), Reff = top(Rm, 'eff'), Lbad = top(Lm, 'bad');
+  if (mode === 'R') { if (L1) sum.push(`Paling sering menerima di: <b>${zn(L1[0])}</b> (${L1[1].n}×, ${pc(good(L1[1]), L1[1].n)} baik)`); if (Lbad && Lbad[1].q['=']) sum.push(`Paling rawan: <b>${zn(Lbad[0])}</b> (${Lbad[1].q['=']} gagal dari ${Lbad[1].n})`); }
+  if (mode === 'F' && L1) sum.push(`Paling sering mengumpan dari: <b>${zn(L1[0])}</b> (${L1[1].n}×, ${pc(good(L1[1]), L1[1].n)} baik)`);
+  if (mode === 'B') { if (L1) sum.push(`Paling sering memblok di: <b>${zn(L1[0])}</b> (${L1[1].n}×, ${L1[1].q['#'] || 0} poin blok)`); const dir = list.filter(e => e.z).length;
+    sum.push(dir ? `Arah bola hasil blok tercatat ${dir} dari ${list.length} blok.` : 'Arah bola hasil blok belum tercatat. Saat input blok, klik area jatuhnya bola sebelum memilih hasil blok.'); }
+  if (['all', 'S'].includes(mode)) { const sv = {}; list.forEach(e => { if (e.s === 'S' && e.z) add(sv, e.z, e); }); const s1 = top(sv);
+    if (s1) sum.push(`Servis paling sering ke: <b>${zn(s1[0])}</b> (${s1[1].n} bola, ${s1[1].q['#'] || 0} ace)`); }
+  if (['all', 'A'].includes(mode)) {
+    const fd = {}; list.forEach(e => { if (e.s === 'A' && e.F) add(fd, e.F, e, e.Fe); }); const f1 = top(fd);
+    if (f1) sum.push(`Umpan paling sering dari: <b>${zn(f1[0])}</b> (${f1[1].n}×)`);
+    if (L1) sum.push(`Titik smash terbanyak: <b>${zn(L1[0])}</b> (${L1[1].n}×)`);
+    const rt = tally(e => e.s === 'A' && e.L && e.z ? (e.F || 0) + '>' + e.L + '>' + e.z : null, 1)[0];
+    if (rt) { const [fz, o, z] = rt[0].split('>'); sum.push(`Rute smash terbanyak: <b>${+fz ? 'umpan ' + zn(fz) + ' → ' : ''}smash ${zn(o)} → ${zn(z)}</b> (${rt[1].n}×)`); }
+  }
+  if (['all', 'S', 'A'].includes(mode)) { if (R1) sum.push(`Paling sering diserang: <b>${zn(R1[0])}</b> (${R1[1].n} bola, ${good(R1[1])} ${goodLbl})`); if (Reff && good(Reff[1])) sum.push(`Paling mematikan: <b>${zn(Reff[0])}</b> (${pc(good(Reff[1]), Reff[1].n)} jadi ${goodLbl} dari ${Reff[1].n} bola)`); }
+  const est = list.filter(e => e.Le || e.Fe || e.Ne).length;
+  const noLoc = list.filter(e => e.s !== 'S' && !e.L).length, noZ = list.filter(e => (e.s === 'S' || e.s === 'A') && !e.z).length;
+  const notes = [];
+  if (est) notes.push(`<b>~</b> ${est} lokasi diperkirakan dari posisi pemain karena dicatat tanpa klik area. Pakai mode <b>Area</b> saat input agar tercatat tepat.`);
+  if (noLoc) notes.push(`${noLoc} tanpa lokasi sentuhan.`);
+  if (noZ) notes.push(`${noZ} tanpa area sasaran.`);
+
+  const legend = [
+    ['all', 'S', 'R'].includes(mode) ? `<span><svg viewBox="0 0 34 10" width="34" height="10" aria-hidden="true"><circle cx="5" cy="5" r="4" class="ar-circle"/><line x1="10" y1="5" x2="30" y2="5" class="ar-srv" stroke-width="1.8"/></svg>${mode === 'R' ? 'servis lawan → tempat diterima' : 'servis dari ' + (fmt === 'regu' ? 'lingkaran servis' : 'belakang garis')}</span>` : '',
+    ['all', 'A'].includes(mode) ? `<span><svg viewBox="0 0 54 10" width="54" height="10" aria-hidden="true"><circle cx="5" cy="5" r="4" class="ar-feed-pt"/><line x1="10" y1="5" x2="22" y2="5" class="ar-feed" stroke-width="1.4"/><circle cx="27" cy="5" r="3" class="ar-hit"/><line x1="31" y1="5" x2="50" y2="5" class="ar-atk" stroke-width="1.8"/></svg>umpan ○ → titik smash ● → sasaran</span>` : '',
+    mode === 'F' ? `<span><svg viewBox="0 0 34 10" width="34" height="10" aria-hidden="true"><circle cx="5" cy="5" r="4" class="ar-feed-pt"/><line x1="10" y1="5" x2="30" y2="5" class="ar-atk" stroke-width="1.8"/></svg>umpan ○ → titik smash berikutnya</span>` : '',
+    mode === 'B' ? `<span><svg viewBox="0 0 34 10" width="34" height="10" aria-hidden="true"><circle cx="5" cy="5" r="3" class="ar-hit"/><line x1="9" y1="5" x2="30" y2="5" class="ar-atk" stroke-width="1.8"/></svg>posisi blok ● → arah bola hasil blok</span>` : '',
+  ].join('');
+  const labels = { R: ['Area terima', 'Asal servis lawan'], F: ['Area umpan', '—'], B: ['Area blok', 'Arah bola hasil blok'] }[mode] || ['Area menyerang', 'Area diserang'];
+  return `<article class="ar-card">${head}
+    <div class="ar-labels"><span>${labels[0]} <small>lapangan ${esc(tname(t))}</small></span><span>${labels[1]} <small>lapangan ${esc(tname(o2))}</small></span></div>
+    ${list.length ? court : `<div class="panel empty"><p>Belum ada ${what} tercatat${sel ? ' di area ini' : ''}.</p></div>`}
     <div class="ar-axis"><span>← belakang · depan →</span><span>net</span><span>← depan · belakang →</span></div>
-    <div class="ar-legend">${mode !== 'A' ? `<span><svg viewBox="0 0 34 10" width="34" height="10" aria-hidden="true"><circle cx="5" cy="5" r="4" class="ar-circle"/><line x1="10" y1="5" x2="30" y2="5" class="ar-srv" stroke-width="1.8"/></svg>servis dari ${fmt === 'regu' ? 'lingkaran servis' : 'belakang garis'}</span>` : ''}
-      ${mode !== 'S' ? `<span><svg viewBox="0 0 54 10" width="54" height="10" aria-hidden="true"><circle cx="5" cy="5" r="4" class="ar-feed-pt"/><line x1="10" y1="5" x2="22" y2="5" class="ar-feed" stroke-width="1.4"/><circle cx="27" cy="5" r="3" class="ar-hit"/><line x1="31" y1="5" x2="50" y2="5" class="ar-atk" stroke-width="1.8"/></svg>umpan ○ → titik smash ● → sasaran</span>` : ''}</div>
-    <ul class="ar-sum">${sum.map(s => `<li>${s}</li>`).join('')}</ul>
+    ${legend ? `<div class="ar-legend">${legend}</div>` : ''}
+    ${sum.length ? `<ul class="ar-sum">${sum.map(s => `<li>${s}</li>`).join('')}</ul>` : ''}
+    ${areaPlayers(list, mode, t)}
     ${notes.length ? `<p class="note">${notes.join(' ')}</p>` : ''}
   </article>`;
+}
+/* Siapa yang paling sering melakukan aksi ini, dengan kualitasnya dan area tersering. */
+function areaPlayers(list, mode, t) {
+  const by = {};
+  list.forEach(e => { if (!e.p) return; const r = (by[e.p] ||= { n: 0, q: {}, S: 0, A: 0, k: 0, zone: {} }); r.n++; r.q[e.q] = (r.q[e.q] || 0) + 1; r[e.s] = (r[e.s] || 0) + 1; if (e.q === '#') r.k++;
+    const zk = e.s === 'S' ? e.z : e.L; if (zk) r.zone[zk] = (r.zone[zk] || 0) + 1; });
+  const rows = Object.entries(by).sort((a, b) => b[1].n - a[1].n).slice(0, 6);
+  if (!rows.length) return '';
+  const g = (r, q) => r.q[q] || 0, pc = (a, b) => b ? Math.round(100 * a / b) + '%' : '–';
+  const cols = {
+    all: [['Servis', r => r.S || 0], ['Smash', r => r.A || 0], ['Poin', r => r.k]],
+    S: [['Ace', r => g(r, '#')], ['Menekan', r => pc(g(r, '#') + g(r, '+'), r.n)], ['Error', r => g(r, '=')]],
+    A: [['Poin', r => g(r, '#')], ['Kill %', r => pc(g(r, '#'), r.n)], ['Error', r => g(r, '=')], ['Diblok', r => g(r, '/')]],
+    R: [['Sempurna', r => g(r, '#')], ['Baik %', r => pc(g(r, '#') + g(r, '+'), r.n)], ['Gagal', r => g(r, '=')]],
+    F: [['Sempurna', r => g(r, '#')], ['Baik %', r => pc(g(r, '#') + g(r, '+'), r.n)], ['Error', r => g(r, '=')]],
+    B: [['Poin blok', r => g(r, '#')], ['Bagus', r => g(r, '+')], ['Error', r => g(r, '=')]],
+  }[mode];
+  const zTop = r => { const e = Object.entries(r.zone).sort((a, b) => b[1] - a[1])[0]; return e ? zoneName(+e[0]) : '–'; };
+  return `<div class="tscroll"><table class="dt ar-pl"><thead><tr><th>Pemain</th><th>Jumlah</th>${cols.map(([l]) => `<th>${l}</th>`).join('')}<th>Area tersering</th></tr></thead><tbody>
+    ${rows.map(([id, r]) => `<tr><td><span class="sw ${t}"></span> ${esc(pLabel(id))}</td><td>${r.n}</td>${cols.map(([, f]) => `<td>${f(r)}</td>`).join('')}<td>${esc(zTop(r))}</td></tr>`).join('')}</tbody></table></div>`;
 }
 function playerTable(X, t) {
   const pl = (X.roster?.[t] || S.m.meta[t].players).filter(p => X.P[p.id]);
@@ -2561,7 +2671,10 @@ const ACT = {
   ytLoad: () => loadYouTube($('#ytUrl').value || S.m?.meta.video),
   statSet: d => { S.statSet = d.s; renderStats(); },
   exportPdf: () => exportPdf(),
-  areaF: d => { S.areaF = d.f; S.areaT = ''; const y = scrollY; renderStats(); scrollTo({ top: y }); },
+  areaF: d => { S.areaF = d.f; S.areaT = ''; S.areaSel = null; const y = scrollY; renderStats(); scrollTo({ top: y }); },
+  areaTeam: d => { S.areaTeam = d.v; if (S.areaSel && d.v !== 'both' && S.areaSel.t !== d.v) S.areaSel = null; const y = scrollY; renderStats(); scrollTo({ top: y }); },
+  areaZone: d => { const s = S.areaSel, z = +d.z; S.areaSel = s && s.t === d.t && s.h === d.h && s.z === z ? null : { t: d.t, h: d.h, z }; const y = scrollY; renderStats(); scrollTo({ top: y }); },
+  areaClear: () => { S.areaSel = null; const y = scrollY; renderStats(); scrollTo({ top: y }); },
   exportCsv: () => offer(fileSafe(`${S.m.meta.date}_${S.m.meta.A.name}_vs_${S.m.meta.B.name}`) + '.csv', toCsv()),
   exportJson: () => { const { id, ...rest } = S.m; offer(fileSafe(`${S.m.meta.date}_${S.m.meta.A.name}_vs_${S.m.meta.B.name}`) + '.json', JSON.stringify({ takrawStats: 1, ...rest }, null, 1)); },
   copySummary: () => copy(summaryText()),

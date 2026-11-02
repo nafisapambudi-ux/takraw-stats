@@ -2,7 +2,7 @@
    Halaman, video beranda, font, dan pustaka Supabase disimpan agar web tetap terbuka saat sinyal venue hilang.
    Data pertandingan tidak lewat sini: aplikasi menyimpannya sendiri di perangkat dan mengirimnya saat online.
    Strategi: jaringan dulu, salinan simpanan bila offline. Ganti VERSION setiap menerbitkan versi baru. */
-const VERSION = 'takraw-v19';
+const VERSION = 'takraw-v20';
 const CORE = ['./', './index.html', './media/hero-poster.jpg'];
 
 self.addEventListener('install', e => {
