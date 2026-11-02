@@ -574,6 +574,42 @@ details summary { cursor: pointer; }
 .fix-grid { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 10px; align-items: end; }
 .fix-in { font-size: 34px; font-family: var(--f-display); text-align: center; padding: 6px; }
 .fix-sep { font-family: var(--f-display); font-size: 34px; color: var(--muted); padding-bottom: 8px; }
+.tag-grid.wide { grid-template-columns: minmax(0, 1fr); }
+.aksirow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.aksirow .lbl { margin-right: 4px; }
+.aksirow .sk { padding: 6px 10px; }
+.courtrow.pitchrow { grid-template-columns: minmax(150px, 190px) minmax(0, 1fr) minmax(150px, 190px) minmax(120px, 150px); gap: 10px; }
+.courtrow.pitchrow > .sidecol.aksi { display: none; }
+.courtrow.pitchrow > .sidecol.kual { order: 5; }   /* aturan lama layar sempit menaruh kualitas paling atas */
+.pside { display: grid; gap: 6px; align-content: start; min-width: 0; padding: 6px; border-radius: 10px; border: 1px solid transparent; }
+.pside.active { border-color: var(--line); background: var(--surface2); }
+.pside.pick { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.ps-hd { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; min-width: 0; }
+.ps-hd span:nth-child(2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ps-ball { margin-left: auto; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); }
+.pcard { display: grid; grid-template-columns: 20px 34px minmax(0, 1fr) auto; gap: 6px; align-items: center; text-align: left; min-height: 56px; padding: 6px 8px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); cursor: pointer; }
+.pcard.A { box-shadow: inset 4px 0 0 var(--teamA); } .pcard.B { box-shadow: inset 4px 0 0 var(--teamB); }
+.pcard.on.A { border-color: var(--teamA); box-shadow: inset 0 0 0 2px var(--teamA); } .pcard.on.B { border-color: var(--teamB); box-shadow: inset 0 0 0 2px var(--teamB); }
+.pcard .no { font-family: var(--f-display); font-size: 24px; line-height: 1; text-align: center; }
+.pcard.A .no { color: var(--teamA); } .pcard.B .no { color: var(--teamB); }
+.pcard .pc-t { display: grid; min-width: 0; line-height: 1.15; }
+.pcard .pr { font-family: var(--f-display); font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: .03em; }
+.pcard .pnm { font-size: 12px; color: var(--ink2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pcard .srv-ball { width: 16px; height: 16px; }
+.ps-bench { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.ps-bench .lbl { width: 100%; }
+.ps-bench .pb { border: 1px dashed var(--line); background: none; border-radius: 6px; padding: 3px 7px; font-size: 12px; color: var(--muted); cursor: pointer; }
+.ps-bench .pb.on { border-style: solid; color: var(--ink); }
+.ps-act { justify-content: center; }
+@media (max-width: 1080px) {
+  .courtrow.pitchrow { grid-template-columns: minmax(120px, 160px) minmax(0, 1fr) minmax(120px, 160px); }
+  .courtrow.pitchrow > .sidecol.kual { grid-column: 1 / -1; }
+  .courtrow.pitchrow > .sidecol.kual .vseg { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .courtrow.pitchrow > .sidecol.kual .qb { justify-content: center; flex-direction: column; text-align: center; padding: 8px 4px; }
+  .courtrow.pitchrow > .sidecol.kual .qb .end { padding-left: 0; }
+  .pcard { grid-template-columns: 16px 28px minmax(0, 1fr); min-height: 52px; padding: 5px 6px; }
+  .pcard .srv-ball { display: none; }
+}
 .btn.direct.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .st-x { font-size: 11px; font-weight: 600; color: var(--accent); }
 .btn.unseen.on { background: #FFCD50; border-color: #E0A800; color: #3a2a00; }
@@ -2158,6 +2194,8 @@ function renderTagMain() {
       ${S.subUI === t ? subForm(t) : `<button class="btn sm ghost" data-act="subOpen" data-t="${t}" ${pl.length > court.length ? '' : 'disabled title="Tambahkan pemain cadangan di data pertandingan"'}>⇄ Ganti pemain</button>`}
     </div>`;
   };
+  // Laptop & tablet (bukan HP, bukan mode Ringkas): pemain tiap tim tepat di samping setengah lapangannya.
+  const wide = !matchMedia('(max-width: 600px)').matches && !(S.mode === 'lite' && S.editIdx == null);
   const tTouch = targetTouch();
   const causeFor = tTouch && tTouch.q === '=' && ERR_CAUSE[tTouch.s] ? tTouch : null;
   const techSkill = S.sel.pid ? sk : tTouch?.s;
@@ -2177,9 +2215,30 @@ function renderTagMain() {
   const pad = locked() ? '' : `<div class="ctxbar"><span class="sw ${padTeam}"></span><b>${esc(padLabel)}</b><span class="spacer"></span>
       ${modeTabs()}
       ${S.mode !== 'list' ? `<div class="tabs mode" role="group" aria-label="Kualitas bila dilewati" title="Bila pemain berikutnya dipilih tanpa menekan kualitas, sentuhan sebelumnya disimpan dengan kualitas ini"><button class="${S.quick === '+' ? 'on' : ''}" data-act="quick" data-q="+">Cepat: +</button><button class="${S.quick === '!' ? 'on' : ''}" data-act="quick" data-q="!">Cepat: !</button><button class="${!S.quick ? 'on' : ''}" data-act="quick" data-q="">Mati</button></div>` : ''}${zoomTabs()}</div>
-    ${S.mode !== 'list' ? `<div class="pospad">${posPlayers(padTeam).map((p, i) => `<button class="posbtn ${padTeam} ${S.sel.pid === p.id || S.blk?.pid === p.id ? 'on' : ''}" data-act="pos" data-i="${i}"><kbd>${i + 1}</kbd><span><span class="pr">${esc(p.pos === 'Pemain' ? 'Pemain ' + (i + 1) : p.pos)}</span><span class="pnm">#${esc(p.no)} ${esc(p.name)}</span></span></button>`).join('')}
+    ${S.mode !== 'list' && !wide ? `<div class="pospad">${posPlayers(padTeam).map((p, i) => `<button class="posbtn ${padTeam} ${S.sel.pid === p.id || S.blk?.pid === p.id ? 'on' : ''}" data-act="pos" data-i="${i}"><kbd>${i + 1}</kbd><span><span class="pr">${esc(p.pos === 'Pemain' ? 'Pemain ' + (i + 1) : p.pos)}</span><span class="pnm">#${esc(p.no)} ${esc(p.name)}</span></span></button>`).join('')}
       <button class="posbtn flip" data-act="flipTeam" title="Pilih pemain tim lain"><kbd>Tab</kbd><span><span class="pr">Tim lain</span><span class="pnm">${esc(tname(opp(padTeam)))}</span></span></button></div>` : ''}
     ${sk === 'A' && S.sel.pid && !S.blk ? `<button class="btn blkbtn" data-act="block"><kbd>B</kbd> Serangan dihadang blok ${esc(tname(opp(S.sel.tm)))}</button>` : ''}`;
+  const listKeys = t => (S.mode !== 'list' ? [] : t === 'A' ? ['1', '2', '3', '4', '5', '6'] : ['7', '8', '9', '0', '', '']);
+  const sidePlayers = t => {
+    const all = M[t].players.filter(p => p.no || p.name), court = posPlayers(t), ids = court.map(p => p.id);
+    const bench = all.filter(p => !ids.includes(p.id)), keyOf = p => listKeys(t)[all.indexOf(p)] || '';
+    const active = !locked() && t === padTeam, picking = S.blk && !S.blk.pid;
+    const card = (p, i) => {
+      const role = p.pos === 'Pemain' ? 'Posisi ' + (i + 1) : p.pos, on = S.sel.pid === p.id || S.blk?.pid === p.id;
+      const k = S.mode === 'list' ? keyOf(p) : active ? String(i + 1) : '';
+      return `<button class="pcard ${t}${on ? ' on' : ''}" data-act="side" data-t="${t}" data-i="${i}" title="${esc(role)} · #${esc(p.no)} ${esc(p.name)}">
+        ${k ? `<kbd>${k}</kbd>` : '<span class="nok"></span>'}<b class="no">${esc(p.no || '?')}</b>
+        <span class="pc-t"><span class="pr">${esc(role)}</span><span class="pnm">${esc(p.name || '—')}</span></span>
+        ${S.cur.sp === p.id && srvT === t && !locked() ? '<svg class="srv-ball" aria-label="Servis"><use href="#takraw"/></svg>' : ''}</button>`;
+    };
+    return `<div class="pside ${t}${active ? ' active' : ''}${picking && t === opp(S.blk.att.tm) ? ' pick' : ''}">
+      <div class="ps-hd"><span class="sw ${t}"></span><span>${esc(M[t].name || 'Tim ' + t)}</span>${active ? `<span class="ps-ball">${picking ? 'pemblok' : 'bola'}</span>` : ''}</div>
+      ${court.map(card).join('')}
+      ${bench.length ? `<div class="ps-bench"><span class="lbl">Cadangan</span>${bench.map(p => `<button class="pb ${t}${S.sel.pid === p.id ? ' on' : ''}" data-act="player" data-id="${p.id}" title="${esc(p.name)}">${keyOf(p) ? `<kbd>${keyOf(p)}</kbd>` : ''}#${esc(p.no)}</button>`).join('')}</div>` : ''}
+      ${S.subUI === t ? subForm(t) : `<button class="btn sm ghost ps-act" data-act="subOpen" data-t="${t}" ${bench.length ? '' : 'disabled title="Tambahkan pemain cadangan di data pertandingan"'}>⇄ Ganti pemain</button>`}
+      <button class="btn sm ghost ps-act" data-act="manual" data-t="${t}" title="Poin tanpa sentuhan penentu, mis. bola jatuh tanpa tersentuh">+ Poin lainnya</button>
+    </div>`;
+  };
   const qBtns = (sk ? SKILLS[sk].q : ['#', '+', '!', '-', '=']).map(q => {
     const term = sk && touchResult({ tm: 'A', s: sk, q });
     return `<button class="qb ${term ? 'term' : ''}" data-act="q" data-q="${q}" ${S.sel.pid ? '' : 'disabled style="opacity:.5"'}><span class="sym">${q === '-' ? '−' : q}</span>${sk ? QL[sk][q] : ''}${term ? `<span class="end">poin ${term === 'A' ? 'tim ini' : 'lawan'}</span>` : ''}</button>`;
@@ -2207,16 +2266,19 @@ function renderTagMain() {
         <button class="sb-flip" data-act="sideFlip" title="Tukar posisi tim kiri dan kanan di layar">⇄ Tukar posisi</button></div>
       ${sbTeam(opp(sideLeft()), 'R')}
     </div>
-    <div class="tag-grid m-${S.mode}${locked() ? ' done' : ''}">
-      ${teamPanel(sideLeft())}
+    <div class="tag-grid m-${S.mode}${locked() ? ' done' : ''}${wide ? ' wide' : ''}">
+      ${wide ? '' : teamPanel(sideLeft())}
       <div class="center panel">${S.mode === 'lite' && S.editIdx == null ? liteHtml() : `${S.editIdx != null ? ` <div class="banner editb">${S.m.rallies[S.editIdx]?.lite ? 'Melengkapi' : 'Mengubah'} rally #${S.editIdx + 1} dari video — sentuhan lama diganti setelah rally ini selesai dicatat · <button class="btn sm ghost" data-act="cancelEdit">Batal</button></div>` : ''}
         ${flowHtml()}
         ${pad}
         <div class="hint" aria-live="polite">${esc(hint)}</div>
         ${areaGuide()}
-        <div class="courtrow">
+        ${wide ? `<div class="aksirow"><span class="lbl">Aksi</span>${SKILL_ORDER.map(k => `<button class="sk ${S.sel.skill === k ? 'on' : ''} ${!S.sel.skill && sk === k ? 'sug' : ''}" data-act="skill" data-k="${k}">${SKILLS[k].name} <kbd>${SKILLS[k].key.toUpperCase()}</kbd></button>`).join('')}</div>` : ''}
+        <div class="courtrow${wide ? ' pitchrow' : ''}">
+        ${wide ? sidePlayers(sideLeft()) : ''}
         <div class="sidecol aksi"><div class="lbl">Aksi</div><div class="vseg">${SKILL_ORDER.map(k => `<button class="sk ${S.sel.skill === k ? 'on' : ''} ${!S.sel.skill && sk === k ? 'sug' : ''}" data-act="skill" data-k="${k}">${SKILLS[k].name} <kbd>${SKILLS[k].key.toUpperCase()}</kbd></button>`).join('')}</div></div>
         <div class="courtcol"><div class="courthd"><div class="lbl">${S.mode === 'area' ? 'Lapangan · klik area sentuhan, lalu area tujuan' : `Zona ${S.sel.pid ? '(arah/tempat bola)' : '(sentuhan terakhir)'} — opsional`}</div><span class="spacer"></span><div class="tabs mode sm" role="group" aria-label="Arah lapangan"><button class="${S.orient !== 'v' ? 'on' : ''}" data-act="orient" data-o="h" title="Lapangan mendatar: ${esc(tname('A'))} kiri, ${esc(tname('B'))} kanan">Mendatar</button><button class="${S.orient === 'v' ? 'on' : ''}" data-act="orient" data-o="v" title="Ikuti kamera siaran dari belakang garis akhir. Sisi bertukar otomatis tiap set.">Ikuti kamera <kbd>V</kbd></button></div>${S.orient === 'v' ? `<button class="btn sm ghost" data-act="camFlip" title="Tukar tim yang dekat kamera">⇅ Tukar sisi</button>` : ''}</div>${courtSvg()}</div>
+        ${wide ? sidePlayers(opp(sideLeft())) : ''}
         <div class="sidecol kual"><div class="lbl">Kualitas ${sk ? '· ' + SKILLS[sk].name : ''}</div><div class="vseg qseg">${qBtns}</div></div>
         </div>
         ${techSkill ? `<div class="techrow"><div class="lbl">Teknik · ${SKILLS[techSkill].name}${S.sel.pid ? '' : ' (sentuhan terakhir)'}</div><div class="seg">${SKILLS[techSkill].tech.map(x => `<button class="tchip ${techVal === x ? 'on' : ''}" data-act="tech" data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>` : ''}
@@ -2234,7 +2296,7 @@ function renderTagMain() {
         </div>
         <div class="shortcuts">${S.mode !== 'list' ? '<span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> posisi pemain tim yang memegang bola</span><span><kbd>Tab</kbd> tim lain</span><span><kbd>B</kbd> serangan dihadang blok</span><span><kbd>N</kbd> langsung ke lawan</span><span><kbd>U</kbd> tak terlihat</span><span><kbd>V</kbd> ikuti kamera</span>' : '<span><kbd>1</kbd>–<kbd>6</kbd> pemain A</span><span><kbd>7</kbd>–<kbd>0</kbd> pemain B</span>'}<span><kbd>S</kbd><kbd>R</kbd><kbd>F</kbd><kbd>A</kbd><kbd>B</kbd><kbd>D</kbd><kbd>X</kbd> aksi</span><span>Kualitas: <kbd>#</kbd><kbd>+</kbd><kbd>!</kbd><kbd>-</kbd><kbd>/</kbd><kbd>=</kbd> atau <kbd>H</kbd><kbd>J</kbd><kbd>K</kbd><kbd>L</kbd><kbd>;</kbd><kbd>'</kbd></span><span><kbd>Spasi</kbd> video · <kbd>←</kbd><kbd>→</kbd> 2 s</span></div>`}
       </div>
-      ${teamPanel(opp(sideLeft()))}
+      ${wide ? '' : teamPanel(opp(sideLeft()))}
     </div>${dock}`);
   scrollFlow();
 }
@@ -2786,6 +2848,17 @@ const ACT = {
     S.draft = { id: null, meta }; go('setup');
   },
   player: d => selectPlayer(d.id),
+  side: d => {
+    if (locked()) return;
+    const t = d.t, i = +d.i;
+    if (S.blk) { if (!S.blk.pid && t === opp(S.blk.att.tm)) selectPos(i); return; }
+    const curTeam = S.sel.pid ? S.sel.tm : (S.forceTeam || ctx().team);
+    if (t === curTeam) return selectPos(i);
+    // Pemain tim lain: simpan sentuhan tertunda (mode Cepat) atau batalkan pilihan, lalu pindah ke tim itu.
+    if (S.sel.pid) { if (S.quick) { if (!autoCommit()) return; } else clearSel(); }
+    S.forceTeam = ctx().team === t ? null : t;
+    selectPos(i);
+  },
   skill: d => selectSkill(d.k),
   q: d => commit(d.q),
   tech: d => setTech(d.v),
