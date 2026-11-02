@@ -2966,7 +2966,7 @@ async function cloudStartOffline(u) {
   const c = lsGet(cacheKey(), null) || lsGet('takraw.cache.last', null);
   if (c) { Store.setArr('matches', c.matches || []); Store.setArr('events', c.events || []); }
   Store.queue.forEach((body, path) => { const [col, id] = splitPath(path); const a = Store.arr(col).filter(x => x.id !== id); a.push(clone(body)); Store.setArr(col, a); });
-  cloudUi(); setStoreState(); renderTabs(); cloudRoute(); Store.onChange('matches');
+  cloudUi(); setStoreState(); renderTabs(); cloudRoute(); Store.onChange('matches'); startProbe();
   toast('Mode offline — memakai akun ' + (u.email || 'terakhir') + '. Catatan dikirim otomatis saat online.');
 }
 /* Sinyal kembali: perbarui login, lalu kirim antrian. Bila login sudah kedaluwarsa, minta masuk lagi tanpa membuang catatan. */
@@ -2979,7 +2979,8 @@ async function cloudReconnect() {
     const { data, error } = await Cloud.sb.auth.getSession();
     if (data?.session && data.session.user.id === Cloud.user.id) await cloudBackOnline(data.session);
     else if (!error || !netErr(error)) { Cloud.needLogin = true; toast('Sesi login berakhir. Masuk lagi untuk mengirim catatan yang tersimpan di perangkat.'); }
-  } catch {} finally { Cloud.reconnecting = false; setStoreState(); }
+    else markOffline();   // sinyal belum benar-benar pulih
+  } catch { markOffline(); } finally { Cloud.reconnecting = false; setStoreState(); }
 }
 async function cloudBackOnline(session) {
   Cloud.offlineAuth = false; Cloud.needLogin = false; Cloud.online = true; Cloud.user = session.user;
@@ -3023,6 +3024,7 @@ async function cloudLoad() {
   const bad = res.find(r => r.error);
   if (bad) {
     const c = lsGet(cacheKey(), null);
+    if (netErr(bad.error)) markOffline();
     if (c) { Store.setArr('matches', c.matches); Store.setArr('events', c.events); toast(netErr(bad.error) ? 'Offline — menampilkan data tersimpan di perangkat.' : 'Gagal memuat: ' + bad.error.message); }
     else toast('Gagal memuat data: ' + bad.error.message);
   } else {
@@ -3084,7 +3086,7 @@ async function cloudFlush() {
       const [col, id] = splitPath(path);
       const { id: _drop, _own, _by, ...data } = body;
       const { error } = await Cloud.sb.from(col).upsert({ id, data });
-      if (error && netErr(error)) { Cloud.online = navigator.onLine !== false; Cloud.timer = setTimeout(cloudFlush, 5000); return; }
+      if (error && netErr(error)) { markOffline(); return; }   // pemeriksa sinyal akan mengirim ulang saat server terjangkau
       Store.queue.delete(path); persistQueue();
       if (error && col === 'matches' && /row-level security|42501/i.test(error.message + error.code)) saveConflictCopy(body);
       else if (error) toast('Gagal menyimpan: ' + error.message);
@@ -3099,8 +3101,32 @@ function saveConflictCopy(body) {
   Store.save(copy);
   toast('Pertandingan ini sedang dicatat analis lain. Catatan Anda disimpan sebagai salinan terpisah.');
 }
-window.addEventListener('online', () => { Cloud.online = true; setStoreState(); if (Store.mode === 'cloud' && Cloud.offlineAuth) { cloudReconnect(); return; } if (Store.mode === 'cloud') { cloudFlush(); if (S.view === 'tag' && S.m) claimLock(S.m.id, false, true); } });
-window.addEventListener('offline', () => { Cloud.online = false; setStoreState(); });
+function goOnline() {
+  stopProbe(); Cloud.online = true; setStoreState();
+  if (Store.mode === 'cloud' && Cloud.offlineAuth) { cloudReconnect(); return; }
+  if (Store.mode === 'cloud') { cloudFlush(); if (S.view === 'tag' && S.m) claimLock(S.m.id, false, true); }
+}
+/* Di venue sering "tersambung tapi internet tidak jalan": browser tetap mengaku online dan event 'online' tak pernah
+   muncul. Maka setiap kegagalan jaringan menandai offline, lalu server diperiksa tiap 15 detik sampai terjangkau lagi. */
+function markOffline() {
+  if (Store.mode !== 'cloud') return;
+  Cloud.online = false; setStoreState(); startProbe();
+}
+function startProbe() {
+  if (Cloud.probe) return;
+  Cloud.probe = setInterval(async () => {
+    if (navigator.onLine === false) return;
+    try {
+      const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 5000);
+      const r = await fetch(CLOUD.url + '/auth/v1/health', { headers: { apikey: CLOUD.key }, cache: 'no-store', signal: ctl.signal });
+      clearTimeout(t);
+      if (r.ok) goOnline();
+    } catch {}
+  }, 15000);
+}
+function stopProbe() { clearInterval(Cloud.probe); Cloud.probe = null; }
+window.addEventListener('online', goOnline);
+window.addEventListener('offline', () => { Cloud.online = false; setStoreState(); if (Store.mode === 'cloud') startProbe(); });
 window.addEventListener('beforeunload', e => {
   if (Store.mode === 'db' && Store.queue.size) { e.preventDefault(); e.returnValue = ''; return; }
   if (Store.mode !== 'cloud') return;
