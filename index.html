@@ -61,6 +61,13 @@ button { cursor: pointer; }
 html.intro-on { overflow: hidden; }
 .intro-play { display: none; position: absolute; width: 84px; height: 84px; border-radius: 50%; border: 0; background: #E20303; color: #fff; font-size: 30px; padding-left: 6px; cursor: pointer; box-shadow: 0 0 0 10px rgb(226 3 3 / .25); }
 .intro.blocked .intro-play { display: grid; place-items: center; }
+.intro-enter { display: none; position: absolute; left: 50%; bottom: calc(13% + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); align-items: center; gap: 10px; white-space: nowrap; font: 700 19px var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: #fff; background: #E20303; border: 0; border-radius: 999px; padding: 14px 32px; cursor: pointer; box-shadow: 0 12px 34px rgb(226 3 3 / .35); animation: introIn .5s ease both; }
+.intro-enter:hover { background: #FF1A1A; }
+.intro-enter:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.intro.gate .intro-enter { display: inline-flex; }
+.intro.gate .intro-ctl, .intro.gate .intro-play { display: none; }
+@keyframes introIn { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@media (prefers-reduced-motion: reduce) { .intro-enter { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .intro { transition: none; } }
 .wordmark { display: block; height: 24px; width: auto; }
 .tabs { display: flex; gap: 2px; background: var(--surface2); border-radius: 999px; padding: 3px; }
@@ -921,10 +928,12 @@ dl.roles dt { font-weight: 700; } dl.roles dd { margin: 0; color: var(--ink2); }
   <video id="introVid" muted playsinline preload="auto" aria-hidden="true"></video>
   <button class="intro-play" id="introPlay" type="button" aria-label="Putar video pembuka">▶</button>
   <div class="intro-ctl"><button class="intro-btn" id="introSound" type="button">Nyalakan suara</button><button class="intro-btn primary" id="introSkip" type="button">Lewati</button></div>
+  <button class="intro-enter" id="introEnter" type="button">Masuk ke TAKRA <span aria-hidden="true">→</span></button>
 </div>
 <script>
-/* Layar pembuka: bola 3D → logo TAKRA, sekali per kunjungan (sessionStorage). Dilewati bila pengguna memilih
-   reduced motion, bila video gagal dimuat, atau bila browser menolak memutar. Versi tegak 9:16 untuk layar HP. */
+/* Layar pembuka: bola 3D → logo TAKRA, sekali per kunjungan (sessionStorage). Setelah video selesai, layar berhenti
+   di logo dengan tombol "Masuk ke TAKRA"; beranda terbuka setelah tombol diklik (atau Enter). "Lewati" langsung ke beranda.
+   Bila putar otomatis ditolak atau pengguna memilih kurangi gerakan, tampil diam dengan tombol Putar. Versi 9:16 untuk HP. */
 (function () {
   const el = document.getElementById('intro'), v = document.getElementById('introVid');
   let seen = false; try { seen = sessionStorage.getItem('takra.intro') === '1'; } catch {}
@@ -951,17 +960,24 @@ dl.roles dt { font-weight: 700; } dl.roles dd { margin: 0; color: var(--ink2); }
     el.classList.remove('blocked'); v.muted = false; document.getElementById('introSound').textContent = 'Matikan suara';
     try { const p = v.play(); if (p && p.catch) p.catch(close); } catch { close(); }
   });
-  v.addEventListener('ended', close); v.addEventListener('error', close);
+  // Video selesai, gagal dimuat, atau tak kunjung mulai: berhenti di logo dengan tombol Masuk.
+  const gate = () => {
+    if (done || el.classList.contains('gate')) return;
+    el.classList.remove('blocked'); el.classList.add('gate');
+    window.dispatchEvent(new Event('takra-intro-done'));   // sinyal sudah lega: video beranda boleh mulai diunduh
+    const b = document.getElementById('introEnter'); try { b.focus({ preventScroll: true }); } catch {}
+  };
+  document.getElementById('introEnter').addEventListener('click', close);
+  v.addEventListener('ended', gate); v.addEventListener('error', gate);
   document.getElementById('introSkip').addEventListener('click', close);
   document.getElementById('introSound').addEventListener('click', e => {
     v.muted = !v.muted; e.currentTarget.textContent = v.muted ? 'Nyalakan suara' : 'Matikan suara';
   });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' || (e.key === 'Enter' && el.classList.contains('gate'))) close(); });
   if (still) blocked();
   else try { const p = v.play(); if (p && p.catch) p.catch(blocked); } catch { blocked(); }
-  // Sinyal sangat lambat: bila video belum mulai setelah 12 detik, langsung ke beranda.
-  setTimeout(() => { if (!done && v.currentTime < 0.2 && !el.classList.contains('blocked')) close(); }, 12000);
-  setTimeout(close, 25000);
+  // Sinyal sangat lambat: bila video belum mulai setelah 12 detik, tampilkan tombol Masuk.
+  setTimeout(() => { if (!done && v.currentTime < 0.2 && !el.classList.contains('blocked')) gate(); }, 12000);
 })();
 </script>
 <header class="top">
