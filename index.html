@@ -569,6 +569,8 @@ details summary { cursor: pointer; }
 .court.vert { width: auto; height: min(68vh, 620px); min-width: 0; max-width: 100%; }
 .camlbl { font-size: 12px; font-weight: 600; color: var(--muted); padding: 2px 0; }
 .camlbl.near { color: var(--ink); }
+.btn.direct.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.st-x { font-size: 11px; font-weight: 600; color: var(--accent); }
 .btn.unseen.on { background: #FFCD50; border-color: #E0A800; color: #3a2a00; }
 .tk.unk { outline: 2px dashed #E0A800; outline-offset: -2px; }
 .tk { cursor: pointer; }
@@ -1140,7 +1142,7 @@ function endCodeOf(t) {
 function suggestSkill(touches, team) {
   if (!touches.length) return 'S';
   const last = touches[touches.length - 1];
-  if (team === last.tm) {
+  if (team === last.tm && !last.x) {
     if (last.s === 'F') return 'A';
     if (last.s === 'B') return 'D';
     return 'F';
@@ -1169,6 +1171,7 @@ function ballContext(touches, srv) {
   const last = touches[touches.length - 1];
   if (last.s === 'S') return { team: opp(last.tm), idx: 1, skill: 'R' };
   if (last.s === 'A') return { team: opp(last.tm), idx: 1, skill: 'D' };
+  if (last.x) return { team: opp(last.tm), idx: 1, skill: 'D' };   // terima/umpan/cover langsung ke lawan
   if (last.s === 'B') return { team: last.q === '+' ? opp(last.tm) : last.tm, idx: 1, skill: 'D' };
   const n = possessionTouches(touches, last.tm) + 1;
   return { team: last.tm, idx: n, skill: n === 2 ? 'F' : n === 3 ? 'A' : 'X' };
@@ -1658,7 +1661,17 @@ function setPath(obj, path, val) {
 
 /* ---------- Input / tagging ---------- */
 const clearSelKeepForce = () => { const f = S.forceTeam; clearSel(); S.forceTeam = f; };
-const clearSel = () => { S.sel = { pid: null, tm: null, skill: null, tech: null, z: null, zh: null, u: false }; S.blk = null; S.forceTeam = null; };
+const clearSel = () => { S.sel = { pid: null, tm: null, skill: null, tech: null, z: null, zh: null, u: false, x: false, x2: false }; S.blk = null; S.forceTeam = null; };
+/* Bola langsung ke lawan: sentuhan ke-2 (umpan) dicatat sebagai Serang; terima/cover diberi tanda x. */
+const DIRECT_OK = sk => sk === 'R' || sk === 'F' || sk === 'D';
+function directToOpp(z, half) {
+  const sk = currentSkill();
+  if (sk === 'F') { S.sel.skill = 'A'; S.sel.x2 = true; }
+  else if (sk === 'R' || sk === 'D') S.sel.x = true;
+  else return false;
+  if (z) { S.sel.z = z; S.sel.zh = half; S.sel.warned = false; }
+  return true;
+}
 function resetCur() {
   S.cur = { touches: [], srv: null, sp: null, ts: null, vt0: null, ovr: false };
   clearSel();
@@ -1888,6 +1901,10 @@ function areaZone(half, z) {
   if (S.sel.pid) {
     const sk = currentSkill();
     if (needsTarget(sk) && half !== S.sel.tm) { S.sel.z = z; S.sel.zh = half; S.sel.warned = false; return renderTagMain(); }
+    if (DIRECT_OK(sk) && half !== S.sel.tm && directToOpp(z, half)) {
+      toast(sk === 'F' ? 'Sentuhan ke-2 langsung ke lawan — dicatat sebagai Serang. Pilih kualitasnya.' : 'Bola langsung ke lawan. Pilih kualitasnya.');
+      return renderTagMain();
+    }
     if (half === S.sel.tm && !S.cur.touches.length && sk === 'S') return renderTagMain();
     if (S.quick) { if (!autoCommit()) return; } else { S.sel.oz = z; S.sel.ozh = half; setPlayer(zonePlayer(half, z) || S.sel.pid); return renderTagMain(); }
   }
@@ -1933,6 +1950,11 @@ function commit(q, auto) {
   if (S.sel.oz) { t.oz = S.sel.oz; t.ozh = S.sel.ozh; if (!t.z && !needsTarget(sk)) { t.z = t.oz; t.zh = t.ozh; } }
   if (auto) t.auto = 1;
   if (S.sel.u) t.u = 1;
+  if (S.sel.x && DIRECT_OK(sk)) t.x = 1;
+  if (S.sel.x2 && sk === 'A') t.x2 = 1;   // serangan langsung dari sentuhan ke-2
+  // Lawan menyentuh berikutnya padahal sentuhan terakhir terima/umpan/cover: bola itu ternyata langsung menyeberang.
+  const prevT = S.cur.touches[S.cur.touches.length - 1];
+  if (prevT && prevT.tm !== t.tm && DIRECT_OK(prevT.s) && t.s !== 'B' && t.s !== 'X' && !prevT.x) { prevT.x = 1; prevT.xa = 1; }
   if (t.z == null) { delete t.z; delete t.zh; }
   if (!S.cur.touches.length) { S.cur.ts = Date.now(); S.cur.vt0 = vt; }
   if (sk === 'S' && S.editIdx == null) { S.cur.srv = t.tm; S.cur.sp = t.p; S.cur.ovr = S.st.cur ? S.cur.srv !== srvTeamFor(S.st.cur.first, S.st.cur.a, S.st.cur.b, S.m.meta.rules) : false; }
@@ -1995,7 +2017,7 @@ function endRally(win, end, lite) {
 function undo() {
   if (S.blk) { S.blk = null; renderTagMain(); return; }
   if (S.sel.pid || S.sel.skill || S.forceTeam) { clearSel(); renderTagMain(); return; }
-  if (S.cur.touches.length) { S.cur.touches.pop(); if (!S.cur.touches.length && S.editIdx == null) { S.cur.ts = null; S.cur.vt0 = null; } renderTagMain(); return; }
+  if (S.cur.touches.length) { S.cur.touches.pop(); const lt = S.cur.touches[S.cur.touches.length - 1]; if (lt && lt.xa) { delete lt.x; delete lt.xa; } if (!S.cur.touches.length && S.editIdx == null) { S.cur.ts = null; S.cur.vt0 = null; } renderTagMain(); return; }
   if (S.editIdx != null) { S.editIdx = null; resetCur(); toast('Batal melengkapi rally'); renderTag(); return; }
   const ra = S.m.rallies.pop(); if (!ra) return;
   persist();
@@ -2086,7 +2108,7 @@ function renderTagMain() {
   else if (!S.sel.pid) hint = S.cur.touches.length ? 'Pilih pemain berikutnya. Teknik/zona/penyebab di bawah akan diterapkan ke sentuhan terakhir.' : `Servis: ${tname(srvT)} ${pLabel(S.cur.sp)}. Tekan S lalu kualitas, atau pilih pemain.`;
   else if (S.blk && !S.blk.pid) hint = `Serangan ${pLabel(S.blk.att.pid)} dihadang. Pilih pemblok ${tname(opp(S.blk.att.tm))} (tekan 1–${posPlayers(opp(S.blk.att.tm)).length}).`;
   else if (S.blk) hint = S.blk.z ? `Blok ${pLabel(S.blk.pid)} · bola hasil blok ke ${zoneName(S.blk.z)} (${tname(S.blk.zh)}) → pilih hasil blok.` : `Blok ${pLabel(S.blk.pid)} atas serangan ${pLabel(S.blk.att.pid)} → klik area jatuhnya bola hasil blok (opsional), lalu pilih hasil blok.`;
-  else hint = `${pLabel(S.sel.pid)} · ${SKILLS[sk].name} → pilih kualitas${S.mode !== 'list' && S.quick && sk !== 'X' ? `, atau langsung pilih pemain berikutnya (tercatat ${AUTO_Q[sk] || S.quick})` : ''}.${sk === 'A' ? ' Bila dihadang lawan, tekan B (Blok).' : ''}`;
+  else hint = `${pLabel(S.sel.pid)} · ${SKILLS[sk].name} → pilih kualitas${S.mode !== 'list' && S.quick && sk !== 'X' ? `, atau langsung pilih pemain berikutnya (tercatat ${AUTO_Q[sk] || S.quick})` : ''}.${sk === 'A' ? ' Bila dihadang lawan, tekan B (Blok).' : ''}${DIRECT_OK(sk) ? ` Bola langsung ke lawan? ${S.mode === 'area' ? 'Klik area di lapangan lawan, atau tekan N.' : 'Tekan N.'}` : ''}`;
   const c = ctx();
   const padTeam = S.blk ? opp(S.blk.att.tm) : (S.mode === 'area' && S.sel.pid) ? S.sel.tm : (S.forceTeam || c.team);
   const padLabel = S.blk ? `Pemblok · ${tname(padTeam)} (serangan ${pLabel(S.blk.att.pid)})` : `Bola di ${tname(padTeam)}${S.forceTeam ? ' (dipilih manual)' : ` · sentuhan ke-${c.idx} · ${SKILLS[c.skill].name}`}`;
@@ -2132,6 +2154,7 @@ function renderTagMain() {
         ${causeFor ? `<div class="causerow"><div class="lbl">Penyebab error · ${SKILLS[causeFor.s].name}</div><div class="seg">${ERR_CAUSE[causeFor.s].map(x => `<button class="tchip ${causeFor.e === x ? 'on' : ''}" data-act="cause" data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>` : ''}
         <div class="actions">
           <button class="btn" data-act="undo"><kbd>⌫</kbd> Batal</button>
+          <button class="btn direct ${S.sel.x || S.sel.x2 ? 'on' : ''}" data-act="direct" ${S.sel.pid && (DIRECT_OK(currentSkill()) || S.sel.x2) ? '' : 'disabled'} title="Terima, umpan (sentuhan ke-2), atau cover yang langsung dimainkan ke lapangan lawan"><kbd>N</kbd> ↷ Langsung ke lawan${S.sel.x2 ? ' · dicatat Serang' : S.sel.x ? ' · aktif' : ''}</button>
           <button class="btn unseen ${S.sel.u ? 'on' : ''}" data-act="unseen" title="Tandai sentuhan yang tidak terlihat jelas di video (close-up, tayangan ulang, pemain tertutup). Bisa dicek dan dilengkapi nanti dari log."><kbd>U</kbd> ? Tak terlihat${S.sel.pid || S.blk ? (S.sel.u ? ' · aktif' : '') : ' (sentuhan terakhir)'}</button>
           <button class="btn" data-act="let" ${S.cur.touches.length ? '' : 'disabled'}>Let / ulang rally</button>
           <button class="btn" data-act="swapSrv" ${S.cur.touches.length || S.editIdx != null ? 'disabled' : ''}>Tukar tim servis</button>
@@ -2139,7 +2162,7 @@ function renderTagMain() {
           <span class="spacer"></span>
           <button class="btn ghost sm" data-act="editMatch">Ubah data pertandingan</button>
         </div>
-        <div class="shortcuts">${S.mode !== 'list' ? '<span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> posisi pemain tim yang memegang bola</span><span><kbd>Tab</kbd> tim lain</span><span><kbd>B</kbd> serangan dihadang blok</span><span><kbd>U</kbd> tak terlihat</span><span><kbd>V</kbd> ikuti kamera</span>' : '<span><kbd>1</kbd>–<kbd>6</kbd> pemain A</span><span><kbd>7</kbd>–<kbd>0</kbd> pemain B</span>'}<span><kbd>S</kbd><kbd>R</kbd><kbd>F</kbd><kbd>A</kbd><kbd>B</kbd><kbd>D</kbd><kbd>X</kbd> aksi</span><span>Kualitas: <kbd>#</kbd><kbd>+</kbd><kbd>!</kbd><kbd>-</kbd><kbd>/</kbd><kbd>=</kbd> atau <kbd>H</kbd><kbd>J</kbd><kbd>K</kbd><kbd>L</kbd><kbd>;</kbd><kbd>'</kbd></span><span><kbd>Spasi</kbd> video · <kbd>←</kbd><kbd>→</kbd> 2 s</span></div>`}
+        <div class="shortcuts">${S.mode !== 'list' ? '<span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> posisi pemain tim yang memegang bola</span><span><kbd>Tab</kbd> tim lain</span><span><kbd>B</kbd> serangan dihadang blok</span><span><kbd>N</kbd> langsung ke lawan</span><span><kbd>U</kbd> tak terlihat</span><span><kbd>V</kbd> ikuti kamera</span>' : '<span><kbd>1</kbd>–<kbd>6</kbd> pemain A</span><span><kbd>7</kbd>–<kbd>0</kbd> pemain B</span>'}<span><kbd>S</kbd><kbd>R</kbd><kbd>F</kbd><kbd>A</kbd><kbd>B</kbd><kbd>D</kbd><kbd>X</kbd> aksi</span><span>Kualitas: <kbd>#</kbd><kbd>+</kbd><kbd>!</kbd><kbd>-</kbd><kbd>/</kbd><kbd>=</kbd> atau <kbd>H</kbd><kbd>J</kbd><kbd>K</kbd><kbd>L</kbd><kbd>;</kbd><kbd>'</kbd></span><span><kbd>Spasi</kbd> video · <kbd>←</kbd><kbd>→</kbd> 2 s</span></div>`}
       </div>
       ${teamPanel('B')}
     </div>${dock}`);
@@ -2164,11 +2187,11 @@ function roleOf(id) {
   return i >= 0 ? 'Posisi ' + (i + 1) : p.pos;
 }
 const qSym = q => (q === '-' ? '−' : q);
-function stepCard({ tm, p, s, q, auto, oz, z, u }, cls = '', note = '') {
+function stepCard({ tm, p, s, q, auto, oz, z, u, x, x2 }, cls = '', note = '') {
   const pl = p ? pById(p) : null;
   const zl = oz || z ? `<div class="st-z">${oz ? esc(zoneName(oz)) : ''}${oz && z && z !== oz ? ' → ' : ''}${z && z !== oz ? esc(zoneName(z)) : ''}</div>` : '';
   return `<div class="step ${tm} ${cls}${auto ? ' auto' : ''}">
-    <div class="st-h">${SKILLS[s].name}${u ? ' <b class="unk" title="Tak terlihat — cek video">?</b>' : ''}<span>${esc(tname(tm))}</span></div>
+    <div class="st-h">${SKILLS[s].name}${u ? ' <b class="unk" title="Tak terlihat — cek video">?</b>' : ''}<span>${esc(tname(tm))}</span></div>${x || x2 ? `<div class="st-x">↷ ${x2 ? 'sentuhan ke-2, ' : ''}langsung ke lawan</div>` : ''}
     <div class="st-p">${pl ? esc((pl.no ? '#' + pl.no + ' ' : '') + (pl.name || '')) : '<span class="muted">pilih posisi</span>'}</div>
     <div class="st-r">${pl ? esc(roleOf(p)) : esc(note)}</div>${zl}
     ${q ? `<div class="st-q" data-q="${q}">${qSym(q)} ${esc(QL[s][q])}${auto ? ' · otomatis' : ''}</div>` : `<div class="st-q wait">${esc(note && pl ? note : 'menunggu kualitas')}</div>`}
@@ -2184,7 +2207,7 @@ function flowHtml() {
     cards.push(stepCard({ tm: bt, p: S.blk.pid, s: 'B' }, 'now', S.blk.pid ? 'pilih hasil blok' : `tekan ${keys(posPlayers(bt).length)}`));
   } else if (S.sel.pid) {
     const sk = currentSkill();
-    cards.push(stepCard({ tm: S.sel.tm, p: S.sel.pid, s: sk, oz: S.sel.oz, z: S.sel.z, u: S.sel.u }, 'now'));
+    cards.push(stepCard({ tm: S.sel.tm, p: S.sel.pid, s: sk, oz: S.sel.oz, z: S.sel.z, u: S.sel.u, x: S.sel.x, x2: S.sel.x2 }, 'now'));
     if (sk === 'A') cards.push(`<div class="step ghost ${opp(S.sel.tm)}"><div class="st-h">Blok?<span>${esc(tname(opp(S.sel.tm)))}</span></div><div class="st-r">tekan <kbd>B</kbd> bila dihadang</div></div>`);
   } else {
     const team = S.forceTeam || c.team;
@@ -2611,12 +2634,12 @@ function playerTable(X, t) {
 /* ---------- Ekspor / impor ---------- */
 function toCsv() {
   const m = S.m, M = m.meta; derive(m);
-  const head = ['pertandingan', 'tanggal', 'set', 'rally', 'skor_A_sebelum', 'skor_B_sebelum', 'tim_servis', 'tekong', 'urutan', 'tim', 'no', 'pemain', 'posisi', 'aksi', 'kode', 'kualitas', 'teknik', 'zona_asal', 'zona', 'sisi_zona', 'penyebab_error', 'waktu_video_s', 'cek_video', 'pemenang_rally', 'cara_poin'];
+  const head = ['pertandingan', 'tanggal', 'set', 'rally', 'skor_A_sebelum', 'skor_B_sebelum', 'tim_servis', 'tekong', 'urutan', 'tim', 'no', 'pemain', 'posisi', 'aksi', 'kode', 'kualitas', 'teknik', 'zona_asal', 'zona', 'sisi_zona', 'penyebab_error', 'waktu_video_s', 'cek_video', 'langsung_ke_lawan', 'pemenang_rally', 'cara_poin'];
   const q = v => { const s = String(v ?? ''); return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
   const lines = [head.join(',')];
   m.rallies.forEach((r, i) => r.tc.forEach((t, j) => {
     const p = pById(t.p) || {};
-    lines.push([`${M.A.name} vs ${M.B.name}`, M.date, r.set, i + 1, r.sA, r.sB, M[r.srv].name, pLabel(r.sp), j + 1, M[t.tm].name, p.no, p.name, p.pos, SKILLS[t.s].name, t.q, QL[t.s][t.q], t.tc, t.oz ? zoneName(t.oz) : '', t.z ? zoneName(t.z) : '', t.zh ? M[t.zh].name : '', t.e, t.vt, t.u ? 'tak terlihat' : t.auto ? 'kualitas otomatis' : '', M[r.win].name, END_LABEL[r.end]].map(q).join(','));
+    lines.push([`${M.A.name} vs ${M.B.name}`, M.date, r.set, i + 1, r.sA, r.sB, M[r.srv].name, pLabel(r.sp), j + 1, M[t.tm].name, p.no, p.name, p.pos, SKILLS[t.s].name, t.q, QL[t.s][t.q], t.tc, t.oz ? zoneName(t.oz) : '', t.z ? zoneName(t.z) : '', t.zh ? M[t.zh].name : '', t.e, t.vt, t.u ? 'tak terlihat' : t.auto ? 'kualitas otomatis' : '', t.x2 ? 'ya (sentuhan ke-2)' : t.x ? 'ya' : '', M[r.win].name, END_LABEL[r.end]].map(q).join(','));
   }));
   return '﻿' + lines.join('\n');
 }
@@ -2706,6 +2729,14 @@ const ACT = {
   block: () => startBlock(),
   orient: d => { S.orient = d.o; try { localStorage.setItem('takraw.orient', d.o); } catch {} renderTagMain(); },
   camFlip: () => { const M = S.m.meta; M.cam = { near: opp(M.cam?.near || 'A') }; persist(); renderTagMain(); toast(`${tname(nearTeam())} sekarang di sisi dekat kamera`); },
+  direct: () => {
+    if (!S.sel.pid) return toast('Pilih pemainnya dulu, lalu tekan N bila bolanya langsung ke lawan.');
+    if (S.sel.x2) { S.sel.x2 = false; S.sel.skill = null; S.sel.z = S.sel.zh = null; return renderTagMain(); }   // batal
+    if (S.sel.x) { S.sel.x = false; return renderTagMain(); }
+    if (!directToOpp()) return toast('Hanya untuk terima, umpan (sentuhan ke-2), atau cover.');
+    toast(S.sel.x2 ? 'Sentuhan ke-2 langsung ke lawan — dicatat sebagai Serang.' + (S.mode === 'area' ? ' Klik area sasaran di lapangan lawan, lalu kualitas.' : '') : 'Bola langsung ke lawan.');
+    renderTagMain();
+  },
   unseen: () => {
     if (S.sel.pid || S.blk) { S.sel.u = !S.sel.u; return renderTagMain(); }
     const t = S.cur.touches.at(-1) || S.m.rallies.at(-1)?.tc.at(-1);
@@ -2849,6 +2880,7 @@ document.addEventListener('keydown', e => {
   if (k === 'Tab') { e.preventDefault(); ACT.flipTeam(); return; }
   if (k === 'b' && startBlock()) { e.preventDefault(); return; }
   if (k === 'u') { e.preventDefault(); ACT.unseen(); return; }
+  if (k === 'n') { e.preventDefault(); ACT.direct(); return; }
   if (k === 'v') { e.preventDefault(); ACT.orient({ o: S.orient === 'v' ? 'h' : 'v' }); return; }
   if (S.mode !== 'list' && ['1', '2', '3', '4'].includes(k)) { e.preventDefault(); selectPos(+k - 1); return; }
   const idxA = ['1', '2', '3', '4', '5', '6'].indexOf(k), idxB = ['7', '8', '9', '0'].indexOf(k);
