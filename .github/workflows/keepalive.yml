@@ -1,0 +1,24 @@
+# Menjaga database TAKRA (Supabase paket gratis) tetap aktif.
+# Supabase menjeda proyek gratis yang tidak dipakai 7 hari; workflow ini membaca satu baris agenda setiap 3 hari.
+# Kunci yang dipakai adalah kunci publik (publishable) yang memang sudah ada di index.html; tidak ada data yang diubah.
+name: Jaga database tetap aktif
+
+on:
+  schedule:
+    - cron: '17 2 */3 * *'   # 02:17 UTC, setiap 3 hari
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sapa database Supabase
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 \
+            "https://jeiwnksyenhzrcpwuuwh.supabase.co/rest/v1/events?select=id&limit=1" \
+            -H "apikey: sb_publishable_MdqobEqKuB2S_29Heqb9pw_mvWK0uiZ")
+          echo "Supabase menjawab HTTP $code"
+          test "$code" = "200"
