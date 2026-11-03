@@ -512,6 +512,29 @@ label.f { display: grid; gap: 4px; font-size: 12px; color: var(--ink2); font-wei
 .bar i { position: absolute; top: 0; bottom: 0; border-radius: 4px; }
 .bar.a i { right: 0; background: var(--teamA); } .bar.b i { left: 0; background: var(--teamB); }
 .cmp .r.hd { font-weight: 600; }
+.cmp .r.grp { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); border-bottom: 1px solid var(--line); padding: 10px 0 3px; }
+.cmp .r.grp:first-of-type { padding-top: 2px; }
+.cmp .v { color: var(--ink2); } .cmp .v.lead { color: var(--ink); font-weight: 800; }
+.rp-kicker { font-family: var(--f-display); font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+.rp-meta { color: var(--ink2); font-size: 13px; margin-top: 8px; }
+.rp-sum-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 24px; }
+@media (max-width: 860px) { .rp-sum-grid { grid-template-columns: minmax(0, 1fr); } }
+.rp-sub { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 16px 0 4px; }
+table.dt.rp-score td:not(:first-child), table.dt.rp-score th:not(:first-child) { text-align: center; }
+table.dt.rp-score td { font-size: 15px; color: var(--muted); } table.dt.rp-score td:first-child { color: var(--ink); font-size: 14px; }
+table.dt.rp-score td.w { color: var(--ink); font-weight: 700; } table.dt.rp-score td.sets { font-size: 20px; border-left: 1px solid var(--line); }
+.rp-win { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #fff; background: var(--accent); border-radius: 4px; padding: 1px 5px; vertical-align: 2px; }
+table.dt.rp-tie tr.cur td { background: var(--surface2); } table.dt.rp-tie td:nth-child(3) { white-space: normal; text-align: left; }
+table.dt tfoot td { font-weight: 700; border-top: 2px solid var(--ink2); border-bottom: 0; }
+table.dt.rp-tie tfoot td { text-align: left; font-family: var(--f-body); }
+.rp-find { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 8px; line-height: 1.5; font-size: 14px; }
+table.dt.pl tr.g th { text-align: center; color: var(--ink2); border-bottom: 0; padding-bottom: 0; }
+table.dt.pl .gs { border-left: 1px solid var(--line); }
+table.dt .z { color: var(--muted); opacity: .45; }
+.rp-def summary { cursor: pointer; font-family: var(--f-display); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; font-size: 15px; }
+.rp-def dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 16px; font-size: 13px; margin: 12px 0 0; }
+.rp-def dt { font-weight: 600; } .rp-def dd { margin: 0; color: var(--ink2); }
+@media (max-width: 600px) { .rp-def dl { grid-template-columns: minmax(0, 1fr); } .rp-def dd { margin-bottom: 6px; } }
 .stack { display: flex; height: 18px; gap: 2px; border-radius: 4px; overflow: hidden; }
 .stack i { display: block; height: 100%; }
 .legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--ink2); margin-top: 6px; }
@@ -925,11 +948,13 @@ dl.roles dt { font-weight: 700; } dl.roles dd { margin: 0; color: var(--ink2); }
 }
 
 /* ---------- Ekspor PDF (cetak → Simpan sebagai PDF) ---------- */
-@page { size: A4 portrait; margin: 12mm 11mm; }
+@page { size: A4 portrait; margin: 12mm 11mm 14mm;
+  @bottom-left { content: "TAKRA · Laporan statistik pertandingan"; font-size: 8px; color: #5E6C67; }
+  @bottom-right { content: "Halaman " counter(page) " dari " counter(pages); font-size: 8px; color: #5E6C67; } }
 @media print {
   :root, :root[data-theme="dark"] {
     --bg: #fff; --surface: #fff; --surface2: #EEF2F1; --ink: #12201C; --ink2: #33433E; --muted: #5E6C67; --line: #CBD4D1;
-    --accent: #B07806; --teamA: #C93E28; --teamB: #1F58B8;
+    --accent: #D10A0A; --teamA: #D2601A; --teamB: #1F58B8;
     --q1: #0F7B6C; --q2: #6DB8AA; --q3: #A3ABA8; --q4: #E3A160; --q5: #A8501A; color-scheme: light;
   }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -941,7 +966,14 @@ dl.roles dt { font-weight: 700; } dl.roles dd { margin: 0; color: var(--ink2); }
   #view[data-pdf]::before { content: attr(data-pdf); display: block; font-size: 9.5px; color: var(--muted); border-bottom: 2px solid var(--accent); padding-bottom: 4px; margin-bottom: 8px; letter-spacing: .02em; }
   .page-head { margin: 0 0 8px; }
   .page-head h1 { font-size: 26px; }
-  .pdf-set { font-size: 11px; color: var(--ink2); margin: 2px 0 8px; }
+  .pdf-set { font-size: 10px; color: var(--ink2); margin: 4px 0 8px; }
+  .rp-kicker { font-size: 10px; margin-bottom: 3px; } .rp-meta { font-size: 10px; margin-top: 4px; }
+  .rp-sum-grid { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 14px; }
+  .rp-find { font-size: 10px; gap: 4px; } .rp-sub { font-size: 8px; margin: 8px 0 2px; }
+  table.dt.rp-score td { font-size: 11px; } table.dt.rp-score td.sets { font-size: 14px; }
+  .cmp .r.grp { font-size: 8px; padding: 5px 0 2px; }
+  .rp-def summary { font-size: 12px; list-style: none; } .rp-def dl { font-size: 9px; gap: 2px 10px; margin-top: 6px; }
+  .st-grid > .panel.st-wide.rp-def { break-inside: avoid; }
   .st-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
   .st-grid > .st-wide { grid-column: 1 / -1; }
   .panel { border-radius: 6px; padding: 8px 10px; break-inside: avoid; page-break-inside: avoid; box-shadow: none; }
@@ -1329,9 +1361,9 @@ function teamKpi(t) {
   const idx = s => { const o = sk(s); if (!o.n) return null; let w = 0; for (const k in o.q) w += (QW[k] ?? 0) * o.q[k]; return (100 * w) / (4 * o.n); };
   return {
     pts: t.pts,
-    ace: q('S', '#') + L('ACE'), srvErr: q('S', '=') + L('SVE'), srvN: S.n,
-    kill: q('A', '#') + L('KILL'), atkErr: q('A', '=') + L('ATE'), atkBlk: q('A', '/'), atkN: A.n,
-    blk: q('B', '#') + L('BLK'), blkN: B.n, liteN: t.liteN || 0,
+    ace: Math.max(t.ends?.ACE || 0, q('S', '#') + L('ACE')), srvErr: q('S', '=') + L('SVE'), srvN: S.n,
+    kill: Math.max(t.ends?.KILL || 0, q('A', '#') + L('KILL')), atkErr: q('A', '=') + L('ATE'), atkBlk: q('A', '/'), atkN: A.n,
+    blk: Math.max(t.ends?.BLK || 0, q('B', '#') + L('BLK')), blkN: B.n, liteN: t.liteN || 0,
     rcvN: Rc.n, rcvPos: q('R', '#') + q('R', '+'), rcvErr: q('R', '='),
     fdN: F.n,
     srvWin: pct(t.srvW, t.srvN), rcvWin: pct(t.rcvW, t.rcvN),
@@ -2426,57 +2458,127 @@ function tieStats(m, ms) {
   out.avgTouches = out.R.length ? touches / out.R.length : 0;
   return out;
 }
+/* Laporan statistik. Gabungan beregu dihitung per format: statSet 'tie:regu' | 'tie:double' | 'tie:quad'. */
+const longDate = d => { try { return d ? new Date(d + 'T00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : ''; } catch { return d || ''; } };
+const fmtShort = f => FORMATS[f]?.label.split(' ')[0] || f;
 function renderStats() {
   const m = S.m, M = m.meta;
   const st = derive(clone(m));
-  const tk = tieKey(m), tieMs = tk ? Store.list.filter(x => tieKey(x) === tk) : [];
-  if (S.statSet === 'tie' && tieMs.length < 2) S.statSet = 'all';
-  const X = S.statSet === 'tie' ? tieStats(m, tieMs) : computeStats(clone(m), S.statSet);
+  const tk = tieKey(m), tieAll = tk ? Store.list.filter(x => tieKey(x) === tk).sort((a, b) => (+a.meta.tie.no || 0) - (+b.meta.tie.no || 0)) : [];
+  let tf = S.statSet.startsWith('tie') ? S.statSet.split(':')[1] || M.format : null;
+  let tieMs = tf ? tieAll.filter(x => x.meta.format === tf) : [];
+  if (tf && tieMs.length < 2) { S.statSet = 'all'; tf = null; tieMs = []; }
+  const isTie = !!tf;
+  const X = isTie ? tieStats(m, tieMs) : computeStats(clone(m), S.statSet);
   const KA = teamKpi(X.T.A), KB = teamKpi(X.T.B);
   const setBtns = ['all', ...st.sets.filter(s => s.a + s.b > 0).map(s => String(s.n))];
-  const head = `<div class="page-head"><div><div class="muted small">${esc(M.event)} ${M.round ? '· ' + esc(M.round) : ''} · ${esc(M.date)} · ${esc(FORMATS[M.format]?.label)}</div>
+  const tieTabs = Object.keys(FORMATS).map(f => [f, tieAll.filter(x => x.meta.format === f).length]).filter(([, n]) => n > 1);
+  const scope = isTie ? `Gabungan ${tieMs.length} partai ${fmtShort(tf)}` : S.statSet === 'all' ? 'Semua set' : 'Set ' + S.statSet;
+  const metaBits = [M.event, M.round, M.gender, FORMATS[M.format]?.label, M.tie?.name ? `${M.tie.name}, partai ${M.tie.no}` : '', longDate(M.date), M.venue].filter(Boolean);
+  const head = `<div class="page-head"><div>
+      <div class="rp-kicker">Laporan statistik pertandingan</div>
       <h1><span class="win-A">${esc(M.A.name)}</span> <span class="num">${st.wA}–${st.wB}</span> <span class="win-B">${esc(M.B.name)}</span></h1>
-      <div class="prev-sets">${st.sets.filter(s => s.a + s.b > 0).map(s => `Set ${s.n}: ${s.a}–${s.b}`).join(' · ')}</div>
-      <div class="print-only pdf-set">Statistik: ${S.statSet === 'all' ? 'semua set' : S.statSet === 'tie' ? 'gabungan ' + tieMs.length + ' regu' : 'set ' + esc(S.statSet)} · ${X.R.length} rally</div></div><span class="spacer"></span>
+      <div class="rp-meta">${metaBits.map(esc).join(' · ')}</div>
+      <div class="print-only pdf-set">Cakupan data: ${esc(scope)} · ${X.R.length} rally · rata-rata ${X.avgTouches.toFixed(1)} sentuhan per rally</div></div><span class="spacer"></span>
       <button class="btn primary" data-act="exportPdf">Ekspor PDF</button><button class="btn" data-act="exportCsv">Ekspor CSV</button><button class="btn" data-act="exportJson">Cadangan JSON</button><button class="btn" data-act="copySummary">Salin ringkasan</button></div>
-    <div class="filters"><span class="lbl">Set</span><div class="tabs">${setBtns.map(s => `<button class="${S.statSet === s ? 'on' : ''}" data-act="statSet" data-s="${s}">${s === 'all' ? 'Semua' : 'Set ' + s}</button>`).join('')}${tieMs.length > 1 ? `<button class="${S.statSet === 'tie' ? 'on' : ''}" data-act="statSet" data-s="tie">Gabungan beregu (${tieMs.length} regu)</button>` : ''}</div>
+    <div class="filters"><span class="lbl">Cakupan</span><div class="tabs">${setBtns.map(s => `<button class="${S.statSet === s ? 'on' : ''}" data-act="statSet" data-s="${s}">${s === 'all' ? 'Semua set' : 'Set ' + s}</button>`).join('')}${tieTabs.map(([f, n]) => `<button class="${tf === f ? 'on' : ''}" data-act="statSet" data-s="tie:${f}">Gabungan ${fmtShort(f)} (${n} partai)</button>`).join('')}</div>
       <span class="muted small">${X.R.length} rally · rata-rata ${X.avgTouches.toFixed(1)} sentuhan per rally</span></div>
     ${X.T.A.liteN ? `<div class="banner warn">${X.T.A.liteN} rally dicatat dalam mode Ringkas. Poin, ace, serangan poin, blok poin, dan error sudah dihitung; persentase per aksi hanya dihitung dari rally yang lengkap. <button class="btn sm" data-act="go" data-v="tag">Lengkapi di Input</button></div>` : ''}
-    ${S.statSet === 'tie' ? `<div class="banner">Gabungan ${tieMs.length} regu “${esc(M.tie.name)}”. Tim dicocokkan dari nama; alur skor & peta zona hanya untuk satu regu.</div>` : ''}`;
+    ${isTie ? `<div class="banner">Gabungan ${tieMs.length} partai ${esc(fmtShort(tf))} dalam “${esc(M.tie.name)}”${tieAll.length > tieMs.length ? '. Partai format lain dihitung terpisah' : ''}. Tim dicocokkan dari nama; alur skor dan peta area hanya tersedia per partai.</div>` : ''}`;
   if (!X.R.length) { $('#view').innerHTML = head + '<div class="panel empty"><h2>Belum ada data</h2><p>Statistik tersedia setelah rally pertama dicatat.</p><button class="btn primary" data-act="go" data-v="tag">Mulai input</button></div>'; return; }
-  const rowsDef = [
-    ['Poin', KA.pts, KB.pts, 'n'],
-    ['Ace servis', KA.ace, KB.ace, 'n'],
-    ['Serangan poin', KA.kill, KB.kill, 'n'],
-    ['Blok poin', KA.blk, KB.blk, 'n'],
-    ['Poin dari error lawan', X.T.A.pts - KA.ace - KA.kill - KA.blk - (X.T.A.ends.MAN || 0), X.T.B.pts - KB.ace - KB.kill - KB.blk - (X.T.B.ends.MAN || 0), 'n'],
-    ['Error & pelanggaran sendiri', KA.given, KB.given, 'n'],
-    ['Menang saat servis', KA.srvWin, KB.srvWin, '%'],
-    ['Menang saat menerima', KA.rcvWin, KB.rcvWin, '%'],
-    ['Penerimaan positif (#/+)', KA.rcvPosPct, KB.rcvPosPct, '%'],
-    ['Kill serangan', KA.killPct, KB.killPct, '%'],
-    ['Efisiensi serangan', KA.atkEff, KB.atkEff, '%'],
-    ['Indeks servis', KA.srvIdx, KB.srvIdx, '%'],
-    ['Indeks umpan', KA.fdIdx, KB.fdIdx, '%'],
-    ['Poin beruntun terpanjang', KA.streak, KB.streak, 'n'],
+  const errPts = t => { const K = t === 'A' ? KA : KB; return X.T[t].pts - K.ace - K.kill - K.blk - (X.T[t].ends.MAN || 0); };
+  /* Perbandingan berkelompok; nilai yang lebih baik ditebalkan (untuk error: yang lebih kecil). */
+  const groups = [
+    ['Perolehan poin', [['Total poin', KA.pts, KB.pts, 'n'], ['Ace servis', KA.ace, KB.ace, 'n'], ['Serangan poin', KA.kill, KB.kill, 'n'], ['Blok poin', KA.blk, KB.blk, 'n'], ['Poin dari error lawan', errPts('A'), errPts('B'), 'n'], ['Poin beruntun terpanjang', KA.streak, KB.streak, 'n']]],
+    ['Servis & penerimaan', [['Menang saat servis', KA.srvWin, KB.srvWin, '%'], ['Menang saat menerima (side-out)', KA.rcvWin, KB.rcvWin, '%'], ['Penerimaan positif (#/+)', KA.rcvPosPct, KB.rcvPosPct, '%'], ['Indeks servis', KA.srvIdx, KB.srvIdx, '%']]],
+    ['Serangan', [['Kill serangan', KA.killPct, KB.killPct, '%'], ['Efisiensi serangan', KA.atkEff, KB.atkEff, '%'], ['Indeks umpan', KA.fdIdx, KB.fdIdx, '%']]],
+    ['Kesalahan', [['Error & pelanggaran sendiri', KA.given, KB.given, 'n', 1]]],
   ];
-  const cmp = rowsDef.map(([l, a, b, u]) => {
-    const fa = u === '%' ? f0(a) : a, fb = u === '%' ? f0(b) : b;
-    const mx = u === '%' ? 100 : Math.max(1, a || 0, b || 0);
-    const wa = Math.max(0, Math.min(100, (100 * (a || 0)) / mx)), wb = Math.max(0, Math.min(100, (100 * (b || 0)) / mx));
-    return `<div class="r"><span class="v a">${fa}</span><div class="bar a"><i style="width:${wa}%"></i></div><span class="l">${l}</span><div class="bar b"><i style="width:${wb}%"></i></div><span class="v b">${fb}</span></div>`;
+  const cmp = groups.map(([g, rows]) => {
+    const body = rows.filter(([, a, b]) => a != null || b != null).map(([l, a, b, u, low]) => {
+      const fa = u === '%' ? f0(a) : a, fb = u === '%' ? f0(b) : b;
+      const mx = u === '%' ? 100 : Math.max(1, a || 0, b || 0);
+      const wa = Math.max(0, Math.min(100, (100 * (a || 0)) / mx)), wb = Math.max(0, Math.min(100, (100 * (b || 0)) / mx));
+      const la = a != null && b != null && a !== b && (low ? a < b : a > b), lb = a != null && b != null && a !== b && !la;
+      return `<div class="r"><span class="v a${la ? ' lead' : ''}">${fa}</span><div class="bar a"><i style="width:${wa}%"></i></div><span class="l">${l}</span><div class="bar b"><i style="width:${wb}%"></i></div><span class="v b${lb ? ' lead' : ''}">${fb}</span></div>`;
+    }).join('');
+    return body ? `<div class="r grp">${g}</div>${body}` : '';
   }).join('');
   const html = head + `<div class="st-grid">
+    ${reportSummary(X, KA, KB, st, isTie, tieAll, errPts)}
     <section class="panel"><h3>Perbandingan tim</h3><div class="cmp" style="margin-top:10px"><div class="r hd"><span class="v a win-A">${esc(tname('A'))}</span><span></span><span></span><span></span><span class="v b win-B">${esc(tname('B'))}</span></div>${cmp}</div>
-      <p class="note">Efisiensi serangan = (poin − error − diblok) ÷ jumlah serangan. Indeks = rata-rata kualitas (# = 100, + = 75, ! = 50, − = 25, = = 0).</p></section>
+      <p class="note">Angka tebal = tim yang lebih baik pada indikator itu. Definisi tiap indikator ada di akhir laporan.</p></section>
     <section class="panel"><h3>Sumber poin</h3>${pointSources(X)}</section>
-    ${S.statSet === 'tie' ? '' : `<section class="panel st-wide"><h3>Alur skor</h3><p class="note">Selisih poin ${esc(tname('A'))} terhadap ${esc(tname('B'))} per rally. Di atas garis: ${esc(tname('A'))} unggul.</p><div class="chart" id="momentum">${momentum(X)}</div></section>`}
+    ${isTie ? '' : `<section class="panel st-wide"><h3>Alur skor</h3><p class="note">Selisih poin ${esc(tname('A'))} terhadap ${esc(tname('B'))} per rally. Di atas garis: ${esc(tname('A'))} unggul.</p><div class="chart" id="momentum">${momentum(X)}</div></section>`}
     ${['A', 'B'].map(t => teamDetail(X, t)).join('')}
-    <section class="panel st-wide"><h3>Peta area & pemain</h3><p class="note">Satu lapangan per tim. Kiri: lapangan tim itu, tempat bola disentuh. Kanan: lapangan lawan, tempat bola diarahkan. Pilih jenis aksi, lalu klik satu area untuk melihat rinciannya. Warna lebih pekat = lebih sering; panah = rute terbanyak.</p>${areaPanel(X)}</section>
+    ${isTie ? '' : `<section class="panel st-wide"><h3>Peta area & pemain</h3><p class="note">Satu lapangan per tim. Kiri: lapangan tim itu, tempat bola disentuh. Kanan: lapangan lawan, tempat bola diarahkan. Pilih jenis aksi, lalu klik satu area untuk melihat rinciannya. Warna lebih pekat = lebih sering; panah = rute terbanyak.</p>${areaPanel(X)}</section>`}
     ${['A', 'B'].map(t => playerTable(X, t)).join('')}
+    ${reportNotes(X, scope)}
   </div>`;
-  $('#view').innerHTML = S.statSet === 'tie' ? html.replace(/<section class="panel st-wide"><h3>Peta area[\s\S]*?<\/section>/, '') : html;
-  if (S.statSet !== 'tie') bindMomentum(X);
+  $('#view').innerHTML = html;
+  if (!isTie) bindMomentum(X);
+}
+/* Ringkasan di awal laporan: hasil per set (atau rekap beregu), box score, dan temuan utama. */
+function reportSummary(X, KA, KB, st, isTie, tieAll, errPts) {
+  const M = S.m.meta, K = { A: KA, B: KB };
+  const sets = st.sets.filter(s => s.a + s.b > 0);
+  const scoreTbl = `<table class="dt rp-score"><thead><tr><th>Tim</th>${sets.map(s => `<th>Set ${s.n}</th>`).join('')}<th>Set</th></tr></thead><tbody>
+    ${['A', 'B'].map(t => `<tr><td><span class="sw ${t}"></span> <b>${esc(M[t].name)}</b>${st.winner === t ? ' <span class="rp-win">Menang</span>' : ''}</td>${sets.map(s => { const v = t === 'A' ? s.a : s.b, o = t === 'A' ? s.b : s.a; return `<td class="${v > o ? 'w' : ''}">${v}</td>`; }).join('')}<td class="w sets">${t === 'A' ? st.wA : st.wB}</td></tr>`).join('')}</tbody></table>`;
+  let tieTbl = '';
+  if (tieAll.length > 1) {
+    const T = tieSummary(tieAll).get(tieKey(S.m));
+    tieTbl = `<h4 class="rp-sub">Rekap beregu · ${esc(M.tie.name)}</h4>
+      <table class="dt rp-tie"><thead><tr><th>Partai</th><th>Format</th><th>Skor set</th><th>Pemenang</th></tr></thead><tbody>
+      ${tieAll.map(x => { const s = derive(clone(x)); return `<tr${x.id === S.m.id ? ' class="cur"' : ''}><td>${esc(x.meta.tie.no)}</td><td>${esc(fmtShort(x.meta.format))}</td><td>${esc(x.meta.A.name)} ${s.wA}–${s.wB} ${esc(x.meta.B.name)} <span class="muted small">(${s.sets.filter(z => z.a + z.b).map(z => z.a + '–' + z.b).join(', ')})</span></td><td>${s.winner ? esc(x.meta[s.winner].name) : '<span class="muted">Berlangsung</span>'}</td></tr>`; }).join('')}
+      </tbody>${T ? `<tfoot><tr><td colspan="4">Hasil beregu: ${esc(T.a)} ${T.wa}–${T.wb} ${esc(T.b)}${T.winner ? ` · <b>${esc(T.winner)}</b> menang` : ''}</td></tr></tfoot>` : ''}</table>`;
+  }
+  const box = `<h4 class="rp-sub">Box score</h4><div class="tscroll"><table class="dt rp-box"><thead><tr><th>Tim</th><th>Poin</th><th>Serangan poin</th><th>Ace</th><th>Blok poin</th><th>Dari error lawan</th><th>Error sendiri</th><th>Side-out</th><th>Eff. serangan</th></tr></thead><tbody>
+    ${['A', 'B'].map(t => `<tr><td><span class="sw ${t}"></span> ${esc(tname(t))}</td><td><b>${K[t].pts}</b></td><td>${K[t].kill}</td><td>${K[t].ace}</td><td>${K[t].blk}</td><td>${errPts(t)}</td><td>${K[t].given}</td><td>${f0(K[t].rcvWin)}</td><td>${f0(K[t].atkEff)}</td></tr>`).join('')}</tbody></table></div>`;
+  return `<section class="panel st-wide rp-sum"><div class="rp-sum-grid">
+    <div><h3>Hasil</h3>${isTie ? '' : scoreTbl}${tieTbl}</div>
+    <div><h3>Temuan utama</h3><ul class="rp-find">${findings(X, K, st, isTie, errPts).map(s => `<li>${s}</li>`).join('')}</ul></div>
+  </div>${box}</section>`;
+}
+/* Kalimat temuan otomatis, hanya dari data yang benar-benar ada. */
+function findings(X, K, st, isTie, errPts) {
+  const out = [], n = t => `<b class="win-${t}">${esc(tname(t))}</b>`, P = X.T;
+  if (!isTie && S.statSet === 'all') {
+    if (st.winner) out.push(`${n(st.winner)} menang ${Math.max(st.wA, st.wB)}–${Math.min(st.wA, st.wB)} set dengan total poin ${P[st.winner].pts}–${P[opp(st.winner)].pts}.`);
+    else out.push(`Pertandingan belum selesai: ${n('A')} ${st.wA}–${st.wB} ${n('B')} dalam set, total poin ${P.A.pts}–${P.B.pts}.`);
+  } else if (P.A.pts !== P.B.pts) { const w = P.A.pts > P.B.pts ? 'A' : 'B'; out.push(`${n(w)} unggul ${P[w].pts}–${P[opp(w)].pts} poin pada cakupan ini.`); }
+  const src = [['serangan poin', K.A.kill, K.B.kill], ['ace servis', K.A.ace, K.B.ace], ['blok poin', K.A.blk, K.B.blk], ['poin dari error lawan', errPts('A'), errPts('B')]]
+    .map(([l, a, b]) => ({ l, a, b, d: Math.abs(a - b) })).sort((x, y) => y.d - x.d)[0];
+  if (src.d > 0) out.push(`Pembeda terbesar: <b>${src.l}</b> (${esc(tname('A'))} ${src.a}, ${esc(tname('B'))} ${src.b}; selisih ${src.d}).`);
+  if (K.A.rcvWin != null && K.B.rcvWin != null && Math.round(K.A.rcvWin) !== Math.round(K.B.rcvWin)) {
+    const b = K.A.rcvWin > K.B.rcvWin ? 'A' : 'B';
+    out.push(`Saat menerima servis, ${n(b)} lebih efektif: ${f0(K[b].rcvWin)} rally dimenangkan, lawan ${f0(K[opp(b)].rcvWin)}.`);
+  }
+  const eT = K.A.given === K.B.given ? null : K.A.given > K.B.given ? 'A' : 'B';
+  if (eT && P[opp(eT)].pts) out.push(`${n(eT)} memberi ${K[eT].given} poin lewat error & pelanggaran sendiri (${f0(100 * K[eT].given / P[opp(eT)].pts)} dari seluruh poin lawan).`);
+  if (K.A.atkN >= 5 && K.B.atkN >= 5 && K.A.atkEff != null && K.B.atkEff != null) {
+    const b = K.A.atkEff >= K.B.atkEff ? 'A' : 'B';
+    out.push(`Efisiensi serangan ${n(b)} ${f0(K[b].atkEff)} dari ${K[b].atkN} serangan, lawan ${f0(K[opp(b)].atkEff)} dari ${K[opp(b)].atkN}.`);
+  }
+  const roster = X.roster || { A: S.m.meta.A.players, B: S.m.meta.B.players };
+  const top = ['A', 'B'].flatMap(t => roster[t].filter(p => X.P[p.id]?.pts).map(p => ({ p, t, v: X.P[p.id].pts }))).sort((a, b) => b.v - a.v)[0];
+  if (top) out.push(`Pencetak poin terbanyak: <b>${esc((top.p.no ? '#' + top.p.no + ' ' : '') + (top.p.name || ''))}</b> (${esc(tname(top.t))}, ${top.v} poin dari ace, serangan, dan blok).`);
+  if (P.A.liteN) out.push(`<span class="muted">${P.A.liteN} dari ${X.R.length} rally dicatat ringkas; persentase per aksi hanya memakai ${X.R.length - P.A.liteN} rally lengkap.</span>`);
+  return out;
+}
+function reportNotes(X, scope) {
+  const defs = [
+    ['Side-out (menang saat menerima)', 'Persentase rally yang dimenangkan saat tim menerima servis lawan.'],
+    ['Menang saat servis', 'Persentase rally yang dimenangkan saat tim melakukan servis.'],
+    ['Penerimaan positif', 'Penerimaan bernilai sempurna (#) atau baik (+) dibagi seluruh penerimaan.'],
+    ['Kill serangan', 'Serangan yang langsung menjadi poin dibagi jumlah serangan.'],
+    ['Efisiensi serangan', '(Poin − error − diblok) ÷ jumlah serangan. Bisa negatif.'],
+    ['Indeks servis / umpan', 'Rata-rata kualitas: # = 100, + = 75, ! = 50, − = 25, = = 0.'],
+    ['Poin dari error lawan', 'Poin yang diperoleh karena error servis, serangan, terima, umpan, cover, atau pelanggaran lawan.'],
+    ['Poin pemain', 'Ace, serangan poin, dan blok poin yang dicetak pemain.'],
+  ];
+  return `<details class="panel st-wide rp-def"${S.printing ? ' open' : ''}><summary>Definisi indikator & catatan data</summary>
+    <dl>${defs.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
+    <p class="note">Cakupan: ${esc(scope)}, ${X.R.length} rally. Kode kualitas mengikuti panduan pencatatan TAKRA (# sempurna, + baik, ! cukup, − buruk, = gagal). Lokasi bertanda ~ pada peta area adalah perkiraan dari posisi pemain.</p></details>`;
 }
 const QCOL = { '#': 'var(--q1)', '+': 'var(--q2)', '!': 'var(--q3)', '-': 'var(--q4)', '/': 'var(--q4)', '=': 'var(--q5)' };
 function qStack(o, skill) {
@@ -2551,9 +2653,11 @@ function teamDetail(X, t) {
   const rqRows = ['#', '+', '!', '-', '='].filter(k => rq[k]).map(k => `<tr><td>${k === '-' ? '−' : k} ${k === '=' ? 'Gagal / kena ace' : QL.R[k]}</td><td>${rq[k].n}</td><td>${rq[k].w}</td><td>${f0(100 * rq[k].w / rq[k].n)}</td></tr>`).join('');
   const tech = Object.entries(T.tech).sort((a, b) => b[1].n - a[1].n).map(([k, v]) => `<tr><td>${esc(k)}</td><td>${v.n}</td><td>${v.k}</td><td>${v.e}</td><td>${v.b}</td><td>${f0(100 * v.k / v.n)}</td><td>${f0(100 * (v.k - v.e - v.b) / v.n)}</td></tr>`).join('');
   const faults = Object.entries(T.faults).map(([k, v]) => `<tr><td>${esc(k)}</td><td>${v}</td></tr>`).join('');
-  const block = (s, title) => `<div><div class="row" style="justify-content:space-between;margin-top:12px"><strong>${title}</strong><span class="muted small num">${T.sk[s]?.n || 0}×</span></div>${qStack(T.sk[s], s)}</div>`;
+  const SK_T = [['S', 'Servis'], ['R', 'Penerimaan servis'], ['F', 'Umpan'], ['A', 'Serangan'], ['B', 'Blok'], ['D', 'Cover / bertahan']];
+  const none = SK_T.filter(([s]) => !T.sk[s]?.n).map(([, l]) => l.toLowerCase());
+  const block = (s, title) => (T.sk[s]?.n ? `<div><div class="row" style="justify-content:space-between;margin-top:12px"><strong>${title}</strong><span class="muted small num">${T.sk[s].n}×</span></div>${qStack(T.sk[s], s)}</div>` : '');
   return `<section class="panel"><h3 class="win-${t}">${esc(S.m.meta[t].name)}</h3>
-    ${block('S', 'Servis')}${block('R', 'Penerimaan servis')}${block('F', 'Umpan')}${block('A', 'Serangan')}${block('B', 'Blok')}${block('D', 'Cover / bertahan')}
+    ${SK_T.map(([s, l]) => block(s, l)).join('')}${none.length ? `<p class="note">Belum tercatat: ${none.join(', ')}.</p>` : ''}
     <div style="margin-top:14px"><strong>Kualitas penerimaan → hasil rally</strong><div class="tscroll"><table class="dt"><thead><tr><th>Penerimaan</th><th>Rally</th><th>Menang</th><th>%</th></tr></thead><tbody>${rqRows || '<tr><td colspan="4" class="muted">—</td></tr>'}</tbody></table></div></div>
     <div style="margin-top:14px"><strong>Serangan per teknik</strong><div class="tscroll"><table class="dt"><thead><tr><th>Teknik</th><th>N</th><th>Poin</th><th>Err</th><th>Blk</th><th>Kill</th><th>Eff</th></tr></thead><tbody>${tech || '<tr><td colspan="7" class="muted">—</td></tr>'}</tbody></table></div></div>
     ${faults ? `<div style="margin-top:14px"><strong>Pelanggaran</strong><table class="dt"><tbody>${faults}</tbody></table></div>` : ''}
@@ -2755,23 +2859,37 @@ function areaPlayers(list, mode, t) {
     ${rows.map(([id, r]) => `<tr><td><span class="sw ${t}"></span> ${esc(pLabel(id))}</td><td>${r.n}</td>${cols.map(([, f]) => `<td>${f(r)}</td>`).join('')}<td>${esc(zTop(r))}</td></tr>`).join('')}</tbody></table></div>`;
 }
 function playerTable(X, t) {
-  const pl = (X.roster?.[t] || S.m.meta[t].players).filter(p => X.P[p.id]);
-  const g = (p, s, q) => X.P[p.id]?.sk[s]?.q[q] || 0, n = (p, s) => X.P[p.id]?.sk[s]?.n || 0;
-  const rows = pl.map(p => {
-    const sN = n(p, 'S'), rN = n(p, 'R'), aN = n(p, 'A'), fN = n(p, 'F');
-    const fIdx = fN ? Object.entries(X.P[p.id].sk.F.q).reduce((a, [k, v]) => a + QW[k] * v, 0) / (4 * fN) * 100 : null;
-    return `<tr><td><b>${esc(p.no)}</b> ${esc(p.name)} <span class="muted small">${esc(p.pos)}</span></td><td>${X.P[p.id].pts}</td><td>${X.P[p.id].err}</td>
-      <td>${sN}</td><td>${g(p, 'S', '#')}</td><td>${g(p, 'S', '=')}</td>
-      <td>${rN}</td><td>${f0(rN ? 100 * (g(p, 'R', '#') + g(p, 'R', '+')) / rN : null)}</td><td>${g(p, 'R', '=')}</td>
-      <td>${fN}</td><td>${f0(fIdx)}</td>
-      <td>${aN}</td><td>${g(p, 'A', '#')}</td><td>${g(p, 'A', '=')}</td><td>${g(p, 'A', '/')}</td><td>${f0(aN ? 100 * (g(p, 'A', '#') - g(p, 'A', '=') - g(p, 'A', '/')) / aN : null)}</td>
-      <td>${n(p, 'B')}</td><td>${g(p, 'B', '#')}</td><td>${n(p, 'D')}</td><td>${n(p, 'X')}</td></tr>`;
-  }).join('');
-  return `<section class="panel st-wide"><h3 class="win-${t}">Pemain · ${esc(S.m.meta[t].name)}</h3><div class="tscroll"><table class="dt" style="margin-top:8px">
-    <thead><tr><th>Pemain</th><th title="Poin dari ace, serangan, blok">Poin</th><th title="Error & pelanggaran">Err</th><th>Servis</th><th>Ace</th><th>S.Err</th><th>Terima</th><th>Pos%</th><th>T.Err</th><th>Umpan</th><th>Indeks</th><th>Serang</th><th>Poin</th><th>A.Err</th><th>Diblok</th><th>Eff</th><th>Blok</th><th>B.Poin</th><th>Cover</th><th>Pelangg.</th></tr></thead>
-    <tbody>${rows || '<tr><td colspan="20" class="muted">Belum ada sentuhan tercatat</td></tr>'}</tbody></table></div></section>`;
+  const rec = id => {
+    const P = X.P[id], g = (s, q) => P.sk[s]?.q[q] || 0, n = s => P.sk[s]?.n || 0;
+    const fW = P.sk.F ? Object.entries(P.sk.F.q).reduce((a, [k, v]) => a + (QW[k] ?? 0) * v, 0) : 0;
+    return { pts: P.pts, err: P.err, sN: n('S'), sA: g('S', '#'), sE: g('S', '='), rN: n('R'), rP: g('R', '#') + g('R', '+'), rE: g('R', '='), fN: n('F'), fW,
+      aN: n('A'), aK: g('A', '#'), aE: g('A', '='), aB: g('A', '/'), bN: n('B'), bK: g('B', '#'), dN: n('D'), xN: n('X') };
+  };
+  const pl = (X.roster?.[t] || S.m.meta[t].players).filter(p => X.P[p.id]).map(p => ({ p, r: rec(p.id) }))
+    .sort((a, b) => b.r.pts - a.r.pts || (a.r.err - b.r.err));
+  const tot = {}; pl.forEach(({ r }) => { for (const k in r) tot[k] = (tot[k] || 0) + r[k]; });
+  const pc = (a, b) => (b ? f0((100 * a) / b) : '–');
+  /* Kolom dikelompokkan per aksi seperti box score resmi. */
+  const G = [
+    ['', [['Poin', 'pts', 'Ace + serangan poin + blok poin'], ['Err', 'err', 'Error & pelanggaran yang memberi poin lawan']]],
+    ['Servis', [['N', 'sN'], ['Ace', 'sA'], ['Err', 'sE']]],
+    ['Penerimaan', [['N', 'rN'], ['Pos%', r => pc(r.rP, r.rN), 'Sempurna + baik'], ['Err', 'rE']]],
+    ['Umpan', [['N', 'fN'], ['Indeks', r => (r.fN ? f0((100 * r.fW) / (4 * r.fN)) : '–')]]],
+    ['Serangan', [['N', 'aN'], ['Poin', 'aK'], ['Err', 'aE'], ['Diblok', 'aB'], ['Eff%', r => (r.aN ? f0((100 * (r.aK - r.aE - r.aB)) / r.aN) : '–'), '(poin − error − diblok) ÷ serangan']]],
+    ['Blok', [['N', 'bN'], ['Poin', 'bK']]],
+    ['Lain', [['Cover', 'dN'], ['Pelangg.', 'xN']]],
+  ];
+  const cells = r => G.map(([, cs]) => cs.map(([, k], i) => {
+    const v = typeof k === 'string' ? r[k] : k(r);
+    return `<td class="${i === 0 ? 'gs' : ''}">${v === 0 ? '<span class="z">0</span>' : v}</td>`;
+  }).join('')).join('');
+  const nCols = 1 + G.reduce((a, [, cs]) => a + cs.length, 0);
+  return `<section class="panel st-wide"><h3 class="win-${t}">Statistik pemain · ${esc(S.m.meta[t].name)}</h3><div class="tscroll"><table class="dt pl" style="margin-top:8px">
+    <thead><tr class="g"><th></th>${G.map(([g, cs]) => `<th colspan="${cs.length}" class="gs">${g}</th>`).join('')}</tr>
+      <tr><th>Pemain</th>${G.map(([, cs]) => cs.map(([l, , tip], i) => `<th class="${i === 0 ? 'gs' : ''}"${tip ? ` title="${tip}"` : ''}>${l}</th>`).join('')).join('')}</tr></thead>
+    <tbody>${pl.map(({ p, r }) => `<tr><td><b>${esc(p.no)}</b> ${esc(p.name)} <span class="muted small">${esc(p.pos)}</span></td>${cells(r)}</tr>`).join('') || `<tr><td colspan="${nCols}" class="muted">Belum ada sentuhan tercatat</td></tr>`}</tbody>
+    ${pl.length ? `<tfoot><tr><td>Total tim</td>${cells(tot)}</tr></tfoot>` : ''}</table></div></section>`;
 }
-
 /* ---------- Ekspor / impor ---------- */
 function toCsv() {
   const m = S.m, M = m.meta; derive(m);
