@@ -649,6 +649,46 @@ details summary { cursor: pointer; }
 .ytin .inp { min-width: 0; flex: 1; padding: 5px 8px; }
 .mant { display: inline-flex; gap: 4px; align-items: center; }
 .mant .inp { width: 74px; padding: 5px 8px; }
+.kflow { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; min-height: 34px; margin: 6px 0 10px; font-size: 13px; }
+.kf { padding: 4px 8px; border-radius: 6px; background: var(--surface2); border-left: 3px solid var(--line); }
+.kf.A { border-left-color: var(--teamA); } .kf.B { border-left-color: var(--teamB); } .kf-a { color: var(--muted); }
+.kil { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 820px) { .kil { grid-template-columns: minmax(0, 1fr); } }
+.kt { border: 1px solid var(--line); border-radius: 12px; padding: 10px; display: grid; gap: 6px; align-content: start; transition: opacity .15s; }
+.kt.A { border-top: 5px solid var(--teamA); } .kt.B { border-top: 5px solid var(--teamB); }
+.kt.on { box-shadow: 0 0 0 2px var(--ink2); }
+.kt.off { opacity: .45; }
+.kt-h { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.kt-h b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kt-sk { margin-left: auto; font-family: var(--f-display); font-weight: 700; font-size: 15px; text-transform: uppercase; letter-spacing: .04em; color: var(--accent); white-space: nowrap; }
+.kr { display: grid; grid-template-columns: minmax(84px, 1.15fr) repeat(var(--n), minmax(0, 1fr)); gap: 5px; align-items: stretch; }
+.kr-h span { font-family: var(--f-mono); font-size: 12px; text-align: center; color: var(--muted); }
+.kp { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.kp b { font-family: var(--f-display); font-size: 26px; line-height: 1; min-width: 28px; text-align: center; }
+.kt.A .kp b { color: var(--teamA); } .kt.B .kp b { color: var(--teamB); }
+.kp span { display: grid; min-width: 0; font-size: 12px; line-height: 1.15; color: var(--ink2); overflow: hidden; } .kp span i { font-style: normal; font-weight: 700; color: var(--ink); text-transform: uppercase; font-size: 11px; }
+.kp .srv-ball { width: 16px; height: 16px; flex: none; }
+.kq { min-height: 58px; border: 0; border-radius: 8px; font: 600 12px/1.1 var(--f-body); padding: 4px 2px; cursor: pointer; color: #0C1319; touch-action: manipulation; }
+.kq.q1 { background: var(--q1); color: #fff; } .kq.q2 { background: var(--q2); } .kq.q3 { background: var(--q3); } .kq.q4 { background: var(--q4); } .kq.q5 { background: var(--q5); color: #fff; } .kq.qx { background: var(--accent); color: #fff; }
+.kq:active { transform: scale(.96); filter: brightness(1.1); }
+.kq:disabled { cursor: default; filter: grayscale(.6); }
+.kt-man { justify-self: start; }
+@media (max-width: 600px) {
+  .kt { padding: 8px 6px; }
+  .kr { grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 4px; }
+  .kr > .kp { grid-column: 1 / -1; margin-top: 4px; } .kr-h > span:first-child { display: none; }
+  .kp b { font-size: 20px; } .kp span { display: flex; gap: 6px; align-items: baseline; font-size: 12px; }
+  .kq { min-height: 50px; font-size: 11px; padding: 2px 1px; }
+  .kz-c { min-height: 64px; font-size: 12px; }
+  .kflow { font-size: 12px; }
+}
+.kz { border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 10px; }
+.kz-court { display: flex; gap: 8px; align-items: stretch; } .kz-court.r { flex-direction: row-reverse; }
+.kz-g { flex: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; background: var(--court); padding: 8px; border-radius: 8px; }
+.kz-c { min-height: 78px; border: 1px dashed rgba(255,255,255,.35); background: rgba(255,255,255,.06); color: #fff; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; }
+.kz-c:active { background: var(--accent); }
+.kz-net { writing-mode: vertical-rl; text-align: center; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); border-left: 4px solid var(--ink2); padding-left: 2px; }
+.kz-court.r .kz-net { border-left: 0; border-right: 4px solid var(--ink2); padding: 0 2px 0 0; }
 .lite { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0; }
 .litecol { border: 1px solid var(--line); border-radius: var(--r); padding: 10px; display: grid; gap: 8px; align-content: start; }
 .litecol.A { border-top: 4px solid var(--teamA); } .litecol.B { border-top: 4px solid var(--teamB); }
@@ -788,17 +828,17 @@ dl.roles dt { font-weight: 700; } dl.roles dd { margin: 0; color: var(--ink2); }
   #tagMain .posbtn { min-height: 54px; }
   .courtrow .courtcol { order: -1; }
   /* Urutan di HP: alur rally → petunjuk → input utama (lapangan di mode Area, posisi pemain di mode lain) → detail → pengaturan */
-  .tag-grid:not(.m-lite) .center > .editb { order: -3; }
-  .tag-grid:not(.m-lite) .center > .flowwrap { order: -2; }
-  .tag-grid:not(.m-lite) .center > .hint { order: -1; }
-  .tag-grid:not(.m-lite) .center > .pospad, .tag-grid:not(.m-lite) .center > .blkbtn { order: 1; }
-  .tag-grid:not(.m-lite) .center > .courtrow { order: 2; }
+  .tag-grid:not(.m-lite):not(.m-kilat) .center > .editb { order: -3; }
+  .tag-grid:not(.m-lite):not(.m-kilat) .center > .flowwrap { order: -2; }
+  .tag-grid:not(.m-lite):not(.m-kilat) .center > .hint { order: -1; }
+  .tag-grid:not(.m-lite):not(.m-kilat) .center > .pospad, .tag-grid:not(.m-lite):not(.m-kilat) .center > .blkbtn { order: 1; }
+  .tag-grid:not(.m-lite):not(.m-kilat) .center > .courtrow { order: 2; }
   .tag-grid.m-area .center > .aguide { order: 1; }
   .tag-grid.m-area .center > .courtrow { order: 2; }
   .tag-grid.m-area .center > .pospad, .tag-grid.m-area .center > .blkbtn { order: 3; }
-  .tag-grid:not(.m-lite) .center > .techrow, .tag-grid:not(.m-lite) .center > .causerow { order: 4; }
-  .tag-grid:not(.m-lite) .center > .actions { order: 5; }
-  .tag-grid:not(.m-lite) .center > .ctxbar { order: 6; border-top: 1px solid var(--line); padding-top: 10px; }
+  .tag-grid:not(.m-lite):not(.m-kilat) .center > .techrow, .tag-grid:not(.m-lite):not(.m-kilat) .center > .causerow { order: 4; }
+  .tag-grid:not(.m-lite):not(.m-kilat) .center > .actions { order: 5; }
+  .tag-grid:not(.m-lite):not(.m-kilat) .center > .ctxbar { order: 6; border-top: 1px solid var(--line); padding-top: 10px; }
   #tagMain .courthd { flex-wrap: wrap; gap: 4px; }
   .court text { font-size: 19px; }
   .court.vert { height: min(58vh, 520px); }
@@ -907,24 +947,24 @@ dl.roles dt { font-weight: 700; } dl.roles dd { margin: 0; color: var(--ink2); }
 /* ---------- HP: alur rally di samping lapangan, Aksi di bawah lapangan ----------
    Kolom .courtrow dilebur (display: contents) supaya alur rally dan lapangan bisa berdampingan dalam satu grid. */
 @media (max-width: 600px), (max-height: 560px) and (orientation: landscape) {
-  #tagMain .tag-grid:not(.m-lite):not(.done) .center { grid-template-columns: minmax(0, 44fr) minmax(0, 56fr); row-gap: 0; column-gap: 8px;
+  #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center { grid-template-columns: minmax(0, 44fr) minmax(0, 56fr); row-gap: 0; column-gap: 8px;
     grid-template-areas: "edit edit" "hint hint" "guide guide" "flow court" "aksi aksi" "tech tech" "cause cause" "act act" "ctx ctx"; }
-  #tagMain .tag-grid:not(.m-lite):not(.done) .center > * { margin-bottom: 10px; }
-  #tagMain .tag-grid:not(.m-lite):not(.done) .center > .courtrow { display: contents; }
-  #tagMain .tag-grid:not(.m-lite):not(.done) .center > .editb { grid-area: edit; }
-  #tagMain .tag-grid:not(.m-lite):not(.done) .center > .hint { grid-area: hint; }
-  #tagMain .tag-grid:not(.m-lite):not(.done) .center > .aguide { grid-area: guide; }
-  #tagMain .tag-grid:not(.m-lite):not(.done) .center > .pospad { grid-area: hint; display: none; }
-  #tagMain .tag-grid:not(.m-lite):not(.done) .center > .blkbtn { grid-area: hint; display: none; }
-  #tagMain .tag-grid:not(.m-lite):not(.done) .courtrow > .courtcol { grid-area: court; margin-bottom: 10px; min-width: 0; }
-  #tagMain .tag-grid:not(.m-lite):not(.done) .courtrow > .aksi { grid-area: aksi; position: static; margin-bottom: 10px; }
-  #tagMain .tag-grid:not(.m-lite):not(.done) .courtrow > .kual { display: none; }
-  #tagMain .tag-grid:not(.m-lite):not(.done) .center > .techrow { grid-area: tech; }
-  #tagMain .tag-grid:not(.m-lite):not(.done) .center > .causerow { grid-area: cause; }
-  #tagMain .tag-grid:not(.m-lite):not(.done) .center > .actions { grid-area: act; }
-  #tagMain .tag-grid:not(.m-lite):not(.done) .center > .ctxbar { grid-area: ctx; }
+  #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > * { margin-bottom: 10px; }
+  #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > .courtrow { display: contents; }
+  #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > .editb { grid-area: edit; }
+  #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > .hint { grid-area: hint; }
+  #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > .aguide { grid-area: guide; }
+  #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > .pospad { grid-area: hint; display: none; }
+  #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > .blkbtn { grid-area: hint; display: none; }
+  #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courtrow > .courtcol { grid-area: court; margin-bottom: 10px; min-width: 0; }
+  #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courtrow > .aksi { grid-area: aksi; position: static; margin-bottom: 10px; }
+  #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courtrow > .kual { display: none; }
+  #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > .techrow { grid-area: tech; }
+  #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > .causerow { grid-area: cause; }
+  #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > .actions { grid-area: act; }
+  #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > .ctxbar { grid-area: ctx; }
   /* alur rally tegak: kartu ditumpuk, panah ke bawah, sentuhan terbaru terlihat */
-  #tagMain .tag-grid:not(.m-lite):not(.done) .center > .flowwrap { grid-area: flow; align-self: start; max-height: 64vh; overflow-y: auto; border-bottom: 0; padding-bottom: 0; scrollbar-width: thin; }
+  #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > .flowwrap { grid-area: flow; align-self: start; max-height: 64vh; overflow-y: auto; border-bottom: 0; padding-bottom: 0; scrollbar-width: thin; }
   #tagMain .flowwrap .flow { flex-direction: column; flex-wrap: nowrap; overflow: visible; gap: 2px; align-items: stretch; padding-bottom: 0; }
   #tagMain .flowwrap .step { min-width: 0; width: 100%; flex: none; padding: 4px 7px 5px; }
   #tagMain .flowwrap .farrow { transform: rotate(90deg); align-self: center; line-height: 1; font-size: 12px; }
@@ -933,18 +973,18 @@ dl.roles dt { font-weight: 700; } dl.roles dd { margin: 0; color: var(--ink2); }
   #tagMain .courthd .lbl { flex-basis: 100%; }
   #tagMain .courthd .tabs.mode button { padding: 4px 8px; font-size: 11px; }
   /* Aksi sebagai baris tombol di bawah lapangan */
-  #tagMain .tag-grid:not(.m-lite):not(.done) .aksi .vseg { display: flex; flex-wrap: wrap; gap: 5px; }
-  #tagMain .tag-grid:not(.m-lite):not(.done) .aksi .vseg .sk { width: auto; flex: 1 1 auto; justify-content: center; min-height: 38px; padding: 6px 10px; }
+  #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .aksi .vseg { display: flex; flex-wrap: wrap; gap: 5px; }
+  #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .aksi .vseg .sk { width: auto; flex: 1 1 auto; justify-content: center; min-height: 38px; padding: 6px 10px; }
 }
 @media (max-width: 600px) {
   #tagMain .court-wrap.vert { overflow: visible; }
   #tagMain .court.vert { width: 100%; height: auto; max-height: max(300px, calc(100vh - 400px)); }
-  #tagMain .tag-grid:not(.m-lite):not(.done) .center > .flowwrap { max-height: max(320px, calc(100vh - 360px)); }
+  #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > .flowwrap { max-height: max(320px, calc(100vh - 360px)); }
   #tagMain .court-wrap.vert .camlbl { font-size: 11px; }
 }
 @media (max-height: 560px) and (orientation: landscape) {
-  #tagMain .tag-grid:not(.m-lite):not(.done) .center { grid-template-columns: minmax(128px, 32%) minmax(0, 1fr); }
-  #tagMain .tag-grid:not(.m-lite):not(.done) .center > .flowwrap { max-height: calc(100vh - 56px); position: sticky; top: calc(env(safe-area-inset-top, 0px) + 44px); }
+  #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center { grid-template-columns: minmax(128px, 32%) minmax(0, 1fr); }
+  #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > .flowwrap { max-height: calc(100vh - 56px); position: sticky; top: calc(env(safe-area-inset-top, 0px) + 44px); }
 }
 
 /* ---------- Ekspor PDF (cetak → Simpan sebagai PDF) ---------- */
@@ -1517,7 +1557,7 @@ function setStoreState() {
 const S = {
   view: 'home', m: null, st: null,
   cur: null, sel: { pid: null, tm: null, skill: null, tech: null, z: null, zh: null },
-  lastTech: {}, statSet: 'all', blk: null, forceTeam: null, quick: (() => { try { return localStorage.getItem('takraw.quick') ?? '+'; } catch { return '+'; } })(), mode: (() => { try { return localStorage.getItem('takraw.mode2') || 'area'; } catch { return 'area'; } })(), orient: (() => { try { return localStorage.getItem('takraw.orient') || 'h'; } catch { return 'h'; } })(), draft: null, confirm: null, video: false, swapNotice: {},
+  lastTech: {}, kPend: null, kArah: (() => { try { return !!localStorage.getItem('takraw.karah'); } catch { return false; } })(), statSet: 'all', blk: null, forceTeam: null, quick: (() => { try { return localStorage.getItem('takraw.quick') ?? '+'; } catch { return '+'; } })(), mode: (() => { try { return localStorage.getItem('takraw.mode2') || 'area'; } catch { return 'area'; } })(), orient: (() => { try { return localStorage.getItem('takraw.orient') || 'h'; } catch { return 'h'; } })(), draft: null, confirm: null, video: false, swapNotice: {},
 };
 
 function go(view) {
@@ -1868,6 +1908,64 @@ function liteRally(win, end) {
   S.cur.touches = tc; if (!S.cur.ts) S.cur.ts = Date.now(); if (S.cur.vt0 == null) S.cur.vt0 = vt;
   endRally(win, end, true);
 }
+/* Mode Kilat (live): satu ketukan = pemain + kualitas. Bola menyeberang = ketuk pemain tim lawan;
+   sentuhan sebelumnya otomatis ditandai "langsung ke lawan" oleh commit(). Arah servis/smash opsional. */
+const KQ = { S: ['#', '+', '!', '-', '='], R: ['#', '+', '!', '-', '='], F: ['#', '+', '!', '-', '=', 'x2'], D: ['#', '+', '!', '-', '='], A: ['#', '+', '!', '/', '='], B: ['#', '+', '!', '-', '='], X: ['='] };
+const KQ_CLS = { '#': 'q1', '+': 'q2', '!': 'q3', '-': 'q4', '/': 'q4', '=': 'q5', x2: 'qx' };
+const kLabel = (sk, q) => (q === 'x2' ? 'Langsung poin' : QL[sk][q]);
+/* Aksi berikutnya untuk tim t; null = tim itu belum bisa menyentuh bola. */
+function kilatSkill(t) {
+  if (S.blk) return t === opp(S.blk.att.tm) ? 'B' : null;
+  if (!S.cur.touches.length) return t === S.cur.srv ? 'S' : null;
+  const c = ctx();
+  return t === c.team ? c.skill : suggestSkill(S.cur.touches, t);
+}
+function kilatTap(t, i, q, z) {
+  if (locked()) return;
+  const sk = kilatSkill(t), pl = posPlayers(t)[i];
+  if (!sk || !pl) return;
+  if (S.blk) { S.blk.pid = pl.id; S.blk.tm = t; S.blk.tech = null; return commit(q); }
+  if (S.kArah && !z && (sk === 'S' || sk === 'A') && q !== '=' && q !== '/') { S.kPend = { t, i, q }; return renderTagMain(); }
+  clearSel();
+  S.sel.pid = pl.id; S.sel.tm = t; S.sel.skill = sk;
+  if (q === 'x2') { S.sel.skill = 'A'; S.sel.x2 = 1; q = '#'; }
+  if (q === '/') { startBlock(); return; }
+  if (z > 0) { S.sel.z = z; S.sel.zh = opp(t); }
+  commit(q);
+}
+/* Pilih arah: setengah lapangan lawan digambar searah dengan lapangan di mode Area (net di sisi tengah layar). */
+function kilatZones(t) {
+  const h = opp(t), right = h !== sideLeft();
+  const cols = right ? [0, 1, 2] : [2, 1, 0], rows = right ? [2, 1, 0] : [0, 1, 2];
+  const cell = (d, lr) => { const z = d * 3 + lr + 1; return `<button class="kz-c" data-act="kzone" data-z="${z}">${zoneName(z).replace('-', '<br>')}</button>`; };
+  const p = S.kPend, sk = kilatSkill(p.t);
+  return `<div class="kz"><div class="kz-h"><b>${esc(SKILLS[sk].name)} ${esc(pLabel(posPlayers(p.t)[p.i]?.id))} · ${esc(kLabel(sk, p.q))}</b> — ke mana bolanya di lapangan ${esc(tname(h))}?</div>
+    <div class="kz-court ${right ? 'r' : 'l'}"><div class="kz-g">${rows.map(lr => cols.map(d => cell(d, lr)).join('')).join('')}</div><span class="kz-net">net</span></div>
+    <div class="row"><button class="btn" data-act="kzone" data-z="0">Lewati (arah tidak terlihat)</button><button class="btn ghost" data-act="kzCancel">Batal</button></div></div>`;
+}
+function kilatHtml() {
+  const flow = S.cur.touches.map(x => `<span class="kf ${x.tm}">${esc(SKILLS[x.s].name)} ${esc(pLabel(x.p))} <b>${esc(QL[x.s][x.q] || x.q)}</b>${x.x ? ' ↷' : ''}</span>`).join('<span class="kf-a">→</span>');
+  const team = t => {
+    const sk = kilatSkill(t), cols = sk ? KQ[sk] : KQ.R, pl = posPlayers(t), act = !!sk && !locked();
+    const head = !act ? (S.cur.touches.length || S.blk ? 'menunggu bola' : 'menerima servis') : S.blk ? 'Pilih pemblok + hasil blok' : (t !== ctx().team && S.cur.touches.length ? '↷ ' : '') + SKILLS[sk].name;
+    return `<div class="kt ${t}${act ? '' : ' off'}${act && (S.blk || t === ctx().team) ? ' on' : ''}">
+      <div class="kt-h"><span class="sw ${t}"></span><b>${esc(M2()[t].name || 'Tim ' + t)}</b><span class="kt-sk" title="↷ = bila bola menyeberang ke tim ini">${esc(head)}</span>
+        <button class="btn sm ghost" data-act="subOpen" data-t="${t}" title="Ganti pemain">⇄</button></div>
+      ${S.subUI === t ? subForm(t) : ''}
+      <div class="kr kr-h" style="--n:${cols.length}"><span></span>${cols.map(q => `<span>${q === 'x2' ? '★' : q === '-' ? '−' : q}</span>`).join('')}</div>
+      ${pl.map((p, i) => `<div class="kr" style="--n:${cols.length}"><div class="kp"><b>${esc(p.no || '?')}</b><span><i>${esc(p.pos === 'Pemain' ? 'Posisi ' + (i + 1) : p.pos)}</i>${esc(p.name || '')}</span>${sk === 'S' && p.id === S.cur.sp ? '<svg class="srv-ball" aria-label="Servis"><use href="#takraw"/></svg>' : ''}</div>
+        ${cols.map(q => `<button class="kq ${KQ_CLS[q]}" data-act="kq" data-t="${t}" data-i="${i}" data-q="${q}" ${act ? '' : 'disabled'} title="${esc(SKILLS[q === 'x2' ? 'A' : sk || 'R'].name)}: ${esc(kLabel(sk || 'R', q))}">${esc(kLabel(sk || 'R', q))}</button>`).join('')}</div>`).join('')}
+      <button class="btn sm ghost kt-man" data-act="manual" data-t="${t}" ${locked() ? 'disabled' : ''}>+ Poin ${esc(tname(t))} (lainnya)</button>
+    </div>`;
+  };
+  return `<div class="ctxbar"><b>Mode Kilat · servis ${esc(tname(S.cur.srv))} ${esc(pLabel(S.cur.sp))}</b><span class="spacer"></span>
+      <button class="btn sm ${S.kArah ? 'primary' : 'ghost'}" data-act="kArah" title="Setelah servis/smash, ketuk area tujuan bola">${S.kArah ? '✓ ' : ''}Catat arah</button>${modeTabs()}</div>
+    <div class="hint">Satu ketukan = pemain + kualitas. Bola langsung menyeberang (mis. sentuhan ke-2)? Ketuk pemain tim lawan — sentuhan sebelumnya otomatis tercatat <b>langsung ke lawan</b>. ★ = sentuhan ke-2 langsung jadi poin.</div>
+    <div class="kflow">${flow || '<span class="muted">Rally baru — mulai dari servis.</span>'}</div>
+    ${S.kPend ? kilatZones(S.kPend.t) : `<div class="kil">${team(sideLeft())}${team(opp(sideLeft()))}</div>`}
+    <div class="actions"><button class="btn" data-act="undo"><kbd>⌫</kbd> ${S.blk ? 'Batal blok' : 'Batal sentuhan'}</button><button class="btn" data-act="let" ${S.cur.touches.length ? '' : 'disabled'}>Let / ulang rally</button><button class="btn" data-act="swapSrv" ${S.cur.touches.length ? 'disabled' : ''}>Tukar tim servis</button><button class="btn" data-act="scoreFix" ${S.st.winner || S.cur.touches.length ? 'disabled' : ''}>± Koreksi skor</button><span class="spacer"></span>${nextBtns(S.m.meta, !!S.st.winner)}<button class="btn ghost sm" data-act="editMatch">Ubah data pertandingan</button></div>`;
+}
+const M2 = () => S.m.meta;
 function liteHtml() {
   const col = t => `<div class="litecol ${t}"><div class="lt-h"><span class="sw ${t}"></span>Poin ${esc(tname(t))}</div>
     <div class="lt-g">${LITE_ENDS.win.map(e => `<button class="btn lt ${t}" data-act="lite" data-t="${t}" data-e="${e}" ${e === 'ACE' && S.cur.srv !== t ? 'disabled' : ''}>${esc(END_LABEL[e])}</button>`).join('')}</div>
@@ -1879,7 +1977,7 @@ function liteHtml() {
     ${S.st.winner ? '' : `<div class="lite">${col(sideLeft())}${col(opp(sideLeft()))}</div>`}
     <div class="actions"><button class="btn" data-act="undo"><kbd>⌫</kbd> Batal poin terakhir</button><button class="btn" data-act="swapSrv">Tukar tim servis</button><button class="btn" data-act="scoreFix" ${S.st.winner ? 'disabled' : ''} title="Bila ada poin yang terlewat dicatat">± Koreksi skor</button><span class="spacer"></span>${nextBtns(S.m.meta, !!S.st.winner)}<button class="btn ghost sm" data-act="editMatch">Ubah data pertandingan</button></div>`;
 }
-const modeTabs = () => `<div class="tabs mode" role="group" aria-label="Cara input"><button class="${S.mode === 'area' ? 'on' : ''}" data-act="mode" data-m="area">Area</button><button class="${S.mode === 'pos' ? 'on' : ''}" data-act="mode" data-m="pos">Posisi</button><button class="${S.mode === 'list' ? 'on' : ''}" data-act="mode" data-m="list">Daftar</button><button class="${S.mode === 'lite' ? 'on' : ''}" data-act="mode" data-m="lite" title="Live: hanya pemenang + cara poin">Ringkas</button></div>`;
+const modeTabs = () => `<div class="tabs mode" role="group" aria-label="Cara input"><button class="${S.mode === 'kilat' ? 'on' : ''}" data-act="mode" data-m="kilat" title="Live cepat: satu ketukan = pemain + kualitas">⚡ Kilat</button><button class="${S.mode === 'area' ? 'on' : ''}" data-act="mode" data-m="area">Area</button><button class="${S.mode === 'pos' ? 'on' : ''}" data-act="mode" data-m="pos">Posisi</button><button class="${S.mode === 'list' ? 'on' : ''}" data-act="mode" data-m="list">Daftar</button><button class="${S.mode === 'lite' ? 'on' : ''}" data-act="mode" data-m="lite" title="Live: hanya pemenang + cara poin">Ringkas</button></div>`;
 /* Pemain di lapangan diurutkan menurut peran: 1 Tekong, 2 Apit Kiri, 3 Apit Kanan (Double/Quad: urutan daftar). */
 const ROLE_ORDER = ['Tekong', 'Apit Kiri', 'Apit Kanan'];
 function posPlayers(team) {
@@ -2097,6 +2195,7 @@ function endRally(win, end, lite) {
   renderTag();
 }
 function undo() {
+  if (S.kPend) { S.kPend = null; renderTagMain(); return; }
   if (S.blk) { S.blk = null; renderTagMain(); return; }
   if (S.sel.pid || S.sel.skill || S.forceTeam) { clearSel(); renderTagMain(); return; }
   if (S.cur.touches.length) { S.cur.touches.pop(); const lt = S.cur.touches[S.cur.touches.length - 1]; if (lt && lt.xa) { delete lt.x; delete lt.xa; } if (!S.cur.touches.length && S.editIdx == null) { S.cur.ts = null; S.cur.vt0 = null; } renderTagMain(); return; }
@@ -2236,7 +2335,8 @@ function renderTagMain() {
     </div>`;
   };
   // Laptop & tablet (bukan HP, bukan mode Ringkas): pemain tiap tim tepat di samping setengah lapangannya.
-  const wide = !matchMedia('(max-width: 600px)').matches && !(S.mode === 'lite' && S.editIdx == null);
+  const kil = S.mode === 'kilat' && S.editIdx == null;
+  const wide = !matchMedia('(max-width: 600px)').matches && !(S.mode === 'lite' && S.editIdx == null) && !kil;
   const tTouch = targetTouch();
   const causeFor = tTouch && tTouch.q === '=' && ERR_CAUSE[tTouch.s] ? tTouch : null;
   const techSkill = S.sel.pid ? sk : tTouch?.s;
@@ -2285,7 +2385,7 @@ function renderTagMain() {
     return `<button class="qb ${term ? 'term' : ''}" data-act="q" data-q="${q}" ${S.sel.pid ? '' : 'disabled style="opacity:.5"'}><span class="sym">${q === '-' ? '−' : q}</span>${sk ? QL[sk][q] : ''}${term ? `<span class="end">poin ${term === 'A' ? 'tim ini' : 'lawan'}</span>` : ''}</button>`;
   }).join('') + `<button class="qb qundo" data-act="undo" aria-label="Batal sentuhan terakhir"><span class="sym">⌫</span>Batal</button>`;
   /* Dok HP: pemain di kiri, kualitas di kanan — dua ketukan jempol per sentuhan tanpa menggulir. Tampil hanya di HP (CSS). */
-  const dock = locked() || (S.mode === 'lite' && S.editIdx == null) ? '' : `<div class="mdock" role="group" aria-label="Pilih pemain dan kualitas">
+  const dock = locked() || kil || (S.mode === 'lite' && S.editIdx == null) ? '' : `<div class="mdock" role="group" aria-label="Pilih pemain dan kualitas">
       <div class="md-l"><div class="lbl">${S.blk ? 'Pemblok' : 'Pemain'} · <span class="win-${padTeam}">${esc(tname(padTeam))}</span></div>
         ${posPlayers(padTeam).map((p, i) => { const role = p.pos === 'Pemain' ? 'Posisi ' + (i + 1) : p.pos; return `<button class="mdp ${padTeam} ${S.sel.pid === p.id || S.blk?.pid === p.id ? 'on' : ''}" data-act="pos" data-i="${i}"><b>${esc(p.no || i + 1)}</b><span>${esc(p.name && p.name !== '—' ? p.name : role)}${p.name && p.name !== '—' ? `<small>${esc(role)}</small>` : ''}</span></button>`; }).join('')}
         ${S.blk ? '' : `<button class="mdp flip" data-act="flipTeam">⇄ Tim lain · ${esc(tname(opp(padTeam)))}</button>`}
@@ -2307,9 +2407,9 @@ function renderTagMain() {
         <button class="sb-flip" data-act="sideFlip" title="Tukar posisi tim kiri dan kanan di layar">⇄ Tukar posisi</button></div>
       ${sbTeam(opp(sideLeft()), 'R')}
     </div>
-    <div class="tag-grid m-${S.mode}${locked() ? ' done' : ''}${wide ? ' wide' : ''}">
-      ${wide ? '' : teamPanel(sideLeft())}
-      <div class="center panel">${S.mode === 'lite' && S.editIdx == null ? liteHtml() : `${S.editIdx != null ? ` <div class="banner editb">${S.m.rallies[S.editIdx]?.lite ? 'Melengkapi' : 'Mengubah'} rally #${S.editIdx + 1} dari video — sentuhan lama diganti setelah rally ini selesai dicatat · <button class="btn sm ghost" data-act="cancelEdit">Batal</button></div>` : ''}
+    <div class="tag-grid m-${S.mode}${locked() ? ' done' : ''}${wide || kil ? ' wide' : ''}">
+      ${wide || kil ? '' : teamPanel(sideLeft())}
+      <div class="center panel">${kil ? kilatHtml() : S.mode === 'lite' && S.editIdx == null ? liteHtml() : `${S.editIdx != null ? ` <div class="banner editb">${S.m.rallies[S.editIdx]?.lite ? 'Melengkapi' : 'Mengubah'} rally #${S.editIdx + 1} dari video — sentuhan lama diganti setelah rally ini selesai dicatat · <button class="btn sm ghost" data-act="cancelEdit">Batal</button></div>` : ''}
         ${flowHtml()}
         ${pad}
         <div class="hint" aria-live="polite">${esc(hint)}</div>
@@ -2337,7 +2437,7 @@ function renderTagMain() {
         </div>
         <div class="shortcuts">${S.mode !== 'list' ? '<span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> posisi pemain tim yang memegang bola</span><span><kbd>Tab</kbd> tim lain</span><span><kbd>B</kbd> serangan dihadang blok</span><span><kbd>N</kbd> langsung ke lawan</span><span><kbd>U</kbd> tak terlihat</span><span><kbd>V</kbd> ikuti kamera</span>' : '<span><kbd>1</kbd>–<kbd>6</kbd> pemain A</span><span><kbd>7</kbd>–<kbd>0</kbd> pemain B</span>'}<span><kbd>S</kbd><kbd>R</kbd><kbd>F</kbd><kbd>A</kbd><kbd>B</kbd><kbd>D</kbd><kbd>X</kbd> aksi</span><span>Kualitas: <kbd>#</kbd><kbd>+</kbd><kbd>!</kbd><kbd>-</kbd><kbd>/</kbd><kbd>=</kbd> atau <kbd>H</kbd><kbd>J</kbd><kbd>K</kbd><kbd>L</kbd><kbd>;</kbd><kbd>'</kbd></span><span><kbd>Spasi</kbd> video · <kbd>←</kbd><kbd>→</kbd> 2 s</span></div>`}
       </div>
-      ${wide ? '' : teamPanel(opp(sideLeft()))}
+      ${wide || kil ? '' : teamPanel(opp(sideLeft()))}
     </div>${dock}`);
   scrollFlow();
 }
@@ -3022,7 +3122,11 @@ const ACT = {
   },
   tkFlag: d => { const t = S.m.rallies[+d.r]?.tc[+d.j]; if (!t) return; if (t.u) delete t.u; else t.u = 1; persist(); renderLog(); },
   mode: d => { if (d.m === 'lite' && (S.cur.touches.length || S.editIdx != null)) return toast('Selesaikan rally yang sedang dicatat dulu'); S.mode = d.m; try { localStorage.setItem('takraw.mode2', d.m); } catch {} clearSel(); renderTagMain(); },
-  let: () => { resetCur(); toast('Rally diulang (let) — tidak tercatat'); renderTagMain(); },
+  kq: d => kilatTap(d.t, +d.i, d.q),
+  kzone: d => { const p = S.kPend; S.kPend = null; if (p) kilatTap(p.t, p.i, p.q, +d.z || -1); },
+  kzCancel: () => { S.kPend = null; renderTagMain(); },
+  kArah: () => { S.kArah = !S.kArah; try { localStorage.setItem('takraw.karah', S.kArah ? '1' : ''); } catch {} renderTagMain(); },
+  let: () => { S.kPend = null; resetCur(); toast('Rally diulang (let) — tidak tercatat'); renderTagMain(); },
   swapSrv: () => { S.cur.srv = opp(S.cur.srv); S.cur.ovr = !S.cur.ovr; S.cur.sp = defaultServer(S.cur.srv); renderTagMain(); },
   manual: d => { if (locked()) return toast('Pertandingan sudah selesai'); endRally(d.t, 'MAN'); },
   lite: d => liteRally(d.t, d.e),
@@ -3039,7 +3143,7 @@ const ACT = {
   fillRally: d => {
     const i = +d.i, r = S.m.rallies[i]; if (!r) return;
     if (S.cur.touches.length && S.editIdx == null) return toast('Selesaikan atau batalkan rally yang sedang dicatat dulu');
-    if (S.mode === 'lite') S.mode = 'area';
+    if (S.mode === 'lite' || S.mode === 'kilat') S.mode = 'area';
     clearSel(); S.editIdx = i;
     S.cur = { touches: [], srv: r.srv, sp: r.sp, ts: r.ts, vt0: r.vt0 ?? null, ovr: false };
     if (r.vt0 != null) seekTo(Math.max(0, r.vt0 - 3));
@@ -3079,7 +3183,7 @@ document.addEventListener('click', e => {
   const fn = ACT[b.dataset.act]; if (fn) { e.preventDefault(); buzz(b.dataset.act); fn(b.dataset, b, e); }
 });
 /* Getar singkat saat mengetuk tombol pencatatan, sebagai tanda ketukan diterima (HP Android). */
-const BUZZ = new Set(['q', 'lite', 'pos', 'player', 'zone', 'skill', 'undo', 'manual', 'block', 'flipTeam']);
+const BUZZ = new Set(['kq', 'kzone', 'q', 'lite', 'pos', 'player', 'zone', 'skill', 'undo', 'manual', 'block', 'flipTeam']);
 function buzz(act) {
   if (!BUZZ.has(act) || S.view !== 'tag' || !navigator.vibrate || !matchMedia('(pointer: coarse)').matches) return;
   try { navigator.vibrate(act === 'undo' ? [12, 40, 12] : 9); } catch {}
@@ -3152,7 +3256,7 @@ document.addEventListener('keydown', e => {
   const v = $('#vid');
   if (k === ' ' && S.video) { e.preventDefault(); ACT.vplay(); return; }
   if ((k === 'ArrowLeft' || k === 'ArrowRight') && S.video) { e.preventDefault(); seekTo((vidTime() || 0) + (k === 'ArrowLeft' ? -1 : 1) * (e.shiftKey ? 5 : 2)); return; }
-  if (S.mode === 'lite' && S.editIdx == null && k !== 'Backspace') return;
+  if ((S.mode === 'lite' || S.mode === 'kilat') && S.editIdx == null && k !== 'Backspace') return;
   if (k === 'Backspace') { e.preventDefault(); undo(); return; }
   if (k === 'Escape') { clearSel(); renderTagMain(); return; }
   if (k === 'Tab') { e.preventDefault(); ACT.flipTeam(); return; }
