@@ -673,6 +673,12 @@ details summary { cursor: pointer; }
 .kq:active { transform: scale(.96); filter: brightness(1.1); }
 .kq:disabled { cursor: default; filter: grayscale(.6); }
 .kt-man { justify-self: start; }
+.kr.kk { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+.kp kbd, .kr-h kbd, .kz-c kbd { font-size: 10px; padding: 0 4px; }
+.kz-c kbd { display: block; width: max-content; margin: 0 auto 4px; color: var(--ink); }
+.kshort { font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.kk-bar { margin: 0 0 8px; }
+@media (hover: none) and (pointer: coarse) { .kshort, .kp kbd, .kr-h kbd, .kz-c kbd { display: none; } }
 @media (max-width: 600px) {
   .kt { padding: 8px 6px; }
   .kr { grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 4px; }
@@ -1557,7 +1563,7 @@ function setStoreState() {
 const S = {
   view: 'home', m: null, st: null,
   cur: null, sel: { pid: null, tm: null, skill: null, tech: null, z: null, zh: null },
-  lastTech: {}, kPend: null, kArah: (() => { try { return !!localStorage.getItem('takraw.karah'); } catch { return false; } })(), statSet: 'all', blk: null, forceTeam: null, quick: (() => { try { return localStorage.getItem('takraw.quick') ?? '+'; } catch { return '+'; } })(), mode: (() => { try { return localStorage.getItem('takraw.mode2') || 'area'; } catch { return 'area'; } })(), orient: (() => { try { return localStorage.getItem('takraw.orient') || 'h'; } catch { return 'h'; } })(), draft: null, confirm: null, video: false, swapNotice: {},
+  lastTech: {}, kPend: null, kKey: null, kArah: (() => { try { return !!localStorage.getItem('takraw.karah'); } catch { return false; } })(), statSet: 'all', blk: null, forceTeam: null, quick: (() => { try { return localStorage.getItem('takraw.quick') ?? '+'; } catch { return '+'; } })(), mode: (() => { try { return localStorage.getItem('takraw.mode2') || 'area'; } catch { return 'area'; } })(), orient: (() => { try { return localStorage.getItem('takraw.orient') || 'h'; } catch { return 'h'; } })(), draft: null, confirm: null, video: false, swapNotice: {},
 };
 
 function go(view) {
@@ -1920,7 +1926,34 @@ function kilatSkill(t) {
   const c = ctx();
   return t === c.team ? c.skill : suggestSkill(S.cur.touches, t);
 }
+const KCOL_KEYS = ['h', 'j', 'k', 'l', ';', "'"];
+const KL_KEYS = ['1', '2', '3', '4'], KR_KEYS = ['7', '8', '9', '0'];
+function kilatKey(e, k) {
+  const stop = () => e.preventDefault();
+  if (k === 'Backspace') { stop(); if (S.kKey) { S.kKey = null; renderTagMain(); } else undo(); return; }
+  if (k === 'Escape') { S.kKey = null; S.kPend = null; renderTagMain(); return; }
+  if (S.kPend) {   // pilih arah: 1–9 urut baca (kiri-atas = 1), 0 / Enter = lewati
+    if (/^[1-9]$/.test(k)) { stop(); const b = document.querySelectorAll('.kz-c')[+k - 1]; if (b) ACT.kzone({ z: b.dataset.z }); }
+    else if (k === '0' || k === 'Enter') { stop(); ACT.kzone({ z: 0 }); }
+    return;
+  }
+  if (k === 'c') { stop(); ACT.kArah(); return; }
+  const li = KL_KEYS.indexOf(k), ri = KR_KEYS.indexOf(k);
+  if (li >= 0 || ri >= 0) {
+    const t = li >= 0 ? sideLeft() : opp(sideLeft()), i = li >= 0 ? li : ri;
+    if (!kilatSkill(t) || !posPlayers(t)[i]) return;
+    stop(); S.kKey = { t, i }; renderTagMain(); return;
+  }
+  if (!S.kKey) return;
+  const sk = kilatSkill(S.kKey.t); if (!sk) return;
+  const cols = KQ[sk], ci = KCOL_KEYS.indexOf(k);
+  let q = ci >= 0 ? cols[ci] : null;
+  if (!q && QKEY[e.key] && cols.includes(QKEY[e.key]) && !KCOL_KEYS.includes(k)) q = QKEY[e.key];
+  if (!q) return;
+  stop(); const { t, i } = S.kKey; S.kKey = null; kilatTap(t, i, q);
+}
 function kilatTap(t, i, q, z) {
+  S.kKey = null;
   if (locked()) return;
   const sk = kilatSkill(t), pl = posPlayers(t)[i];
   if (!sk || !pl) return;
@@ -1937,11 +1970,12 @@ function kilatTap(t, i, q, z) {
 function kilatZones(t) {
   const h = opp(t), right = h !== sideLeft();
   const cols = right ? [0, 1, 2] : [2, 1, 0], rows = right ? [2, 1, 0] : [0, 1, 2];
-  const cell = (d, lr) => { const z = d * 3 + lr + 1; return `<button class="kz-c" data-act="kzone" data-z="${z}">${zoneName(z).replace('-', '<br>')}</button>`; };
+  let kn = 0;
+  const cell = (d, lr) => { const z = d * 3 + lr + 1; return `<button class="kz-c" data-act="kzone" data-z="${z}"><kbd>${++kn}</kbd>${zoneName(z).replace('-', '<br>')}</button>`; };
   const p = S.kPend, sk = kilatSkill(p.t);
   return `<div class="kz"><div class="kz-h"><b>${esc(SKILLS[sk].name)} ${esc(pLabel(posPlayers(p.t)[p.i]?.id))} · ${esc(kLabel(sk, p.q))}</b> — ke mana bolanya di lapangan ${esc(tname(h))}?</div>
     <div class="kz-court ${right ? 'r' : 'l'}"><div class="kz-g">${rows.map(lr => cols.map(d => cell(d, lr)).join('')).join('')}</div><span class="kz-net">net</span></div>
-    <div class="row"><button class="btn" data-act="kzone" data-z="0">Lewati (arah tidak terlihat)</button><button class="btn ghost" data-act="kzCancel">Batal</button></div></div>`;
+    <div class="row"><button class="btn" data-act="kzone" data-z="0"><kbd>0</kbd> Lewati (arah tidak terlihat)</button><button class="btn ghost" data-act="kzCancel">Batal</button></div></div>`;
 }
 function kilatHtml() {
   const flow = S.cur.touches.map(x => `<span class="kf ${x.tm}">${esc(SKILLS[x.s].name)} ${esc(pLabel(x.p))} <b>${esc(QL[x.s][x.q] || x.q)}</b>${x.x ? ' ↷' : ''}</span>`).join('<span class="kf-a">→</span>');
@@ -1952,8 +1986,8 @@ function kilatHtml() {
       <div class="kt-h"><span class="sw ${t}"></span><b>${esc(M2()[t].name || 'Tim ' + t)}</b><span class="kt-sk" title="↷ = bila bola menyeberang ke tim ini">${esc(head)}</span>
         <button class="btn sm ghost" data-act="subOpen" data-t="${t}" title="Ganti pemain">⇄</button></div>
       ${S.subUI === t ? subForm(t) : ''}
-      <div class="kr kr-h" style="--n:${cols.length}"><span></span>${cols.map(q => `<span>${q === 'x2' ? '★' : q === '-' ? '−' : q}</span>`).join('')}</div>
-      ${pl.map((p, i) => `<div class="kr" style="--n:${cols.length}"><div class="kp"><b>${esc(p.no || '?')}</b><span><i>${esc(p.pos === 'Pemain' ? 'Posisi ' + (i + 1) : p.pos)}</i>${esc(p.name || '')}</span>${sk === 'S' && p.id === S.cur.sp ? '<svg class="srv-ball" aria-label="Servis"><use href="#takraw"/></svg>' : ''}</div>
+      <div class="kr kr-h" style="--n:${cols.length}"><span></span>${cols.map((q, ci) => `<span>${q === 'x2' ? '★' : q === '-' ? '−' : q} <kbd>${KCOL_KEYS[ci].toUpperCase()}</kbd></span>`).join('')}</div>
+      ${pl.map((p, i) => `<div class="kr${S.kKey && S.kKey.t === t && S.kKey.i === i ? ' kk' : ''}" style="--n:${cols.length}"><div class="kp"><kbd>${(t === sideLeft() ? KL_KEYS : KR_KEYS)[i] || ''}</kbd><b>${esc(p.no || '?')}</b><span><i>${esc(p.pos === 'Pemain' ? 'Posisi ' + (i + 1) : p.pos)}</i>${esc(p.name || '')}</span>${sk === 'S' && p.id === S.cur.sp ? '<svg class="srv-ball" aria-label="Servis"><use href="#takraw"/></svg>' : ''}</div>
         ${cols.map(q => `<button class="kq ${KQ_CLS[q]}" data-act="kq" data-t="${t}" data-i="${i}" data-q="${q}" ${act ? '' : 'disabled'} title="${esc(SKILLS[q === 'x2' ? 'A' : sk || 'R'].name)}: ${esc(kLabel(sk || 'R', q))}">${esc(kLabel(sk || 'R', q))}</button>`).join('')}</div>`).join('')}
       <button class="btn sm ghost kt-man" data-act="manual" data-t="${t}" ${locked() ? 'disabled' : ''}>+ Poin ${esc(tname(t))} (lainnya)</button>
     </div>`;
@@ -1961,7 +1995,9 @@ function kilatHtml() {
   return `<div class="ctxbar"><b>Mode Kilat · servis ${esc(tname(S.cur.srv))} ${esc(pLabel(S.cur.sp))}</b><span class="spacer"></span>
       <button class="btn sm ${S.kArah ? 'primary' : 'ghost'}" data-act="kArah" title="Setelah servis/smash, ketuk area tujuan bola">${S.kArah ? '✓ ' : ''}Catat arah</button>${modeTabs()}</div>
     <div class="hint">Satu ketukan = pemain + kualitas. Bola langsung menyeberang (mis. sentuhan ke-2)? Ketuk pemain tim lawan — sentuhan sebelumnya otomatis tercatat <b>langsung ke lawan</b>. ★ = sentuhan ke-2 langsung jadi poin.</div>
+    <div class="kshort no-print">Keyboard: <kbd>1</kbd>–<kbd>4</kbd> pemain kiri · <kbd>7</kbd>–<kbd>0</kbd> pemain kanan · lalu <kbd>H</kbd> <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> <kbd>;</kbd> <kbd>'</kbd> kualitas (urut kolom) · <kbd>C</kbd> catat arah · <kbd>⌫</kbd> batal · <kbd>Esc</kbd> lepas pilihan</div>
     <div class="kflow">${flow || '<span class="muted">Rally baru — mulai dari servis.</span>'}</div>
+    ${S.kKey ? `<div class="banner kk-bar">Pemain ${esc(pLabel(posPlayers(S.kKey.t)[S.kKey.i]?.id))} (${esc(tname(S.kKey.t))}) dipilih — tekan <kbd>H</kbd> <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> <kbd>;</kbd> <kbd>'</kbd> untuk kualitas, <kbd>Esc</kbd> batal.</div>` : ''}
     ${S.kPend ? kilatZones(S.kPend.t) : `<div class="kil">${team(sideLeft())}${team(opp(sideLeft()))}</div>`}
     <div class="actions"><button class="btn" data-act="undo"><kbd>⌫</kbd> ${S.blk ? 'Batal blok' : 'Batal sentuhan'}</button><button class="btn" data-act="let" ${S.cur.touches.length ? '' : 'disabled'}>Let / ulang rally</button><button class="btn" data-act="swapSrv" ${S.cur.touches.length ? 'disabled' : ''}>Tukar tim servis</button><button class="btn" data-act="scoreFix" ${S.st.winner || S.cur.touches.length ? 'disabled' : ''}>± Koreksi skor</button><span class="spacer"></span>${nextBtns(S.m.meta, !!S.st.winner)}<button class="btn ghost sm" data-act="editMatch">Ubah data pertandingan</button></div>`;
 }
@@ -2081,6 +2117,15 @@ function areaZone(half, z) {
   if (S.sel.pid) {
     const sk = currentSkill();
     if (needsTarget(sk) && half !== S.sel.tm) { S.sel.z = z; S.sel.zh = half; S.sel.warned = false; return renderTagMain(); }
+    if (S.quick && (sk === 'R' || sk === 'D') && half !== S.sel.tm) {
+      // Bola langsung menyeberang: simpan sentuhan ini (kualitas cepat, tanda langsung ke lawan),
+      // lalu siapkan cover tim lawan di area yang diketuk — tinggal ganti pemain bila tebakan salah.
+      S.sel.x = true; S.sel.z = z; S.sel.zh = half;
+      if (!autoCommit()) return;
+      S.sel.oz = z; S.sel.ozh = half; setPlayer(zonePlayer(half, z));
+      toast(`Bola langsung ke ${tname(half)} — cover ${pLabel(S.sel.pid)}. Ganti pemain bila perlu, lalu pilih kualitas.`);
+      return renderTagMain();
+    }
     if (DIRECT_OK(sk) && half !== S.sel.tm && directToOpp(z, half)) {
       toast(sk === 'F' ? 'Sentuhan ke-2 langsung ke lawan — dicatat sebagai Serang. Pilih kualitasnya.' : 'Bola langsung ke lawan. Pilih kualitasnya.');
       return renderTagMain();
@@ -3256,7 +3301,8 @@ document.addEventListener('keydown', e => {
   const v = $('#vid');
   if (k === ' ' && S.video) { e.preventDefault(); ACT.vplay(); return; }
   if ((k === 'ArrowLeft' || k === 'ArrowRight') && S.video) { e.preventDefault(); seekTo((vidTime() || 0) + (k === 'ArrowLeft' ? -1 : 1) * (e.shiftKey ? 5 : 2)); return; }
-  if ((S.mode === 'lite' || S.mode === 'kilat') && S.editIdx == null && k !== 'Backspace') return;
+  if (S.mode === 'kilat' && S.editIdx == null) { kilatKey(e, k); return; }
+  if (S.mode === 'lite' && S.editIdx == null && k !== 'Backspace') return;
   if (k === 'Backspace') { e.preventDefault(); undo(); return; }
   if (k === 'Escape') { clearSel(); renderTagMain(); return; }
   if (k === 'Tab') { e.preventDefault(); ACT.flipTeam(); return; }
