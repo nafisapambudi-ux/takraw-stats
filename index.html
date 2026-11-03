@@ -722,9 +722,18 @@ body.auth #tabs, body.auth #tagView { display: none !important; }
 .panel.login { width: min(420px, 100%); display: grid; gap: 12px; }
 .panel.login h1 { margin: 0; }
 .panel.login .ball.big { width: 44px; height: 44px; }
+.lg-brand { display: grid; justify-items: center; gap: 12px; padding: 28px 16px 20px; margin-bottom: 4px; border-radius: 12px; color: #F4F6F8;
+  background: radial-gradient(260px 160px at 50% 0%, rgba(226,3,3,.35), transparent 70%), var(--brand); }
+.lg-brand .ball { width: 84px; height: 84px; filter: drop-shadow(0 6px 18px rgba(226,3,3,.35)); }
+.lg-wm { height: 36px; width: auto; }
+.lg-wm-t { font-family: var(--f-display); font-style: italic; font-weight: 800; font-size: 40px; letter-spacing: .04em; }
+.lg-tag { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--brand-mute); }
+.panel.login > h1, .panel.login > p.muted { text-align: center; }
+.lg-forgot { justify-self: end; margin-top: -4px; }
+.lg-forgot:hover { color: var(--accent); }
 .panel.login .row .btn { flex: 1; justify-content: center; }
 .panel.login .btn.ghost { justify-content: center; gap: 8px; }
-.linkbtn { background: none; border: 0; color: var(--accent-ink, var(--ink2)); text-decoration: underline; cursor: pointer; justify-self: start; padding: 0; font: inherit; font-size: 13px; }
+.linkbtn { background: none; border: 0; color: var(--ink2); text-decoration: underline; cursor: pointer; justify-self: start; padding: 0; font: inherit; font-size: 13px; }
 .lg-msg { min-height: 1.2em; font-size: 13px; color: var(--ink2); }
 .lg-name[hidden] { display: none !important; }
 .lg-msg.bad { color: #B3261E; }
@@ -3641,18 +3650,20 @@ function showLogin() {
   $('#tagView').hidden = true; $('#view').hidden = false;
   try { history.replaceState(null, '', '#login'); } catch {}
   const rec = Cloud.recovery;
+  const wm = document.querySelector('.top .wordmark')?.getAttribute('src') || '';
   $('#view').innerHTML = `<div class="login-wrap"><div class="panel login">
-    <svg class="ball big" aria-hidden="true"><use href="#takraw"/></svg>
+    <div class="lg-brand"><svg class="ball" aria-hidden="true"><use href="#takraw"/></svg>${wm ? `<img class="lg-wm" src="${wm}" alt="TAKRA">` : '<b class="lg-wm-t">TAKRA</b>'}<span class="lg-tag">Notational analysis sepak takraw</span></div>
     <h1>${rec ? 'Buat kata sandi baru' : 'Masuk'}</h1>
     <p class="muted">${rec ? 'Masukkan kata sandi baru untuk akun Anda.' : 'Masuk untuk mencatat pertandingan serta melihat hasil dan statistik. Belum memiliki akun? Isi email dan kata sandi, lalu pilih "Daftar akun baru".'}</p>
     ${rec ? `<label class="f">Kata sandi baru<input class="inp" type="password" id="lgPass" autocomplete="new-password" minlength="8"></label>
       <button class="btn primary" data-act="lgNewPass">Simpan kata sandi</button>` : `
     <label class="f">Email<input class="inp" type="email" id="lgEmail" autocomplete="email" placeholder="nama@contoh.ac.id"></label>
     <label class="f">Kata sandi<input class="inp" type="password" id="lgPass" autocomplete="current-password" placeholder="minimal 8 karakter"></label>
+    <button class="linkbtn lg-forgot" data-act="lgReset">Lupa kata sandi?</button>
     <label class="f lg-name" hidden>Nama lengkap<input class="inp" id="lgName" autocomplete="name"></label>
     <div class="row"><button class="btn primary" data-act="lgIn">Masuk</button><button class="btn" data-act="lgUp">Daftar akun baru</button></div>
     ${Cloud.google ? `<button class="btn ghost" data-act="lgGoogle"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.2-2.1 3.5-5.1 3.5-8.8z"/><path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-2.9l-3.9-3c-1.1.7-2.5 1.2-4.1 1.2-3.1 0-5.8-2.1-6.7-5H1.3v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.3 14.3a7.2 7.2 0 0 1 0-4.6V6.6h-4a12 12 0 0 0 0 10.8l4-3.1z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.3 6.6l4 3.1c.9-2.8 3.6-4.9 6.7-4.9z"/></svg> Masuk dengan Google</button>` : ''}
-    <button class="linkbtn" data-act="lgReset">Lupa kata sandi?</button>`}
+`}
     <div class="lg-msg" id="lgMsg" role="status">${esc(Cloud.msg)}</div>
     <ol class="lg-steps"><li><b>Daftar</b> dengan email dan kata sandi.</li><li><b>Mulai mencatat</b> pertandingan.</li><li><b>Akses hasil &amp; statistik</b> setelah akun disetujui.</li></ol>
     <p class="note">Data pertandingan tersimpan di server.</p>
@@ -3696,7 +3707,7 @@ Object.assign(ACT, {
   lgReset: async () => {
     const { email } = lgVals(); if (!email) return lgMsg('Ketik email Anda dulu, lalu tekan "Lupa kata sandi?" lagi.', true);
     const { error } = await Cloud.sb.auth.resetPasswordForEmail(email, { redirectTo: appUrl() });
-    lgMsg(error ? authErr(error) : 'Tautan ganti kata sandi sudah dikirim ke ' + email + '.', !!error);
+    lgMsg(error ? authErr(error) : 'Tautan ganti kata sandi sudah dikirim ke ' + email + '. Buka email itu (cek juga folder Spam/Promosi), klik tautannya, lalu buat kata sandi baru di halaman ini.', !!error);
   },
   lgNewPass: async () => {
     const { password } = lgVals(); if (password.length < 8) return lgMsg('Minimal 8 karakter.', true);
