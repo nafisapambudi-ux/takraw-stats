@@ -734,6 +734,7 @@ body.auth #tabs, body.auth #tagView { display: none !important; }
 .panel.login .row .btn { flex: 1; justify-content: center; }
 .panel.login .btn.ghost { justify-content: center; gap: 8px; }
 .linkbtn { background: none; border: 0; color: var(--ink2); text-decoration: underline; cursor: pointer; justify-self: start; padding: 0; font: inherit; font-size: 13px; }
+.chip.warnchip { background: #FFF1C7; color: #5A3F00; border-color: #E8C35A; }
 .lg-msg { min-height: 1.2em; font-size: 13px; color: var(--ink2); }
 .lg-name[hidden] { display: none !important; }
 .lg-msg.bad { color: #B3261E; }
@@ -1684,6 +1685,14 @@ function tieSummary(list) {
   map.forEach(T => { T.winner = T.wa >= 2 ? T.a : T.wb >= 2 ? T.b : ''; });
   return map;
 }
+/* Pengingat cadangan untuk admin: kapan terakhir mengunduh "Cadangkan semua" dari perangkat ini. */
+function backupAge() {
+  if (Cloud.role !== 'admin') return '';
+  let t = 0; try { t = +localStorage.getItem('takra.lastBackup') || 0; } catch {}
+  const d = t ? Math.floor((Date.now() - t) / 864e5) : null;
+  const txt = d == null ? 'Belum pernah dicadangkan dari perangkat ini' : d === 0 ? 'Dicadangkan hari ini' : `Cadangan terakhir ${d} hari lalu`;
+  return `<span class="chip${d == null || d > 30 ? ' warnchip' : ''}" title="Disarankan mengunduh cadangan setidaknya sebulan sekali">${txt}</span>`;
+}
 function renderList() {
   const list = [...Store.list].filter(m => !S.byFilter || m._by === S.byFilter).sort((a, b) => (b.meta?.date || '').localeCompare(a.meta?.date || '') || b.updatedAt - a.updatedAt);
   const ties = tieSummary(list);
@@ -1707,7 +1716,7 @@ function renderList() {
   }).join('');
   $('#view').innerHTML = `
     <div class="page-head"><div><h1>Pertandingan</h1><div class="muted">Pencatatan pertandingan dan statistik tim serta pemain.</div></div><span class="spacer"></span>
-      ${list.length ? '<button class="btn" data-act="exportAll" title="Semua pertandingan dan agenda dalam satu file JSON">Cadangkan semua</button>' : ''}
+      ${list.length ? `${backupAge()}<button class="btn" data-act="exportAll" title="${Cloud.role === 'admin' ? 'Semua pertandingan, agenda, dan daftar pengguna' : 'Semua pertandingan dan agenda'} dalam satu file JSON">Cadangkan semua</button>` : ''}
       <label class="btn" for="impFile">Impor JSON</label><input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn primary" data-act="newMatch">+ Pertandingan baru</button></div>
     ${Store.mode === 'local' || Store.mode === 'memory' ? `<div class="banner warn">${Store.mode === 'local' ? 'Data hanya tersimpan di browser ini. Lakukan "Cadangkan semua" secara berkala.' : 'Mode pratinjau: data tidak disimpan setelah halaman ditutup.'}</div>` : ''}
@@ -3230,7 +3239,14 @@ const ACT = {
   scoreFix: () => scoreFixModal(),
   scoreFixSave: () => scoreFixSave(),
   foreignLoad: () => { closeModal(); const r = Store.get(S.m.id); if (!r) return; S.editIdx = null; S.m = clone(r); S.st = derive(S.m); resetCur(); renderTag(); toast('Versi terbaru dimuat'); },
-  exportAll: () => offer(`takra-cadangan-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify({ takrawStatsAll: 1, at: Date.now(), matches: Store.list, events: Store.events }, null, 1)),
+  exportAll: async () => {
+    // Admin: daftar pengguna (nama, email, peran) ikut dicadangkan; kata sandi tidak pernah bisa dibaca.
+    let users;
+    if (Cloud.role === 'admin' && Cloud.sb) { try { const { data } = await Cloud.sb.from('profiles').select('id,email,name,role,created_at').order('created_at'); users = data || undefined; } catch {} }
+    await offer(`takra-cadangan-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify({ takrawStatsAll: 1, at: Date.now(), matches: Store.list, events: Store.events, users }, null, 1));
+    try { localStorage.setItem('takra.lastBackup', String(Date.now())); } catch {}
+    if (S.view === 'list') renderList();
+  },
 };
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
