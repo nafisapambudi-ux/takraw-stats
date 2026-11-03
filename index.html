@@ -610,6 +610,9 @@ details summary { cursor: pointer; }
   .pcard { grid-template-columns: 16px 28px minmax(0, 1fr); min-height: 52px; padding: 5px 6px; }
   .pcard .srv-ball { display: none; }
 }
+.nextp { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.nextp .lbl { margin-right: 2px; }
+.note.warn { border-left: 3px solid var(--accent); padding-left: 10px; }
 .btn.direct.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .st-x { font-size: 11px; font-weight: 600; color: var(--accent); }
 .btn.unseen.on { background: #FFCD50; border-color: #E0A800; color: #3a2a00; }
@@ -1576,6 +1579,11 @@ function scoreLine(m) {
 }
 /* Pertandingan beregu: beberapa regu (biasanya 3) dengan nama beregu & tanggal sama. Tim dikenali dari nama, bukan sisi A/B. */
 const tieKey = m => (m.meta?.tie?.name ? m.meta.tie.name.trim().toLowerCase() + '|' + (m.meta.date || '') : '');
+/* Partai/pertandingan berikutnya dengan format bebas (beregu campuran, atau pindah nomor Regu → Double → Quadrant). */
+function nextBtns(M, big) {
+  const lbl = M.tie?.name ? 'Lanjut partai ' + ((+M.tie.no || 1) + 1) : 'Pertandingan berikutnya';
+  return `<span class="nextp"><span class="lbl">${lbl}</span>${Object.entries(FORMATS).map(([k, v]) => `<button class="btn sm ${big && k === M.format ? 'primary' : ''}" data-act="nextRegu" data-f="${k}" title="Tim, event, tanggal, dan video dibawa; susunan pemain diisi untuk ${v.label}">${v.label.split(' ')[0]} →</button>`).join('')}</span>`;
+}
 function tieSummary(list) {
   const map = new Map();
   [...list].sort((x, y) => (+x.meta.tie?.no || 0) - (+y.meta.tie?.no || 0)).forEach(m => {
@@ -1600,7 +1608,7 @@ function renderList() {
     const conf = S.confirm === 'del:' + m.id;
     return tieHead + `<article class="panel mcard${tk ? ' intie' : ''}">
       <div style="min-width:0">
-        <div class="row" style="margin-bottom:4px">${m.sample ? '<span class="chip sample">Contoh</span>' : ''}<span class="chip">${esc(FORMATS[m.meta.format]?.label || m.meta.format)}</span><span class="chip">${esc(m.meta.gender || '')}</span>${tieKey(m) ? `<span class="chip">Regu ${esc(m.meta.tie.no)}</span>` : ''}<span class="muted small">${esc(m.meta.date || '')} · ${esc(m.meta.event || '')} ${m.meta.round ? '· ' + esc(m.meta.round) : ''}</span></div>
+        <div class="row" style="margin-bottom:4px">${m.sample ? '<span class="chip sample">Contoh</span>' : ''}<span class="chip">${esc(FORMATS[m.meta.format]?.label || m.meta.format)}</span><span class="chip">${esc(m.meta.gender || '')}</span>${tieKey(m) ? `<span class="chip">Partai ${esc(m.meta.tie.no)}</span>` : ''}<span class="muted small">${esc(m.meta.date || '')} · ${esc(m.meta.event || '')} ${m.meta.round ? '· ' + esc(m.meta.round) : ''}</span></div>
         <div class="sc"><span class="sw A"></span>${esc(m.meta.A.name)} <span class="num">${st.wA}–${st.wB}</span> ${esc(m.meta.B.name)}<span class="sw B"></span></div>
         <div class="muted small">${sets ? 'Set: ' + sets + ' · ' : ''}${m.rallies.length} rally${st.winner ? ' · Selesai' : m.rallies.length ? ' · Berlangsung' : ' · Belum dimulai'}</div>
       </div>
@@ -1675,10 +1683,11 @@ function renderSetup() {
       <label class="f">Kategori<select class="inp" id="mGender" data-f="gender">${['Putra', 'Putri', 'Junior Putra', 'Junior Putri'].map(o => `<option ${o === M.gender ? 'selected' : ''}>${o}</option>`).join('')}</select></label>
       <label class="f">Format<select class="inp" id="mFormat" data-act-change="format">${Object.entries(FORMATS).map(([k, v]) => `<option value="${k}" ${k === M.format ? 'selected' : ''}>${v.label}</option>`).join('')}</select></label>
       <label class="f">Pertandingan beregu <span class="muted small">(opsional)</span><input class="inp" id="mTie" data-f="tie.name" value="${esc(M.tie?.name || '')}" placeholder="mis. Final Beregu MAS vs THA"></label>
-      <label class="f">Regu ke-<select class="inp" id="mTieNo" data-f="tie.no">${[1, 2, 3, 4, 5].map(n => `<option value="${n}" ${+M.tie?.no === n ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+      <label class="f">Partai ke-<select class="inp" id="mTieNo" data-f="tie.no">${[1, 2, 3, 4, 5].map(n => `<option value="${n}" ${+M.tie?.no === n ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
       <label class="f">Link video YouTube <span class="muted small">(opsional)</span><input class="inp" id="mVideo" data-f="video" value="${esc(M.video || '')}" placeholder="https://www.youtube.com/watch?v=…"></label>
       <label class="f">Servis pertama (undian)<select class="inp" id="mFirst" data-f="firstServe"><option value="A" ${M.firstServe === 'A' ? 'selected' : ''}>Tim A</option><option value="B" ${M.firstServe === 'B' ? 'selected' : ''}>Tim B</option></select></label>
     </div></div>
+    ${d.id && Store.get(d.id)?.rallies.length && Store.get(d.id).meta.format !== M.format ? `<p class="note warn">Format diubah dari ${esc(FORMATS[Store.get(d.id).meta.format]?.label)} ke ${esc(FORMATS[M.format].label)}. ${Store.get(d.id).rallies.length} rally yang sudah dicatat tetap tersimpan; urutan servis dan posisi dihitung ulang dengan format baru. Bila partai baru dimulai, kembali dan pakai tombol <b>Pertandingan berikutnya</b> agar data partai sebelumnya tidak tercampur.</p>` : ''}
     <div class="teams2">${teamBox('A')}${teamBox('B')}</div>
     <details class="panel"><summary><strong>Aturan skor</strong> <span class="muted small">— bawaan ISTAF 2024; sesuaikan bila diperlukan</span></summary>
       <div class="form-grid" style="margin-top:10px">
@@ -1836,7 +1845,7 @@ function liteHtml() {
   return `<div class="ctxbar"><b>Mode Ringkas · servis ${esc(tname(S.cur.srv))} ${esc(pLabel(S.cur.sp))}</b><span class="spacer"></span>${modeTabs()}${zoomTabs()}</div>
     <div class="hint">Saat live, cukup catat siapa dapat poin dan caranya. Detail sentuhan dilengkapi nanti dari video lewat tombol <b>Lengkapi</b> di log rally.</div>
     ${S.st.winner ? '' : `<div class="lite">${col(sideLeft())}${col(opp(sideLeft()))}</div>`}
-    <div class="actions"><button class="btn" data-act="undo"><kbd>⌫</kbd> Batal poin terakhir</button><button class="btn" data-act="swapSrv">Tukar tim servis</button><button class="btn" data-act="scoreFix" ${S.st.winner ? 'disabled' : ''} title="Bila ada poin yang terlewat dicatat">± Koreksi skor</button>${S.st.winner && S.m.meta.tie?.name ? `<button class="btn primary" data-act="nextRegu">Lanjut Regu ${(+S.m.meta.tie.no || 1) + 1} →</button>` : ''}<span class="spacer"></span><button class="btn ghost sm" data-act="editMatch">Ubah data pertandingan</button></div>`;
+    <div class="actions"><button class="btn" data-act="undo"><kbd>⌫</kbd> Batal poin terakhir</button><button class="btn" data-act="swapSrv">Tukar tim servis</button><button class="btn" data-act="scoreFix" ${S.st.winner ? 'disabled' : ''} title="Bila ada poin yang terlewat dicatat">± Koreksi skor</button><span class="spacer"></span>${nextBtns(S.m.meta, !!S.st.winner)}<button class="btn ghost sm" data-act="editMatch">Ubah data pertandingan</button></div>`;
 }
 const modeTabs = () => `<div class="tabs mode" role="group" aria-label="Cara input"><button class="${S.mode === 'area' ? 'on' : ''}" data-act="mode" data-m="area">Area</button><button class="${S.mode === 'pos' ? 'on' : ''}" data-act="mode" data-m="pos">Posisi</button><button class="${S.mode === 'list' ? 'on' : ''}" data-act="mode" data-m="list">Daftar</button><button class="${S.mode === 'lite' ? 'on' : ''}" data-act="mode" data-m="lite" title="Live: hanya pemenang + cara poin">Ringkas</button></div>`;
 /* Pemain di lapangan diurutkan menurut peran: 1 Tekong, 2 Apit Kiri, 3 Apit Kanan (Double/Quad: urutan daftar). */
@@ -2290,8 +2299,8 @@ function renderTagMain() {
           <button class="btn" data-act="let" ${S.cur.touches.length ? '' : 'disabled'}>Let / ulang rally</button>
           <button class="btn" data-act="swapSrv" ${S.cur.touches.length || S.editIdx != null ? 'disabled' : ''}>Tukar tim servis</button>
           <button class="btn" data-act="scoreFix" ${S.cur.touches.length || S.editIdx != null || st.winner ? 'disabled' : ''} title="Bila ada poin yang terlewat dicatat">± Koreksi skor</button>
-          ${st.winner && M.tie?.name && S.editIdx == null ? `<button class="btn primary" data-act="nextRegu">Lanjut Regu ${(+M.tie.no || 1) + 1} →</button>` : ''}
           <span class="spacer"></span>
+          ${S.editIdx == null ? nextBtns(M, !!st.winner) : ''}
           <button class="btn ghost sm" data-act="editMatch">Ubah data pertandingan</button>
         </div>
         <div class="shortcuts">${S.mode !== 'list' ? '<span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> posisi pemain tim yang memegang bola</span><span><kbd>Tab</kbd> tim lain</span><span><kbd>B</kbd> serangan dihadang blok</span><span><kbd>N</kbd> langsung ke lawan</span><span><kbd>U</kbd> tak terlihat</span><span><kbd>V</kbd> ikuti kamera</span>' : '<span><kbd>1</kbd>–<kbd>6</kbd> pemain A</span><span><kbd>7</kbd>–<kbd>0</kbd> pemain B</span>'}<span><kbd>S</kbd><kbd>R</kbd><kbd>F</kbd><kbd>A</kbd><kbd>B</kbd><kbd>D</kbd><kbd>X</kbd> aksi</span><span>Kualitas: <kbd>#</kbd><kbd>+</kbd><kbd>!</kbd><kbd>-</kbd><kbd>/</kbd><kbd>=</kbd> atau <kbd>H</kbd><kbd>J</kbd><kbd>K</kbd><kbd>L</kbd><kbd>;</kbd><kbd>'</kbd></span><span><kbd>Spasi</kbd> video · <kbd>←</kbd><kbd>→</kbd> 2 s</span></div>`}
@@ -2313,7 +2322,7 @@ function subForm(t) {
 /* Alur rally: setiap sentuhan sebagai kartu langkah, ditambah langkah yang sedang/akan dicatat. */
 function roleOf(id) {
   const p = pById(id); if (!p) return '';
-  const oc = onCourt(p.tm).find(x => x.id === id); if (oc && oc.pos !== 'Cadangan') return oc.pos === 'Pemain' ? 'Posisi ' + (onCourt(p.tm).indexOf(oc) + 1) : oc.pos;
+  const oc = onCourt(p.tm).find(x => x.id === id); if (oc && oc.pos !== 'Cadangan') return oc.pos === 'Pemain' ? 'Posisi ' + (onCourt(p.tm).findIndex(x => x.id === id) + 1) : oc.pos;
   if (ROLE_ORDER.includes(p.pos)) return p.pos;
   const i = posPlayers(p.tm).findIndex(x => x.id === id);
   return i >= 0 ? 'Posisi ' + (i + 1) : p.pos;
@@ -2840,11 +2849,16 @@ const ACT = {
   },
   cancelSetup: () => { go(S.m ? 'tag' : 'list'); },
   editMatch: () => { S.draft = { id: S.m.id, meta: clone(S.m.meta) }; S.draft.meta.tie ||= { name: '', no: 1 }; go('setup'); },
-  nextRegu: () => {
-    const M = clone(S.m.meta), fmt = M.format;
-    const meta = { ...M, title: '', notes: '', video: M.video || '', tie: { name: M.tie.name, no: (+M.tie.no || 1) + 1 },
-      A: { ...blankTeam(fmt, M.A.name), short: M.A.short }, B: { ...blankTeam(fmt, M.B.name), short: M.B.short } };
+  nextRegu: d => {
+    const M = clone(S.m.meta), fmt = FORMATS[d?.f] ? d.f : M.format, same = fmt === M.format;
+    // Format lain: pakai susunan terakhir tim itu di format tersebut bila pernah dicatat; selain itu kosong untuk diisi.
+    const known = new Map(knownTeams().map(x => [x.team.name + '|' + x.fmt, x.team]));
+    const team = t => { const k = !same && known.get(M[t].name + '|' + fmt);
+      return k ? { name: M[t].name, short: M[t].short || k.short || '', players: k.players.map(p => ({ ...p, id: uid('p') })) } : { ...blankTeam(fmt, M[t].name), short: M[t].short }; };
+    const meta = { ...M, title: '', notes: '', video: M.video || '', format: fmt, rules: same ? M.rules : defaultRules(fmt),
+      tie: M.tie?.name ? { name: M.tie.name, no: (+M.tie.no || 1) + 1 } : { name: '', no: 1 }, A: team('A'), B: team('B') };
     delete meta.cam;
+    toast(`${FORMATS[fmt].label}: periksa susunan pemain lalu simpan`);
     S.draft = { id: null, meta }; go('setup');
   },
   player: d => selectPlayer(d.id),

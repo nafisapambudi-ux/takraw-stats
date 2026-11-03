@@ -3,7 +3,7 @@
    saat sinyal venue hilang. Data pertandingan tidak lewat sini: aplikasi menyimpannya sendiri di perangkat dan
    mengirimnya saat online. Strategi: jaringan dulu (halaman menunggu maks. 4 detik), salinan simpanan bila offline.
    Ganti VERSION setiap menerbitkan versi baru. */
-const VERSION = 'takra-v33';
+const VERSION = 'takra-v34';
 const SUPABASE_LIB = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';
 const CORE = ['./', './index.html', './manifest.webmanifest', './favicon.ico',
   './media/favicon-32.png', './media/apple-touch-icon.png', './media/icon-192.png', './media/icon-512.png',
