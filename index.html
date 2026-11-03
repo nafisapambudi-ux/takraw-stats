@@ -684,7 +684,8 @@ details summary { cursor: pointer; }
   .kr { grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 4px; }
   .kr > .kp { grid-column: 1 / -1; margin-top: 4px; } .kr-h > span:first-child { display: none; }
   .kp b { font-size: 20px; } .kp span { display: flex; gap: 6px; align-items: baseline; font-size: 12px; }
-  .kq { min-height: 50px; font-size: 11px; padding: 2px 1px; }
+  .kq { min-height: 50px; font-size: 11px; padding: 2px 1px; overflow-wrap: anywhere; }
+  .kshort { display: none; }
   .kz-c { min-height: 64px; font-size: 12px; }
   .kflow { font-size: 12px; }
 }
@@ -1449,7 +1450,7 @@ const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(
 const clone = o => JSON.parse(JSON.stringify(o));
 const f0 = v => (v == null || isNaN(v) ? '–' : Math.round(v) + '%');
 const fmtVT = s => { if (s == null) return ''; s = Math.max(0, s); const m = Math.floor(s / 60), x = Math.floor(s % 60); return m + ':' + String(x).padStart(2, '0'); };
-const fmtClock = ms => { const d = new Date(ms); return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); };
+const fmtClock = ms => { const d = new Date(ms); if (!ms || isNaN(d)) return ''; return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); };
 
 let toastT;
 function toast(msg) {
