@@ -1700,6 +1700,41 @@ function backupAge() {
   const txt = d == null ? 'Belum pernah dicadangkan dari perangkat ini' : d === 0 ? 'Dicadangkan hari ini' : `Cadangan terakhir ${d} hari lalu`;
   return `<span class="chip${d == null || d > 30 ? ' warnchip' : ''}" title="Disarankan mengunduh cadangan setidaknya sebulan sekali">${txt}</span>`;
 }
+/* Ganti nama tim/daerah di semua pertandingan yang bisa diubah pengguna ini (database atlet ikut, karena dikenali dari nama tim). */
+function teamNameIndex() {
+  const map = new Map();
+  Store.list.filter(m => !m.sample).forEach(m => ['A', 'B'].forEach(t => { const n = (m.meta[t]?.name || '').trim(); if (!n) return; const e = map.get(n) || { name: n, short: m.meta[t].short || '', n: 0 }; e.n++; map.set(n, e); }));
+  return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, 'id'));
+}
+function renameModal() {
+  const names = teamNameIndex();
+  if (!names.length) return toast('Belum ada nama tim yang tercatat');
+  modal(`<h2>Ganti nama tim / daerah</h2>
+    <p class="note">Nama diganti di <b>semua pertandingan</b> yang memakai nama itu, termasuk yang sudah selesai. Skor, rally, dan statistik tidak berubah; database atlet ikut memakai nama baru.</p>
+    <label class="f">Nama sekarang<select class="inp" id="rnFrom">${names.map(x => `<option value="${esc(x.name)}">${esc(x.name)} (${x.n} pertandingan)</option>`).join('')}</select></label>
+    <label class="f">Nama baru<input class="inp" id="rnTo" placeholder="mis. Jawa Timur"></label>
+    <label class="f">Singkatan baru <span class="muted small">(opsional, 3–5 huruf)</span><input class="inp" id="rnShort" maxlength="6" placeholder="mis. JTM"></label>
+    <p class="muted small">Bila nama baru sudah dipakai tim lain, keduanya akan terbaca sebagai satu tim. Cara ini juga bisa dipakai untuk menyatukan ejaan berbeda, mis. “Jatim” menjadi “Jawa Timur”.</p>
+    <div class="row"><button class="btn primary" data-act="renameSave">Ganti nama</button><button class="btn ghost" data-act="closeModal">Batal</button></div>`);
+}
+function renameSave() {
+  const from = $('#rnFrom').value, to = $('#rnTo').value.trim().replace(/s+/g, ' '), short = $('#rnShort').value.trim().toUpperCase();
+  if (!to) return toast('Isi nama baru');
+  if (to === from && !short) return closeModal();
+  let n = 0;
+  Store.list.filter(m => !m.sample).forEach(m => {
+    let hit = false; const c = clone(m); delete c._own; delete c._by;
+    ['A', 'B'].forEach(t => { if ((c.meta[t]?.name || '').trim() === from) { c.meta[t].name = to; if (short) c.meta[t].short = short; hit = true; } });
+    if (!hit) return;
+    if (c.meta.A.name === c.meta.B.name) return;   // kedua tim tidak boleh bernama sama
+    c.meta.title = `${c.meta.A.name} vs ${c.meta.B.name}`;
+    Store.save(c); n++;
+    if (S.m && S.m.id === c.id) { S.m = clone(c); S.st = derive(S.m); }
+  });
+  closeModal();
+  toast(n ? `“${from}” diganti menjadi “${to}” di ${n} pertandingan` : 'Tidak ada pertandingan yang diubah');
+  if (S.view === 'list') renderList();
+}
 function renderList() {
   const list = [...Store.list].filter(m => !S.byFilter || m._by === S.byFilter).sort((a, b) => (b.meta?.date || '').localeCompare(a.meta?.date || '') || b.updatedAt - a.updatedAt);
   const ties = tieSummary(list);
@@ -1718,12 +1753,14 @@ function renderList() {
       <div class="row">
         <button class="btn primary" data-act="open" data-id="${m.id}" data-v="tag">Input</button>
         <button class="btn" data-act="open" data-id="${m.id}" data-v="stats">Statistik</button>
+        ${m.sample ? '' : `<button class="btn ghost" data-act="editById" data-id="${m.id}" title="Ubah nama tim/daerah, pemain, event, dan data lain">Ubah</button>`}
         <button class="btn ${conf ? 'danger' : 'ghost'}" data-act="delMatch" data-id="${m.id}">${conf ? 'Konfirmasi hapus' : 'Hapus'}</button>
       </div></article>`;
   }).join('');
   $('#view').innerHTML = `
     <div class="page-head"><div><h1>Pertandingan</h1><div class="muted">Pencatatan pertandingan dan statistik tim serta pemain.</div></div><span class="spacer"></span>
       ${list.length ? `${backupAge()}<button class="btn" data-act="exportAll" title="${Cloud.role === 'admin' ? 'Semua pertandingan, agenda, dan daftar pengguna' : 'Semua pertandingan dan agenda'} dalam satu file JSON">Cadangkan semua</button>` : ''}
+      ${list.some(m => !m.sample) ? '<button class="btn" data-act="renameOpen" title="Ganti satu nama tim/daerah di semua pertandingan">Ganti nama tim</button>' : ''}
       <label class="btn" for="impFile">Impor JSON</label><input type="file" id="impFile" accept=".json,application/json" hidden>
       <button class="btn primary" data-act="newMatch">+ Pertandingan baru</button></div>
     ${Store.mode === 'local' || Store.mode === 'memory' ? `<div class="banner warn">${Store.mode === 'local' ? 'Data hanya tersimpan di browser ini. Lakukan "Cadangkan semua" secara berkala.' : 'Mode pratinjau: data tidak disimpan setelah halaman ditutup.'}</div>` : ''}
@@ -3137,6 +3174,9 @@ const ACT = {
     S.m = clone(m); S.st = derive(S.m); resetCur();
     toast('Tersimpan'); go('tag');
   },
+  editById: d => { openMatch(d.id, 'tag'); ACT.editMatch(); },
+  renameOpen: () => renameModal(),
+  renameSave: () => renameSave(),
   cancelSetup: () => { go(S.m ? 'tag' : 'list'); },
   editMatch: () => { S.draft = { id: S.m.id, meta: clone(S.m.meta) }; S.draft.meta.tie ||= { name: '', no: 1 }; go('setup'); },
   nextRegu: d => {
