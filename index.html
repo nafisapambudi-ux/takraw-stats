@@ -1213,7 +1213,7 @@ function zoneName(z) { if (!z) return ''; const d = Math.floor((z - 1) / 3), l =
 const opp = t => (t === 'A' ? 'B' : 'A');
 
 function defaultRules(fmt) {
-  return { pts: 15, deuce: 14, cap: 17, sets: 3, rot: FORMATS[fmt || 'regu'].rot, swap: 8 };
+  return { pts: 15, deuce: 14, cap: 17, sets: 3, rot: FORMATS[fmt || 'regu'].rot, swap: 8, srvWin: 'win' };
 }
 
 /* Set dimenangkan saat mencapai 15 (sebelum 14-14) atau 17 setelah 14-14 (Law 12.2-12.3). */
@@ -1234,6 +1234,12 @@ function srvTeamFor(first, a, b, r) {
   return Math.floor(tot / rot) % 2 ? opp(first) : first;
 }
 
+/* Tim yang servis setelah rally terakhir set ini.
+   rules.srvWin = 'win': tim pemenang poin servis berikutnya; selain itu bergantian menurut rules.rot (ISTAF 2024). */
+function srvNext(set, r) {
+  if (r.srvWin === 'win') return set.rallies?.length ? set.rallies[set.rallies.length - 1].win : set.first;
+  return srvTeamFor(set.first, set.a, set.b, r);
+}
 function newSet(n, first) { return { n, a: 0, b: 0, first, win: null, rallies: [] }; }
 
 /* Hitung ulang set, skor dan pemenang dari daftar rally. Menulis ra.set, ra.sA, ra.sB. */
@@ -1792,7 +1798,8 @@ function renderSetup() {
         <label class="f">Deuce pada<input class="inp num" type="number" id="rDeuce" data-f="rules.deuce" data-num value="${r.deuce}"></label>
         <label class="f">Batas setelah deuce<input class="inp num" type="number" id="rCap" data-f="rules.cap" data-num value="${r.cap}"></label>
         <label class="f">Jumlah set (best of)<input class="inp num" type="number" id="rSets" data-f="rules.sets" data-num value="${r.sets}"></label>
-        <label class="f">Servis berganti tiap … poin<input class="inp num" type="number" min="1" id="rRot" data-f="rules.rot" data-num value="${r.rot}"></label>
+        <label class="f">Giliran servis<select class="inp" id="rSrvWin" data-f="rules.srvWin"><option value="" ${r.srvWin === 'win' ? '' : 'selected'}>Bergantian (ISTAF 2024)</option><option value="win" ${r.srvWin === 'win' ? 'selected' : ''}>Tim pemenang poin servis</option></select></label>
+        <label class="f">Servis berganti tiap … poin <span class="muted small">(bila bergantian)</span><input class="inp num" type="number" min="1" id="rRot" data-f="rules.rot" data-num value="${r.rot}" ${r.srvWin === 'win' ? 'disabled' : ''}></label>
         <label class="f">Pindah tempat set akhir pada<input class="inp num" type="number" id="rSwap" data-f="rules.swap" data-num value="${r.swap}"></label>
       </div>
       ${M.format === 'quad' ? '<p class="note">Quadrant: Law 10.3 menetapkan rotasi servis tiap 1 poin, Law 10.4 tiap 3 poin. Sesuaikan dengan keputusan technical meeting.</p>' : ''}
@@ -1827,7 +1834,7 @@ function resetCur() {
 function applyServeDefaults() {
   const st = S.st; if (!st.cur) return;
   const r = S.m.meta.rules;
-  const auto = srvTeamFor(st.cur.first, st.cur.a, st.cur.b, r);
+  const auto = srvNext(st.cur, r);
   if (!S.cur.ovr) S.cur.srv = auto;
   if (!S.cur.touches.length) S.cur.sp = defaultServer(S.cur.srv);
 }
@@ -2201,7 +2208,7 @@ function commit(q, auto) {
   if (prevT && prevT.tm !== t.tm && DIRECT_OK(prevT.s) && t.s !== 'B' && t.s !== 'X' && !prevT.x) { prevT.x = 1; prevT.xa = 1; }
   if (t.z == null) { delete t.z; delete t.zh; }
   if (!S.cur.touches.length) { S.cur.ts = Date.now(); S.cur.vt0 = vt; }
-  if (sk === 'S' && S.editIdx == null) { S.cur.srv = t.tm; S.cur.sp = t.p; S.cur.ovr = S.st.cur ? S.cur.srv !== srvTeamFor(S.st.cur.first, S.st.cur.a, S.st.cur.b, S.m.meta.rules) : false; }
+  if (sk === 'S' && S.editIdx == null) { S.cur.srv = t.tm; S.cur.sp = t.p; S.cur.ovr = S.st.cur ? S.cur.srv !== srvNext(S.st.cur, S.m.meta.rules) : false; }
   else if (sk === 'S') S.cur.sp = t.p;
   if (t.tc) S.lastTech[t.p + sk] = t.tc;
   S.cur.touches.push(t);
@@ -2269,7 +2276,7 @@ function undo() {
   if (ra.lite) { toast('Poin terakhir dihapus'); resetCur(); renderTag(); return; }
   const tc = ra.end === 'MAN' ? ra.tc : ra.tc.slice(0, -1);
   S.cur = { touches: tc, srv: ra.srv, sp: ra.sp, ts: ra.ts, vt0: ra.vt0, ovr: false };
-  S.cur.ovr = ra.srv !== srvTeamFor(S.st.cur.first, S.st.cur.a, S.st.cur.b, S.m.meta.rules);
+  S.cur.ovr = ra.srv !== srvNext(S.st.cur, S.m.meta.rules);
   toast('Rally terakhir dibuka kembali');
   renderTag();
 }
@@ -2324,7 +2331,8 @@ function scoreFixSave() {
   const r = S.m.meta.rules, plan = planScoreFix(cur, ta, tb, r);
   if (!plan) return toast(`Skor ${ta}–${tb} tidak mungkin terjadi menurut aturan set (${r.pts} poin, deuce ${r.deuce}, batas ${r.cap}).`);
   const now = Date.now();
-  plan.forEach((p, i) => S.m.rallies.push({ srv: srvTeamFor(cur.first, p.a, p.b, r), sp: null, win: p.win, end: 'MAN', ts: now + i, tc: [], adj: 1 }));
+  let prev = cur.rallies.length ? cur.rallies[cur.rallies.length - 1].win : cur.first;
+  plan.forEach((p, i) => { S.m.rallies.push({ srv: r.srvWin === 'win' ? prev : srvTeamFor(cur.first, p.a, p.b, r), sp: null, win: p.win, end: 'MAN', ts: now + i, tc: [], adj: 1 }); prev = p.win; });
   persist(); closeModal(); resetCur(); renderTag();
   toast(`Skor dikoreksi menjadi ${ta}–${tb} · ${plan.length} poin ditambahkan sebagai Koreksi skor.` + (S.st.winner ? ' Pertandingan selesai.' : ''));
 }
@@ -3267,6 +3275,7 @@ document.addEventListener('input', e => {
 });
 document.addEventListener('change', e => {
   const el = e.target;
+  if (el.id === 'rSrvWin') { renderSetup(); return; }
   if (el.dataset.actChange === 'format') {
     const fmt = el.value, M = S.draft.meta; M.format = fmt; M.rules = defaultRules(fmt);
     ['A', 'B'].forEach(t => {
