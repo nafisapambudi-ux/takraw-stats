@@ -696,6 +696,13 @@ details summary { cursor: pointer; }
 .kz-c:active { background: var(--accent); }
 .kz-net { writing-mode: vertical-rl; text-align: center; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); border-left: 4px solid var(--ink2); padding-left: 2px; }
 .kz-court.r .kz-net { border-left: 0; border-right: 4px solid var(--ink2); padding: 0 2px 0 0; }
+.collab { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; padding: 7px 10px; margin-bottom: 8px; border-radius: 10px; background: var(--surface2); font-size: 13px; }
+.collab .cdot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; flex: none; }
+.collab.on .cdot, .cchip.on .cdot { background: #1E9E5A; box-shadow: 0 0 0 3px rgba(30,158,90,.18); }
+.collab.off { background: #FFF6E0; color: #5A3F00; }
+.cchip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 12px; }
+.collab .btn { margin-left: auto; }
+.chip.collabchip { background: #E8F3FF; color: #0F4C8A; border-color: #9CC3EC; }
 .lite { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0; }
 .litecol { border: 1px solid var(--line); border-radius: var(--r); padding: 10px; display: grid; gap: 8px; align-content: start; }
 .litecol.A { border-top: 4px solid var(--teamA); } .litecol.B { border-top: 4px solid var(--teamB); }
@@ -1746,15 +1753,15 @@ function renderList() {
     const conf = S.confirm === 'del:' + m.id;
     return tieHead + `<article class="panel mcard${tk ? ' intie' : ''}">
       <div style="min-width:0">
-        <div class="row" style="margin-bottom:4px">${m.sample ? '<span class="chip sample">Contoh</span>' : ''}<span class="chip">${esc(FORMATS[m.meta.format]?.label || m.meta.format)}</span><span class="chip">${esc(m.meta.gender || '')}</span>${tieKey(m) ? `<span class="chip">Partai ${esc(m.meta.tie.no)}</span>` : ''}<span class="muted small">${esc(m.meta.date || '')} · ${esc(m.meta.event || '')} ${m.meta.round ? '· ' + esc(m.meta.round) : ''}</span></div>
+        <div class="row" style="margin-bottom:4px">${m.sample ? '<span class="chip sample">Contoh</span>' : ''}${isGuestMatch(m) ? '<span class="chip collabchip" title="Anda diundang sebagai rekan pencatat">Rekan · fokus ' + (myMember(m.id).team === 'AB' ? 'kedua tim' : esc(m.meta[myMember(m.id).team]?.name || 'Tim ' + myMember(m.id).team)) + '</span>' : ''}<span class="chip">${esc(FORMATS[m.meta.format]?.label || m.meta.format)}</span><span class="chip">${esc(m.meta.gender || '')}</span>${tieKey(m) ? `<span class="chip">Partai ${esc(m.meta.tie.no)}</span>` : ''}<span class="muted small">${esc(m.meta.date || '')} · ${esc(m.meta.event || '')} ${m.meta.round ? '· ' + esc(m.meta.round) : ''}</span></div>
         <div class="sc"><span class="sw A"></span>${esc(m.meta.A.name)} <span class="num">${st.wA}–${st.wB}</span> ${esc(m.meta.B.name)}<span class="sw B"></span></div>
         <div class="muted small">${sets ? 'Set: ' + sets + ' · ' : ''}${m.rallies.length} rally${st.winner ? ' · Selesai' : m.rallies.length ? ' · Berlangsung' : ' · Belum dimulai'}</div>
       </div>
       <div class="row">
         <button class="btn primary" data-act="open" data-id="${m.id}" data-v="tag">Input</button>
         <button class="btn" data-act="open" data-id="${m.id}" data-v="stats">Statistik</button>
-        ${m.sample ? '' : `<button class="btn ghost" data-act="editById" data-id="${m.id}" title="Ubah nama tim/daerah, pemain, event, dan data lain">Ubah</button>`}
-        <button class="btn ${conf ? 'danger' : 'ghost'}" data-act="delMatch" data-id="${m.id}">${conf ? 'Konfirmasi hapus' : 'Hapus'}</button>
+        ${m.sample || isGuestMatch(m) ? '' : `<button class="btn ghost" data-act="editById" data-id="${m.id}" title="Ubah nama tim/daerah, pemain, event, dan data lain">Ubah</button>`}
+        ${isGuestMatch(m) ? '' : `<button class="btn ${conf ? 'danger' : 'ghost'}" data-act="delMatch" data-id="${m.id}">${conf ? 'Konfirmasi hapus' : 'Hapus'}</button>`}
       </div></article>`;
   }).join('');
   $('#view').innerHTML = `
@@ -2020,8 +2027,12 @@ function kilatTap(t, i, q, z) {
   if (locked()) return;
   const sk = kilatSkill(t), pl = posPlayers(t)[i];
   if (!sk || !pl) return;
+  if (!S._remote && !focusOK(t)) return toast('Tim ' + tname(t) + ' dicatat rekan Anda. Fokus Anda: ' + (myFocus() === 'AB' ? 'kedua tim' : 'Tim ' + tname(myFocus())) + '.');
+  const guest = Collab.role === 'guest' && isGuestMatch(S.m);
+  if (guest && S.blk) { collabSendIntent({ kind: 'tap', t, pid: pl.id, q, z: 0 }); return renderTagMain(); }
   if (S.blk) { S.blk.pid = pl.id; S.blk.tm = t; S.blk.tech = null; return commit(q); }
   if (S.kArah && !z && (sk === 'S' || sk === 'A') && q !== '=' && q !== '/') { S.kPend = { t, i, q }; return renderTagMain(); }
+  if (guest) { collabSendIntent({ kind: 'tap', t, pid: pl.id, q, z: z > 0 ? z : 0 }); return renderTagMain(); }
   clearSel();
   S.sel.pid = pl.id; S.sel.tm = t; S.sel.skill = sk;
   if (q === 'x2') { S.sel.skill = 'A'; S.sel.x2 = 1; q = '#'; }
@@ -2043,16 +2054,16 @@ function kilatZones(t) {
 function kilatHtml() {
   const flow = S.cur.touches.map(x => `<span class="kf ${x.tm}">${esc(SKILLS[x.s].name)} ${esc(pLabel(x.p))} <b>${esc(QL[x.s][x.q] || x.q)}</b>${x.x ? ' ↷' : ''}</span>`).join('<span class="kf-a">→</span>');
   const team = t => {
-    const sk = kilatSkill(t), cols = sk ? KQ[sk] : KQ.R, pl = posPlayers(t), act = !!sk && !locked();
-    const head = !act ? (S.cur.touches.length || S.blk ? 'menunggu bola' : 'menerima servis') : S.blk ? 'Pilih pemblok + hasil blok' : (t !== ctx().team && S.cur.touches.length ? '↷ ' : '') + SKILLS[sk].name;
+    const sk = kilatSkill(t), cols = sk ? KQ[sk] : KQ.R, pl = posPlayers(t), act = !!sk && !locked() && focusOK(t);
+    const head = !focusOK(t) ? 'dicatat rekan' : !act ? (S.cur.touches.length || S.blk ? 'menunggu bola' : 'menerima servis') : S.blk ? 'Pilih pemblok + hasil blok' : (t !== ctx().team && S.cur.touches.length ? '↷ ' : '') + SKILLS[sk].name;
     return `<div class="kt ${t}${act ? '' : ' off'}${act && (S.blk || t === ctx().team) ? ' on' : ''}">
       <div class="kt-h"><span class="sw ${t}"></span><b>${esc(M2()[t].name || 'Tim ' + t)}</b><span class="kt-sk" title="↷ = bila bola menyeberang ke tim ini">${esc(head)}</span>
-        <button class="btn sm ghost" data-act="subOpen" data-t="${t}" title="Ganti pemain">⇄</button></div>
+        ${isGuestMatch(S.m) ? '' : `<button class="btn sm ghost" data-act="subOpen" data-t="${t}" title="Ganti pemain">⇄</button>`}</div>
       ${S.subUI === t ? subForm(t) : ''}
       <div class="kr kr-h" style="--n:${cols.length}"><span></span>${cols.map((q, ci) => `<span>${q === 'x2' ? '★' : q === '-' ? '−' : q} <kbd>${KCOL_KEYS[ci].toUpperCase()}</kbd></span>`).join('')}</div>
       ${pl.map((p, i) => `<div class="kr${S.kKey && S.kKey.t === t && S.kKey.i === i ? ' kk' : ''}" style="--n:${cols.length}"><div class="kp"><kbd>${(t === sideLeft() ? KL_KEYS : KR_KEYS)[i] || ''}</kbd><b>${esc(p.no || '?')}</b><span><i>${esc(p.pos === 'Pemain' ? 'Posisi ' + (i + 1) : p.pos)}</i>${esc(p.name || '')}</span>${sk === 'S' && p.id === S.cur.sp ? '<svg class="srv-ball" aria-label="Servis"><use href="#takraw"/></svg>' : ''}</div>
         ${cols.map(q => `<button class="kq ${KQ_CLS[q]}" data-act="kq" data-t="${t}" data-i="${i}" data-q="${q}" ${act ? '' : 'disabled'} title="${esc(SKILLS[q === 'x2' ? 'A' : sk || 'R'].name)}: ${esc(kLabel(sk || 'R', q))}">${esc(kLabel(sk || 'R', q))}</button>`).join('')}</div>`).join('')}
-      <button class="btn sm ghost kt-man" data-act="manual" data-t="${t}" ${locked() ? 'disabled' : ''}>+ Poin ${esc(tname(t))} (lainnya)</button>
+      ${isGuestMatch(S.m) ? '' : `<button class="btn sm ghost kt-man" data-act="manual" data-t="${t}" ${locked() ? 'disabled' : ''}>+ Poin ${esc(tname(t))} (lainnya)</button>`}
     </div>`;
   };
   return `<div class="ctxbar"><b>Mode Kilat · servis ${esc(tname(S.cur.srv))} ${esc(pLabel(S.cur.sp))}</b><span class="spacer"></span>
@@ -2062,7 +2073,7 @@ function kilatHtml() {
     <div class="kflow">${flow || '<span class="muted">Rally baru — mulai dari servis.</span>'}</div>
     ${S.kKey ? `<div class="banner kk-bar">Pemain ${esc(pLabel(posPlayers(S.kKey.t)[S.kKey.i]?.id))} (${esc(tname(S.kKey.t))}) dipilih — tekan <kbd>H</kbd> <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> <kbd>;</kbd> <kbd>'</kbd> untuk kualitas, <kbd>Esc</kbd> batal.</div>` : ''}
     ${S.kPend ? kilatZones(S.kPend.t) : `<div class="kil">${team(sideLeft())}${team(opp(sideLeft()))}</div>`}
-    <div class="actions"><button class="btn" data-act="undo"><kbd>⌫</kbd> ${S.blk ? 'Batal blok' : 'Batal sentuhan'}</button><button class="btn" data-act="let" ${S.cur.touches.length ? '' : 'disabled'}>Let / ulang rally</button><button class="btn" data-act="swapSrv" ${S.cur.touches.length ? 'disabled' : ''}>Tukar tim servis</button><button class="btn" data-act="scoreFix" ${S.st.winner || S.cur.touches.length ? 'disabled' : ''}>± Koreksi skor</button><span class="spacer"></span>${nextBtns(S.m.meta, !!S.st.winner)}<button class="btn ghost sm" data-act="editMatch">Ubah data pertandingan</button></div>`;
+    ${isGuestMatch(S.m) ? `<div class="actions"><button class="btn" data-act="undo"><kbd>⌫</kbd> Batal sentuhan saya terakhir</button><span class="spacer"></span><span class="muted small">Skor, let, dan koreksi dipegang pemilik pertandingan.</span></div>` : `<div class="actions"><button class="btn" data-act="undo"><kbd>⌫</kbd> ${S.blk ? 'Batal blok' : 'Batal sentuhan'}</button><button class="btn" data-act="let" ${S.cur.touches.length ? '' : 'disabled'}>Let / ulang rally</button><button class="btn" data-act="swapSrv" ${S.cur.touches.length ? 'disabled' : ''}>Tukar tim servis</button><button class="btn" data-act="scoreFix" ${S.st.winner || S.cur.touches.length ? 'disabled' : ''}>± Koreksi skor</button><span class="spacer"></span>${nextBtns(S.m.meta, !!S.st.winner)}<button class="btn ghost sm" data-act="editMatch">Ubah data pertandingan</button></div>`}`;
 }
 const M2 = () => S.m.meta;
 function liteHtml() {
@@ -2237,6 +2248,7 @@ function commit(q, auto) {
   const t = { tm: S.sel.tm, p: S.sel.pid, s: sk, q, tc: S.sel.tech || null, z: S.sel.z, zh: S.sel.zh, vt };
   if (S.sel.oz) { t.oz = S.sel.oz; t.ozh = S.sel.ozh; if (!t.z && !needsTarget(sk)) { t.z = t.oz; t.zh = t.ozh; } }
   if (auto) t.auto = 1;
+  if (S._by) t.by = S._by;
   if (S.sel.u) t.u = 1;
   if (S.sel.x && DIRECT_OK(sk)) t.x = 1;
   if (S.sel.x2 && sk === 'A') t.x2 = 1;   // serangan langsung dari sentuhan ke-2
@@ -2267,6 +2279,7 @@ function commitBlock(q) {
   if (a.oz) { at.oz = a.oz; at.ozh = a.ozh; }
   if (at.z == null) { delete at.z; delete at.zh; }
   const bt = { tm: b.tm, p: b.pid, s: 'B', q, tc: b.tech || null, vt };
+  if (S._by) bt.by = S._by;
   if (b.z) { bt.z = b.z; bt.zh = b.zh; }   // arah bola hasil blok
   if (S.sel.u) { at.u = 1; bt.u = 1; }
   if (!S.cur.touches.length) { S.cur.ts = Date.now(); S.cur.vt0 = vt; }
@@ -2303,6 +2316,7 @@ function endRally(win, end, lite) {
   renderTag();
 }
 function undo() {
+  if (Collab.role === 'guest' && isGuestMatch(S.m)) { if (S.kPend) { S.kPend = null; return renderTagMain(); } collabSendIntent({ kind: 'undo' }); return; }
   if (S.kPend) { S.kPend = null; renderTagMain(); return; }
   if (S.blk) { S.blk = null; renderTagMain(); return; }
   if (S.sel.pid || S.sel.skill || S.forceTeam) { clearSel(); renderTagMain(); return; }
@@ -2518,7 +2532,7 @@ function renderTagMain() {
     </div>
     <div class="tag-grid m-${S.mode}${locked() ? ' done' : ''}${wide || kil ? ' wide' : ''}">
       ${wide || kil ? '' : teamPanel(sideLeft())}
-      <div class="center panel">${kil ? kilatHtml() : S.mode === 'lite' && S.editIdx == null ? liteHtml() : `${S.editIdx != null ? ` <div class="banner editb">${S.m.rallies[S.editIdx]?.lite ? 'Melengkapi' : 'Mengubah'} rally #${S.editIdx + 1} dari video — sentuhan lama diganti setelah rally ini selesai dicatat · <button class="btn sm ghost" data-act="cancelEdit">Batal</button></div>` : ''}
+      <div class="center panel">${collabBarHtml()}${kil ? kilatHtml() : S.mode === 'lite' && S.editIdx == null ? liteHtml() : `${S.editIdx != null ? ` <div class="banner editb">${S.m.rallies[S.editIdx]?.lite ? 'Melengkapi' : 'Mengubah'} rally #${S.editIdx + 1} dari video — sentuhan lama diganti setelah rally ini selesai dicatat · <button class="btn sm ghost" data-act="cancelEdit">Batal</button></div>` : ''}
         ${flowHtml()}
         ${pad}
         <div class="hint" aria-live="polite">${esc(hint)}</div>
@@ -3176,6 +3190,10 @@ const ACT = {
   },
   editById: d => { openMatch(d.id, 'tag'); ACT.editMatch(); },
   renameOpen: () => renameModal(),
+  inviteOpen: () => { if (Store.mode !== 'cloud') return toast('Undang rekan tersedia di versi web (takra-id.github.io) setelah masuk akun.'); inviteModal(); },
+  inviteSave: () => inviteSave($('#invMail').value.trim(), $('#invTeam').value),
+  memberDel: async d => { const { error } = await Cloud.sb.from('match_members').delete().eq('match_id', S.m.id).eq('user_id', d.u); if (error) return toast('Gagal: ' + error.message); await loadMembers(); inviteModal(); renderTagMain(); toast('Rekan dikeluarkan dari pertandingan ini'); },
+  focusSet: d => { S.focus = d.f; renderTagMain(); },
   renameSave: () => renameSave(),
   cancelSetup: () => { go(S.m ? 'tag' : 'list'); },
   editMatch: () => { S.draft = { id: S.m.id, meta: clone(S.m.meta) }; S.draft.meta.tie ||= { name: '', no: 1 }; go('setup'); },
@@ -3316,6 +3334,7 @@ document.addEventListener('input', e => {
 document.addEventListener('change', e => {
   const el = e.target;
   if (el.id === 'rSrvWin') { renderSetup(); return; }
+  if (el.dataset.actChange === 'memberTeam') { const r = matchMembers(S.m.id).find(x => x.user_id === el.dataset.u); if (r) inviteSave(r.email, el.value); return; }
   if (el.dataset.actChange === 'format') {
     const fmt = el.value, M = S.draft.meta; M.format = fmt; M.rules = defaultRules(fmt);
     ['A', 'B'].forEach(t => {
@@ -3492,7 +3511,8 @@ function cloudRoute() {
 function cloudSubscribe() {
   const ch = Cloud.sb.channel('takraw-data')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, p => cloudRemote('matches', p))
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, p => cloudRemote('events', p));
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, p => cloudRemote('events', p))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'match_members' }, () => cloudLoad().then(() => { Store.onChange('matches'); if (S.view === 'tag') { collabJoin(); renderTagMain(); } }));
   if (isAdmin()) { ch.on('postgres_changes', { event: '*', schema: 'public', table: 'presence' }, livePresence); liveLoad(); }
   ch.subscribe();
 }
@@ -3567,6 +3587,7 @@ async function cloudLoad() {
   } else {
     ['matches', 'events'].forEach((col, i) => Store.setArr(col, (res[i].data || []).map(fromRow)));
     (res[0].data || []).forEach(r => setLockInfo(r));
+    await loadMembers();
     // perubahan lokal yang belum terkirim tetap menang
     Store.queue.forEach((body, path) => { const [col, id] = splitPath(path); const a = Store.arr(col).filter(x => x.id !== id); a.push(clone(body)); Store.setArr(col, a); });
     saveCache();
@@ -3589,6 +3610,7 @@ function cloudRemote(col, p) {
   const arr = Store.arr(col).filter(x => x.id !== id);
   if (p.eventType !== 'DELETE' && p.new.data) arr.push(fromRow(p.new));
   Store.setArr(col, arr); saveCache();
+  if (S.m && S.m.id === id && S.view === 'tag' && isGuestMatch(S.m) && p.eventType !== 'DELETE') { const cur = S.cur, blk = S.blk; S.m = clone(Store.get(id)); S.st = derive(S.m); S.cur = cur; S.blk = blk; renderTagMain(); renderLog(); return; }
   if (S.m && S.m.id === id && S.view === 'stats' && p.eventType !== 'DELETE') { S.m = clone(Store.get(id)); S.st = derive(S.m); renderStats(); return; }
   Store.onChange(col);
 }
@@ -3825,6 +3847,133 @@ document.addEventListener('change', e => {
 /* ---------- Navigasi & peran ---------- */
 const DATA_VIEWS = ['list', 'athletes', 'stats', 'tag', 'setup'];
 /* Akun yang belum di-ACC: hasil & statistik terkunci, mencatat tetap jalan. */
+/* ---------- Kolaborasi live: dua akun mencatat satu pertandingan ----------
+   Pemilik pertandingan memegang skor: hanya perangkatnya yang menulis ke database.
+   Akun yang diundang mengirim ketukan (mode Kilat) lewat saluran realtime privat takra-m-<id>;
+   perangkat pemilik menjalankannya seolah diketuk sendiri, lalu menyiarkan keadaan rally ke semua anggota. */
+const Collab = { ch: null, mid: null, role: null, peers: new Map(), host: 0, applied: [], pending: new Map(), timer: null, sendT: 0 };
+const myMember = mid => (Cloud.members || []).find(r => r.match_id === mid && r.user_id === Cloud.user?.id);
+const matchMembers = mid => (Cloud.members || []).filter(r => r.match_id === mid);
+/* Pertandingan milik orang lain yang saya catat sebagai anggota undangan. */
+const isGuestMatch = m => !!(m && Store.mode === 'cloud' && Cloud.user && m._own && m._own !== Cloud.user.id && myMember(m.id));
+const isOwnMatch = m => !!(m && (Store.mode !== 'cloud' || !m._own || m._own === Cloud.user?.id));
+const myFocus = () => (S.m && isGuestMatch(S.m) ? myMember(S.m.id).team : S.focus || 'AB');
+const focusOK = t => myFocus().includes(t);
+async function loadMembers() {
+  if (Store.mode !== 'cloud' || !Cloud.user || !Cloud.sb) return;
+  const { data, error } = await Cloud.sb.from('match_members').select('match_id,user_id,email,name,team');
+  if (!error) Cloud.members = data || [];
+}
+function collabJoin() {
+  const m = S.m; if (Store.mode !== 'cloud' || !m || !Cloud.sb || !Cloud.user) return collabLeave();
+  const guest = isGuestMatch(m), owner = isOwnMatch(m) && matchMembers(m.id).length;
+  if (!guest && !owner) return collabLeave();
+  if (Collab.mid === m.id && Collab.ch) return;
+  collabLeave();
+  Collab.mid = m.id; Collab.role = guest ? 'guest' : 'host'; Collab.peers.clear(); Collab.host = 0; Collab.pending.clear();
+  const ch = Cloud.sb.channel('takra-m-' + m.id, { config: { private: true, broadcast: { self: false } } });
+  ch.on('broadcast', { event: 'intent' }, ({ payload }) => collabIntent(payload));
+  ch.on('broadcast', { event: 'state' }, ({ payload }) => collabState(payload));
+  ch.on('broadcast', { event: 'hello' }, ({ payload }) => { if (Collab.role === 'host' && payload?.uid) { Collab.peers.set(payload.uid, { ...payload, at: Date.now() }); collabBroadcast(true); renderCollabBar(); } });
+  ch.subscribe(st => { if (st === 'SUBSCRIBED') { collabHello(); collabBroadcast(true); } });
+  Collab.ch = ch;
+  clearInterval(Collab.timer);
+  Collab.timer = setInterval(() => { collabHello(); if (Collab.role === 'host') collabBroadcast(true); collabRetry(); renderCollabBar(); }, 4000);
+}
+function collabLeave() {
+  clearInterval(Collab.timer); Collab.timer = null;
+  try { Collab.ch && Cloud.sb.removeChannel(Collab.ch); } catch {}
+  Collab.ch = null; Collab.mid = null; Collab.role = null;
+}
+const collabSend = (event, payload) => { try { Collab.ch?.send({ type: 'broadcast', event, payload }); } catch {} };
+function collabHello() { if (Collab.role === 'guest') collabSend('hello', { uid: Cloud.user.id, email: Cloud.user.email, name: Cloud.name, team: myFocus() }); }
+/* Pemilik: siarkan keadaan rally setelah setiap perubahan (dibatasi tiap 100 ms) dan sebagai detak tiap 4 detik. */
+function collabBroadcast(now) {
+  if (Collab.role !== 'host' || !Collab.ch || !S.m) return;
+  const go2 = () => collabSend('state', { mid: S.m.id, rn: S.m.rallies.length, cur: S.cur, blk: S.blk, acks: Collab.applied.slice(-30), host: Cloud.name || Cloud.user.email, focus: S.focus || 'AB', at: Date.now() });
+  if (now) return go2();
+  clearTimeout(Collab.sendT); Collab.sendT = setTimeout(go2, 100);
+}
+/* Pemilik menerima ketukan anggota. */
+function collabIntent(p) {
+  if (Collab.role !== 'host' || !p || p.mid !== S.m?.id || Collab.applied.includes(p.id)) return;
+  const mem = matchMembers(S.m.id).find(r => r.user_id === p.uid);
+  if (!mem) return;                         // hanya anggota yang diundang
+  Collab.applied.push(p.id); if (Collab.applied.length > 200) Collab.applied.splice(0, 100);
+  Collab.peers.set(p.uid, { uid: p.uid, email: mem.email, name: mem.name, team: mem.team, at: Date.now() });
+  if (locked()) return collabBroadcast(true);
+  if (p.kind === 'undo') {
+    const last = S.cur.touches[S.cur.touches.length - 1];
+    if (S.blk && S.blk.by === p.uid) { S.blk = null; renderTagMain(); }
+    else if (last && last.by === (mem.email || p.uid)) undo();
+    return collabBroadcast(true);
+  }
+  if (p.kind === 'tap' && mem.team.includes(p.t)) {
+    const i = posPlayers(p.t).findIndex(x => x.id === p.pid);
+    if (i >= 0) { S._by = mem.email || p.uid; S._remote = true; try { kilatTap(p.t, i, p.q, p.z || -1); if (S.blk && !S.blk.by) S.blk.by = p.uid; } finally { S._by = null; S._remote = false; } }
+  }
+  collabBroadcast(true);
+}
+/* Anggota menerima keadaan dari pemilik. */
+async function collabState(p) {
+  if (Collab.role !== 'guest' || !p || p.mid !== S.m?.id) return;
+  Collab.host = Date.now(); Collab.hostName = p.host; Collab.hostFocus = p.focus;
+  (p.acks || []).forEach(id => Collab.pending.delete(id));
+  if (p.rn !== S.m.rallies.length) {
+    const { data } = await Cloud.sb.from('matches').select('id,data,owner,owner_email').eq('id', S.m.id).maybeSingle();
+    if (data) { const fresh = fromRow(data); Store.setArr('matches', [...Store.arr('matches').filter(x => x.id !== fresh.id), fresh]); S.m = clone(fresh); S.st = derive(S.m); }
+  }
+  S.cur = clone(p.cur); S.blk = p.blk ? clone(p.blk) : null; S.kKey = null;
+  if (S.view === 'tag') { renderTagMain(); if (typeof renderLog === 'function') renderLog(); }
+}
+function collabSendIntent(intent) {
+  const p = { ...intent, id: uid('i'), mid: S.m.id, uid: Cloud.user.id, at: Date.now() };
+  Collab.pending.set(p.id, { p, n: 0 }); collabSend('intent', p); renderCollabBar();
+}
+function collabRetry() {
+  if (Collab.role !== 'guest') return;
+  Collab.pending.forEach((v, id) => { if (++v.n > 4) { Collab.pending.delete(id); toast('Ketukan belum diterima pemilik pertandingan. Periksa sinyal, lalu ulangi.'); } else collabSend('intent', v.p); });
+}
+function renderCollabBar() {
+  const el = document.getElementById('collabBar'); if (!el) return;
+  el.outerHTML = collabBarHtml();
+}
+function collabBarHtml() {
+  const m = S.m; if (!m || Store.mode !== 'cloud') return '<div id="collabBar" hidden></div>';
+  const tn = t => (t === 'AB' ? 'kedua tim' : 'Tim ' + tname(t));
+  if (isGuestMatch(m)) {
+    const on = Date.now() - Collab.host < 10000;
+    return `<div id="collabBar" class="collab ${on ? 'on' : 'off'}"><span class="cdot"></span><b>Mode rekan</b> · fokus Anda: <b>${esc(tn(myFocus()))}</b> · ${on ? `terhubung ke ${esc(Collab.hostName || 'pemilik')}` : 'menunggu pemilik membuka halaman Input…'}${Collab.pending.size ? ` · <span class="muted">mengirim ${Collab.pending.size}…</span>` : ''}</div>`;
+  }
+  const mem = matchMembers(m.id); if (!mem.length && !isOwnMatch(m)) return '<div id="collabBar" hidden></div>';
+  const live = [...Collab.peers.values()].filter(p => Date.now() - p.at < 10000);
+  const chips = mem.map(r => { const on = live.some(p => p.uid === r.user_id); return `<span class="cchip ${on ? 'on' : ''}" title="${on ? 'Terhubung' : 'Belum terhubung'}"><span class="cdot"></span>${esc(r.name || r.email)} · ${esc(tn(r.team))}</span>`; }).join('');
+  const fb = k => `<button class="${(S.focus || 'AB') === k ? 'on' : ''}" data-act="focusSet" data-f="${k}">${k === 'AB' ? 'Kedua tim' : esc(tname(k))}</button>`;
+  return `<div id="collabBar" class="collab host">${mem.length ? `<span class="lbl">Rekan</span>${chips}<span class="lbl" style="margin-left:6px">Fokus saya</span><div class="tabs">${fb('A')}${fb('B')}${fb('AB')}</div>` : '<span class="muted small">Ajak rekan mencatat tim lawan secara live.</span>'}${isOwnMatch(m) ? '<button class="btn sm" data-act="inviteOpen">+ Undang rekan</button>' : ''}</div>`;
+}
+const INVITE_WHY = { bukan_pemilik: 'Hanya pemilik pertandingan yang bisa mengundang.', tidak_ada: 'Email itu belum terdaftar di TAKRA. Minta rekan mendaftar dulu.', diri_sendiri: 'Itu email Anda sendiri.', belum_acc: 'Akun itu belum disetujui admin. Minta admin menyetujuinya dulu.' };
+function inviteModal() {
+  const mem = matchMembers(S.m.id);
+  const opt = (v, cur) => ['A', 'B', 'AB'].map(k => `<option value="${k}" ${k === cur ? 'selected' : ''}>${k === 'AB' ? 'Kedua tim' : 'Tim ' + esc(tname(k))}</option>`).join('');
+  modal(`<h2>Undang rekan pencatat</h2>
+    <p class="note">Rekan mencatat <b>live bersama Anda</b> di pertandingan ini saja, misalnya Anda fokus ${esc(tname('A'))} dan rekan fokus ${esc(tname('B'))}. Skor tetap dipegang perangkat Anda. Rekan juga bisa melihat statistik pertandingan ini.</p>
+    ${mem.length ? `<table class="dt" style="margin:8px 0"><thead><tr><th>Rekan</th><th>Fokus</th><th></th></tr></thead><tbody>${mem.map(r => `<tr><td>${esc(r.name || '')} <span class="muted small">${esc(r.email)}</span></td><td><select class="inp" data-act-change="memberTeam" data-u="${r.user_id}" style="width:auto">${opt(0, r.team)}</select></td><td><button class="btn sm ghost danger" data-act="memberDel" data-u="${r.user_id}">Keluarkan</button></td></tr>`).join('')}</tbody></table>` : ''}
+    <label class="f">Email rekan (akun TAKRA yang sudah disetujui)<input class="inp" id="invMail" type="email" placeholder="rekan@contoh.ac.id"></label>
+    <label class="f">Fokus rekan<select class="inp" id="invTeam">${opt(0, 'B')}</select></label>
+    <div class="row"><button class="btn primary" data-act="inviteSave">Undang</button><button class="btn ghost" data-act="closeModal">Tutup</button></div>`);
+}
+async function inviteSave(mail, team) {
+  if (!mail) return toast('Isi email rekan');
+  const { data, error } = await Cloud.sb.rpc('invite_member', { mid: S.m.id, mail, tm: team });
+  if (error) return toast(/invite_member/.test(error.message) ? 'Fitur rekan belum aktif: jalankan migrasi-kolaborasi.sql di Supabase.' : 'Gagal mengundang: ' + error.message);
+  if (!data?.ok) return toast(INVITE_WHY[data?.why] || 'Gagal mengundang.');
+  await loadMembers(); toast(`${data.name || data.email} diundang · fokus ${data.team === 'AB' ? 'kedua tim' : 'Tim ' + tname(data.team)}`);
+  if (S.focus == null || S.focus === 'AB') S.focus = data.team === 'A' ? 'B' : data.team === 'B' ? 'A' : 'AB';
+  collabJoin(); inviteModal(); renderTagMain();
+}
+
+{ const _rtm = renderTagMain; renderTagMain = function () { const r = _rtm.apply(this, arguments); if (Collab.role === 'host') collabBroadcast(); return r; }; }
+{ const _g = go; go = function () { const r = _g.apply(this, arguments); setTimeout(() => { if (S.view === 'tag') collabJoin(); else if (Collab.ch) collabLeave(); }, 0); return r; }; }
 /* Status akun dibaca ulang dari server: saat tombol Periksa status ditekan, setiap 20 detik selama menunggu ACC,
    dan setiap kali aplikasi kembali dibuka. Begitu disetujui, hasil & statistik langsung terbuka tanpa muat ulang. */
 async function syncRole(silent) {
@@ -3875,6 +4024,7 @@ go = function (view) {
     if (Cloud.role === 'nonaktif') { toast('Akun Anda dinonaktifkan pemilik platform.'); view = 'home'; }
     else if ((view === 'stats' || view === 'athletes') && !canView()) return showPending(view);
   }
+  if (view === 'tag' && S.m && isGuestMatch(S.m)) { S.mode = 'kilat'; return _go('tag'); }
   if (view === 'tag' && S.m && Store.get(S.m.id)) {
     const mid = S.m.id;
     claimLock(mid).then(r => {
