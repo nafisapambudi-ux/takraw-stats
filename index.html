@@ -702,6 +702,17 @@ details summary { cursor: pointer; }
 .collab.off { background: #FFF6E0; color: #5A3F00; }
 .cchip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 12px; }
 .collab .btn { margin-left: auto; }
+body.guestmode #tagMain [data-act=manual],
+body.guestmode #tagMain [data-act=let],
+body.guestmode #tagMain [data-act=swapSrv],
+body.guestmode #tagMain [data-act=scoreFix],
+body.guestmode #tagMain [data-act=nextRegu],
+body.guestmode #tagMain [data-act=editMatch],
+body.guestmode #tagMain [data-act=subOpen],
+body.guestmode #tagMain [data-act=sideFlip],
+body.guestmode #tagMain [data-act=camFlip],
+body.guestmode #tagMain .tabs.mode [data-m=lite],
+body.guestmode #tagMain .nextp { display: none !important; }
 .chip.collabchip { background: #E8F3FF; color: #0F4C8A; border-color: #9CC3EC; }
 .lite { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0; }
 .litecol { border: 1px solid var(--line); border-radius: var(--r); padding: 10px; display: grid; gap: 8px; align-content: start; }
@@ -1659,7 +1670,7 @@ function openMatch(id, view) {
   S.m = clone(m); S.st = derive(S.m); resetCur(); S.statSet = 'all';
   go(view || 'tag');
 }
-function persist() { S.st = derive(S.m); Store.save(S.m); }
+function persist() { S.st = derive(S.m); if (isGuestMatch(S.m)) return; Store.save(S.m); }
 /* Mode db: pertandingan yang sedang dibuka diubah dari perangkat lain. Di halaman Input, tanya dulu; simpanan berikutnya akan menimpa. */
 function watchForeignEdit() {
   if (!S.m) return;
@@ -2110,6 +2121,7 @@ function autoCommit() {
   return !locked();
 }
 function selectPos(i) {
+  if (!S.blk) { const tm = S.sel.pid ? S.sel.tm : (S.forceTeam || ctx().team); if (!S.sel.pid && !focusGuard(tm)) return; }
   if (locked()) return;
   if (S.mode === 'area' && !S.blk && S.sel.pid && S.sel.oz) {
     const p = posPlayers(S.sel.tm).at(i); if (p) { setPlayer(p.id); renderTagMain(); } return;
@@ -2129,12 +2141,14 @@ function selectPos(i) {
 }
 /* Serangan yang dihadang lawan: pilih penyerang, tekan B, pilih pemblok, lalu kualitas blok. */
 function startBlock() {
+  if (Collab.role === 'guest' && isGuestMatch(S.m)) { toast('Untuk serangan yang diblok, pilih kualitas / (Diblok). Bloknya dicatat pencatat tim lawan.'); return false; }
   if (S.sel.pid && currentSkill() === 'A') { S.blk = { att: { ...S.sel }, pid: null, tm: null, tech: null }; renderTagMain(); return true; }
   return false;
 }
 
 function selectPlayer(id) {
   const p = pById(id); if (!p) return;
+  if (!S.blk && S.sel.pid !== id && !focusGuard(p.tm)) return;
   if (S.blk && !S.blk.pid && p.tm !== S.blk.att.tm) { S.blk.pid = id; S.blk.tm = p.tm; S.blk.tech = S.lastTech[id + 'B'] ?? null; renderTagMain(); return; }
   if (S.blk) S.blk = null;
   if (S.sel.pid === id) { S.sel.pid = null; S.sel.tm = null; }
@@ -2196,6 +2210,7 @@ function areaZone(half, z) {
       // lalu siapkan cover tim lawan di area yang diketuk — tinggal ganti pemain bila tebakan salah.
       S.sel.x = true; S.sel.z = z; S.sel.zh = half;
       if (!autoCommit()) return;
+      if (!focusOK(half)) return renderTagMain();   // cover tim lawan dicatat rekan
       S.sel.oz = z; S.sel.ozh = half; setPlayer(zonePlayer(half, z));
       toast(`Bola langsung ke ${tname(half)} — cover ${pLabel(S.sel.pid)}. Ganti pemain bila perlu, lalu pilih kualitas.`);
       return renderTagMain();
@@ -2209,10 +2224,12 @@ function areaZone(half, z) {
   }
   const c2 = ctx();
   if (c2.skill === 'S' && !S.cur.touches.length) {
+    if (!focusGuard(S.cur.srv)) return;
     S.sel.skill = 'S'; setPlayer(S.cur.sp);
     if (half !== S.cur.srv) { S.sel.z = z; S.sel.zh = half; }
     return renderTagMain();
   }
+  if (!focusGuard(half)) return renderTagMain();
   S.forceTeam = null;
   S.sel.oz = z; S.sel.ozh = half;
   setPlayer(zonePlayer(half, z));
@@ -2252,6 +2269,12 @@ function commit(q, auto) {
   if (S.sel.u) t.u = 1;
   if (S.sel.x && DIRECT_OK(sk)) t.x = 1;
   if (S.sel.x2 && sk === 'A') t.x2 = 1;   // serangan langsung dari sentuhan ke-2
+  if (Collab.role === 'guest' && isGuestMatch(S.m)) {
+    if (t.z == null) { delete t.z; delete t.zh; }
+    if (t.tc) S.lastTech[t.p + sk] = t.tc;
+    delete t.vt;                         // waktu video dicatat perangkat pemilik
+    collabSendIntent({ kind: 'touch', t }); clearSel(); collabOptimistic(); return renderTagMain();
+  }
   // Lawan menyentuh berikutnya padahal sentuhan terakhir terima/umpan/cover: bola itu ternyata langsung menyeberang.
   const prevT = S.cur.touches[S.cur.touches.length - 1];
   if (prevT && prevT.tm !== t.tm && DIRECT_OK(prevT.s) && t.s !== 'B' && t.s !== 'X' && !prevT.x) { prevT.x = 1; prevT.xa = 1; }
@@ -3859,6 +3882,7 @@ const isGuestMatch = m => !!(m && Store.mode === 'cloud' && Cloud.user && m._own
 const isOwnMatch = m => !!(m && (Store.mode !== 'cloud' || !m._own || m._own === Cloud.user?.id));
 const myFocus = () => (S.m && isGuestMatch(S.m) ? myMember(S.m.id).team : S.focus || 'AB');
 const focusOK = t => myFocus().includes(t);
+const focusGuard = t => { if (focusOK(t)) return true; toast('Tim ' + tname(t) + ' dicatat rekan Anda. Fokus Anda: ' + (myFocus() === 'AB' ? 'kedua tim' : 'Tim ' + tname(myFocus())) + '.'); return false; };
 async function loadMembers() {
   if (Store.mode !== 'cloud' || !Cloud.user || !Cloud.sb) return;
   const { data, error } = await Cloud.sb.from('match_members').select('match_id,user_id,email,name,team');
@@ -3870,6 +3894,7 @@ function collabJoin() {
   if (!guest && !owner) return collabLeave();
   if (Collab.mid === m.id && Collab.ch) return;
   collabLeave();
+  collabGuard(); document.body.classList.toggle('guestmode', guest);
   Collab.mid = m.id; Collab.role = guest ? 'guest' : 'host'; Collab.peers.clear(); Collab.host = 0; Collab.pending.clear();
   const ch = Cloud.sb.channel('takra-m-' + m.id, { config: { private: true, broadcast: { self: false } } });
   ch.on('broadcast', { event: 'intent' }, ({ payload }) => collabIntent(payload));
@@ -3880,10 +3905,15 @@ function collabJoin() {
   clearInterval(Collab.timer);
   Collab.timer = setInterval(() => { collabHello(); if (Collab.role === 'host') collabBroadcast(true); collabRetry(); renderCollabBar(); }, 4000);
 }
+const OWNER_ONLY = ['manual', 'lite', 'let', 'swapSrv', 'scoreFix', 'scoreFixSave', 'sideFlip', 'subOpen', 'subSave', 'nextRegu', 'editMatch', 'camFlip'];
+function collabGuard() {
+  OWNER_ONLY.forEach(k => { const f = ACT[k]; if (!f || f.__guard) return; ACT[k] = function (d) { if (S.view === 'tag' && isGuestMatch(S.m)) return toast('Skor, let, pergantian pemain, dan data pertandingan dipegang pemilik pertandingan.'); return f.apply(this, arguments); }; ACT[k].__guard = 1; });
+  const m = ACT.mode; if (m && !m.__guard) { ACT.mode = function (d) { if (d?.m === 'lite' && isGuestMatch(S.m)) return toast('Mode Ringkas mencatat poin langsung; untuk rekan gunakan Area, Posisi, Daftar, atau Kilat.'); return m.apply(this, arguments); }; ACT.mode.__guard = 1; }
+}
 function collabLeave() {
   clearInterval(Collab.timer); Collab.timer = null;
   try { Collab.ch && Cloud.sb.removeChannel(Collab.ch); } catch {}
-  Collab.ch = null; Collab.mid = null; Collab.role = null;
+  Collab.ch = null; Collab.mid = null; Collab.role = null; document.body.classList.remove('guestmode');
 }
 const collabSend = (event, payload) => { try { Collab.ch?.send({ type: 'broadcast', event, payload }); } catch {} };
 function collabHello() { if (Collab.role === 'guest') collabSend('hello', { uid: Cloud.user.id, email: Cloud.user.email, name: Cloud.name, team: myFocus() }); }
@@ -3908,11 +3938,24 @@ function collabIntent(p) {
     else if (last && last.by === (mem.email || p.uid)) undo();
     return collabBroadcast(true);
   }
+  if (p.kind === 'touch' && p.t && mem.team.includes(p.t.tm)) { applyRemoteTouch(p.t, mem.email || p.uid); return collabBroadcast(true); }
   if (p.kind === 'tap' && mem.team.includes(p.t)) {
     const i = posPlayers(p.t).findIndex(x => x.id === p.pid);
     if (i >= 0) { S._by = mem.email || p.uid; S._remote = true; try { kilatTap(p.t, i, p.q, p.z || -1); if (S.blk && !S.blk.by) S.blk.by = p.uid; } finally { S._by = null; S._remote = false; } }
   }
   collabBroadcast(true);
+}
+function applyRemoteTouch(t0, by) {
+  if (locked()) return;
+  const t = { ...t0, by }; delete t.vt;
+  const vt = vidTime(); if (vt != null) t.vt = vt;
+  const prevT = S.cur.touches[S.cur.touches.length - 1];
+  if (prevT && prevT.tm !== t.tm && DIRECT_OK(prevT.s) && t.s !== 'B' && t.s !== 'X' && !prevT.x) { prevT.x = 1; prevT.xa = 1; }
+  if (!S.cur.touches.length) { S.cur.ts = Date.now(); S.cur.vt0 = vt; }
+  if (t.s === 'S' && S.editIdx == null) { S.cur.srv = t.tm; S.cur.sp = t.p; S.cur.ovr = S.st.cur ? S.cur.srv !== srvNext(S.st.cur, S.m.meta.rules) : false; }
+  S.cur.touches.push(t);
+  const win = touchResult(t);
+  if (win) endRally(win, endCodeOf(t)); else renderTagMain();
 }
 /* Anggota menerima keadaan dari pemilik. */
 async function collabState(p) {
@@ -3923,8 +3966,13 @@ async function collabState(p) {
     const { data } = await Cloud.sb.from('matches').select('id,data,owner,owner_email').eq('id', S.m.id).maybeSingle();
     if (data) { const fresh = fromRow(data); Store.setArr('matches', [...Store.arr('matches').filter(x => x.id !== fresh.id), fresh]); S.m = clone(fresh); S.st = derive(S.m); }
   }
-  S.cur = clone(p.cur); S.blk = p.blk ? clone(p.blk) : null; S.kKey = null;
+  S.cur = clone(p.cur); S.blk = p.blk ? clone(p.blk) : null; S.kKey = null; collabOptimistic();
   if (S.view === 'tag') { renderTagMain(); if (typeof renderLog === 'function') renderLog(); }
+}
+/* Sentuhan rekan yang belum dikonfirmasi pemilik langsung ditampilkan, agar aksi berikutnya ditebak dari urutan yang benar. */
+function collabOptimistic() {
+  const have = new Set(S.cur.touches.map(t => t._iid).filter(Boolean));
+  Collab.pending.forEach((v, id) => { if (v.p.kind === 'touch' && !have.has(id)) { const t = { ...v.p.t, by: Cloud.user.email, _iid: id }; const prev = S.cur.touches[S.cur.touches.length - 1]; if (prev && prev.tm !== t.tm && DIRECT_OK(prev.s) && t.s !== 'B' && t.s !== 'X' && !prev.x) { prev.x = 1; prev.xa = 1; } S.cur.touches.push(t); } });
 }
 function collabSendIntent(intent) {
   const p = { ...intent, id: uid('i'), mid: S.m.id, uid: Cloud.user.id, at: Date.now() };
@@ -4024,7 +4072,7 @@ go = function (view) {
     if (Cloud.role === 'nonaktif') { toast('Akun Anda dinonaktifkan pemilik platform.'); view = 'home'; }
     else if ((view === 'stats' || view === 'athletes') && !canView()) return showPending(view);
   }
-  if (view === 'tag' && S.m && isGuestMatch(S.m)) { S.mode = 'kilat'; return _go('tag'); }
+  if (view === 'tag' && S.m && isGuestMatch(S.m)) { if (S.mode === 'lite') S.mode = 'area'; return _go('tag'); }
   if (view === 'tag' && S.m && Store.get(S.m.id)) {
     const mid = S.m.id;
     claimLock(mid).then(r => {
