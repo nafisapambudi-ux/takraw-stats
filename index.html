@@ -3795,17 +3795,10 @@ Object.assign(ACT, {
   approve: async d => {
     const role = d.r || 'pengguna';
     const { error } = await Cloud.sb.from('profiles').update({ role }).eq('id', d.id);
-    toast(error ? 'Gagal: ' + error.message : role === 'pengguna' ? 'Akun disetujui. Pengguna bisa melihat hasilnya setelah memuat ulang halaman.' : 'Akun ditolak dan dinonaktifkan.');
+    toast(error ? 'Gagal: ' + error.message : role === 'pengguna' ? 'Akun disetujui. Hasil dan statistik terbuka otomatis di perangkat pengguna dalam ±20 detik.' : 'Akun ditolak dan dinonaktifkan.');
     renderUsers();
   },
-  recheck: async () => {
-    const { data } = await Cloud.sb.from('profiles').select('role,name').eq('id', Cloud.user.id).maybeSingle();
-    if (data) { Cloud.role = ROLE_ALIAS[data.role] || data.role; lsSet('takraw.profile.' + Cloud.user.id, data); }
-    document.body.classList.toggle('pending', !canView()); document.body.classList.toggle('ro', !canWrite());
-    if (canView()) { toast('Akun Anda sudah disetujui.'); await cloudLoad(); go(S.pendingFor || 'list'); }
-    else toast('Akun Anda masih menunggu persetujuan pemilik.');
-    setStoreState();
-  },
+  recheck: () => syncRole(false),
   uploadLocal: () => {
     const loc = localMatches().filter(m => !Store.get(m.id));
     loc.forEach(m => Store.save(m)); toast(loc.length + ' pertandingan diunggah ke akun Anda'); renderList();
@@ -3832,6 +3825,29 @@ document.addEventListener('change', e => {
 /* ---------- Navigasi & peran ---------- */
 const DATA_VIEWS = ['list', 'athletes', 'stats', 'tag', 'setup'];
 /* Akun yang belum di-ACC: hasil & statistik terkunci, mencatat tetap jalan. */
+/* Status akun dibaca ulang dari server: saat tombol Periksa status ditekan, setiap 20 detik selama menunggu ACC,
+   dan setiap kali aplikasi kembali dibuka. Begitu disetujui, hasil & statistik langsung terbuka tanpa muat ulang. */
+async function syncRole(silent) {
+  if (Store.mode !== 'cloud' || !Cloud.user || !Cloud.sb || Cloud.offlineAuth) { if (!silent) toast('Sedang offline. Status akun diperiksa lagi saat online.'); return; }
+  const before = Cloud.role;
+  const { data, error } = await Cloud.sb.from('profiles').select('role,name,email').eq('id', Cloud.user.id).maybeSingle();
+  if (error || !data) { if (!silent) toast('Status akun belum bisa diperiksa. Coba lagi sebentar.'); return; }
+  Cloud.role = ROLE_ALIAS[data.role] || data.role; Cloud.name = data.name || Cloud.user.email;
+  lsSet('takraw.profile.' + Cloud.user.id, data); rememberUser();
+  document.body.classList.toggle('pending', !canView()); document.body.classList.toggle('ro', !canWrite());
+  const changed = before !== Cloud.role;
+  if (changed || !silent) { cloudUi(); setStoreState(); renderTabs(); }
+  if (canView() && (changed || !silent)) {
+    toast(changed ? 'Akun Anda telah disetujui. Hasil dan statistik sekarang bisa dibuka.' : 'Akun Anda sudah disetujui.');
+    await cloudLoad();
+    const v = S.pendingFor || (S.view === 'stats' || S.view === 'athletes' ? S.view : null); S.pendingFor = null;
+    if (v) go(v); else if (S.view !== 'tag' && S.view !== 'setup') go(S.view);
+  } else if (Cloud.role === 'nonaktif' && changed) { toast('Akun Anda dinonaktifkan pemilik platform.'); go('home'); }
+  else if (!silent) toast('Akun Anda masih menunggu persetujuan pemilik.');
+}
+setInterval(() => { if (Cloud.role === 'menunggu' && document.visibilityState === 'visible') syncRole(true); }, 20000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && Cloud.user) syncRole(true); });
+window.addEventListener('focus', () => { if (Cloud.user && Cloud.role === 'menunggu') syncRole(true); });
 function showPending(view) {
   S.view = view; S.pendingFor = view;
   $('#view').hidden = false; $('#tagView').hidden = true; renderTabs();
