@@ -713,6 +713,7 @@ body.guestmode #tagMain [data-act=sideFlip],
 body.guestmode #tagMain [data-act=camFlip],
 body.guestmode #tagMain .tabs.mode [data-m=lite],
 body.guestmode #tagMain .nextp { display: none !important; }
+body.sharedview [data-act=exportCsv], body.sharedview [data-act=exportJson], body.sharedview [data-act=go][data-v=tag] { display: none !important; }
 .chip.collabchip { background: #E8F3FF; color: #0F4C8A; border-color: #9CC3EC; }
 .lite { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0; }
 .litecol { border: 1px solid var(--line); border-radius: var(--r); padding: 10px; display: grid; gap: 8px; align-content: start; }
@@ -1650,7 +1651,7 @@ function renderTabs() {
   const t = $('#tabs');
   const items = [['home', 'Beranda'], ['list', 'Pertandingan'], ['athletes', 'Atlet'], ['events', 'Agenda'], ['rules', 'Regulasi']];
   let html = items.map(([v, l]) => `<button class="${S.view === v ? 'on' : ''}" data-act="go" data-v="${v}">${l}</button>`).join('');
-  if (S.m) html += `<span class="nav-sep" aria-hidden="true"></span><span class="nav-match">${esc(S.m.meta.A.short || S.m.meta.A.name)} v ${esc(S.m.meta.B.short || S.m.meta.B.name)}</span>` +
+  if (S.m && !S.shared) html += `<span class="nav-sep" aria-hidden="true"></span><span class="nav-match">${esc(S.m.meta.A.short || S.m.meta.A.name)} v ${esc(S.m.meta.B.short || S.m.meta.B.name)}</span>` +
     [['tag', 'Input'], ['stats', 'Statistik']].map(([v, l]) => `<button class="${S.view === v ? 'on' : ''}" data-act="go" data-v="${v}">${l}</button>`).join('');
   if (S.view === 'setup') html += `<button class="on">Data pertandingan</button>`;
   t.innerHTML = html;
@@ -1670,7 +1671,7 @@ function openMatch(id, view) {
   S.m = clone(m); S.st = derive(S.m); resetCur(); S.statSet = 'all';
   go(view || 'tag');
 }
-function persist() { S.st = derive(S.m); if (isGuestMatch(S.m)) return; Store.save(S.m); }
+function persist() { S.st = derive(S.m); S.m.done = !!S.st.winner; if (isGuestMatch(S.m)) return; Store.save(S.m); }
 /* Mode db: pertandingan yang sedang dibuka diubah dari perangkat lain. Di halaman Input, tanya dulu; simpanan berikutnya akan menimpa. */
 function watchForeignEdit() {
   if (!S.m) return;
@@ -1741,7 +1742,7 @@ function renameSave() {
   if (to === from && !short) return closeModal();
   let n = 0;
   Store.list.filter(m => !m.sample).forEach(m => {
-    let hit = false; const c = clone(m); delete c._own; delete c._by;
+    let hit = false; const c = clone(m); delete c._own; delete c._by; delete c._share;
     ['A', 'B'].forEach(t => { if ((c.meta[t]?.name || '').trim() === from) { c.meta[t].name = to; if (short) c.meta[t].short = short; hit = true; } });
     if (!hit) return;
     if (c.meta.A.name === c.meta.B.name) return;   // kedua tim tidak boleh bernama sama
@@ -2721,16 +2722,17 @@ function renderStats() {
   const tieTabs = Object.keys(FORMATS).map(f => [f, tieAll.filter(x => x.meta.format === f).length]).filter(([, n]) => n > 1);
   const scope = isTie ? `Gabungan ${tieMs.length} partai ${fmtShort(tf)}` : S.statSet === 'all' ? 'Semua set' : 'Set ' + S.statSet;
   const metaBits = [M.event, M.round, M.gender, FORMATS[M.format]?.label, M.tie?.name ? `${M.tie.name}, partai ${M.tie.no}` : '', longDate(M.date), M.venue].filter(Boolean);
-  const head = `<div class="page-head"><div>
+  let head = `<div class="page-head"><div>
       <div class="rp-kicker">Laporan statistik pertandingan</div>
       <h1><span class="win-A">${esc(M.A.name)}</span> <span class="num">${st.wA}–${st.wB}</span> <span class="win-B">${esc(M.B.name)}</span></h1>
       <div class="rp-meta">${metaBits.map(esc).join(' · ')}</div>
       <div class="print-only pdf-set">Cakupan data: ${esc(scope)} · ${X.R.length} rally · rata-rata ${X.avgTouches.toFixed(1)} sentuhan per rally</div></div><span class="spacer"></span>
-      <button class="btn primary" data-act="exportPdf">Ekspor PDF</button><button class="btn" data-act="exportCsv">Ekspor CSV</button><button class="btn" data-act="exportJson">Cadangan JSON</button><button class="btn" data-act="copySummary">Salin ringkasan</button></div>
+      ${S.shared ? '' : Store.mode === 'cloud' && isOwnMatch(m) && !m.sample ? '<button class="btn" data-act="shareOpen" title="Tautan hasil untuk orang tua, manajer, dan pelatih">Bagikan hasil</button>' : ''}<button class="btn primary" data-act="exportPdf">Ekspor PDF</button><button class="btn" data-act="exportCsv">Ekspor CSV</button><button class="btn" data-act="exportJson">Cadangan JSON</button><button class="btn" data-act="copySummary">Salin ringkasan</button></div>
     <div class="filters"><span class="lbl">Cakupan</span><div class="tabs">${setBtns.map(s => `<button class="${S.statSet === s ? 'on' : ''}" data-act="statSet" data-s="${s}">${s === 'all' ? 'Semua set' : 'Set ' + s}</button>`).join('')}${tieTabs.map(([f, n]) => `<button class="${tf === f ? 'on' : ''}" data-act="statSet" data-s="tie:${f}">Gabungan ${fmtShort(f)} (${n} partai)</button>`).join('')}</div>
       <span class="muted small">${X.R.length} rally · rata-rata ${X.avgTouches.toFixed(1)} sentuhan per rally</span></div>
     ${X.T.A.liteN ? `<div class="banner warn">${X.T.A.liteN} rally dicatat dalam mode Ringkas. Poin, ace, serangan poin, blok poin, dan error sudah dihitung; persentase per aksi hanya dihitung dari rally yang lengkap. <button class="btn sm" data-act="go" data-v="tag">Lengkapi di Input</button></div>` : ''}
     ${isTie ? `<div class="banner">Gabungan ${tieMs.length} partai ${esc(fmtShort(tf))} dalam “${esc(M.tie.name)}”${tieAll.length > tieMs.length ? '. Partai format lain dihitung terpisah' : ''}. Tim dicocokkan dari nama; alur skor dan peta area hanya tersedia per partai.</div>` : ''}`;
+  if (S.shared) head = '<div class="banner">Hasil resmi yang dibagikan pencatat pertandingan melalui TAKRA. Data hanya untuk dilihat.</div>' + head;
   if (!X.R.length) { $('#view').innerHTML = head + '<div class="panel empty"><h2>Belum ada data</h2><p>Statistik tersedia setelah rally pertama dicatat.</p><button class="btn primary" data-act="go" data-v="tag">Mulai input</button></div>'; return; }
   const errPts = t => { const K = t === 'A' ? KA : KB; return X.T[t].pts - K.ace - K.kill - K.blk - (X.T[t].ends.MAN || 0); };
   /* Perbandingan berkelompok; nilai yang lebih baik ditebalkan (untuk error: yang lebih kecil). */
@@ -3213,6 +3215,11 @@ const ACT = {
   },
   editById: d => { openMatch(d.id, 'tag'); ACT.editMatch(); },
   renameOpen: () => renameModal(),
+  shareOpen: () => shareModal(),
+  shareMake: () => shareSet(true),
+  shareRevoke: () => shareSet(false),
+  shareCopy: () => copy($('#shareLink').value),
+  shareRecheck: () => S.shared && openShared(S.shared.tok),
   inviteOpen: () => { if (Store.mode !== 'cloud') return toast('Undang rekan tersedia di versi web (takra-id.github.io) setelah masuk akun.'); inviteModal(); },
   inviteSave: () => inviteSave($('#invMail').value.trim(), $('#invTeam').value),
   memberDel: async d => { const { error } = await Cloud.sb.from('match_members').delete().eq('match_id', S.m.id).eq('user_id', d.u); if (error) return toast('Gagal: ' + error.message); await loadMembers(); inviteModal(); renderTagMain(); toast('Rekan dikeluarkan dari pertandingan ini'); },
@@ -3528,6 +3535,8 @@ function cloudUi() {
 }
 function cloudRoute() {
   const h = (location.hash || '').slice(1);
+  if (h.startsWith('lihat/')) return openShared(h.slice(6));
+  if (BOOT_SHARE && !cloudRoute.done) { cloudRoute.done = 1; return openShared(BOOT_SHARE); }
   const v = ['home', 'list', 'athletes', 'events', 'rules', 'users', 'live', 'login'].includes(h) ? h : (S.view === 'login' ? 'home' : S.view);
   go(Cloud.user && v === 'login' ? 'home' : v);
 }
@@ -3596,11 +3605,11 @@ async function cloudStart(session) {
   if (Store.queue.size) cloudFlush();
 }
 /* Baris server → dokumen aplikasi. _own/_by (pemilik & email pencatat) hanya untuk tampilan, tidak ikut disimpan. */
-const fromRow = r => ({ ...r.data, id: r.id, ...(r.owner ? { _own: r.owner } : {}), ...(r.owner_email ? { _by: r.owner_email } : {}) });
+const fromRow = r => ({ ...r.data, id: r.id, ...(r.owner ? { _own: r.owner } : {}), ...(r.owner_email ? { _by: r.owner_email } : {}), ...(r.share_token ? { _share: r.share_token } : {}) });
 async function cloudLoad() {
   // Pengunjung tanpa akun hanya membaca agenda; pertandingan memang ditolak database untuk mereka.
   const res = await Promise.all(['matches', 'events'].map(col => col === 'matches' && !Cloud.user ? Promise.resolve({ data: [] }) :
-    Cloud.sb.from(col).select(col === 'matches' ? 'id,data,owner,owner_email,locked_by,locked_name,locked_at' : 'id,data')));
+    Cloud.sb.from(col).select(col === 'matches' ? 'id,data,owner,owner_email,locked_by,locked_name,locked_at,share_token' : 'id,data')));
   const bad = res.find(r => r.error);
   if (bad) {
     const c = lsGet(cacheKey(), null);
@@ -3666,7 +3675,7 @@ async function cloudFlush() {
     while (Store.queue.size) {
       const [path, body] = Store.queue.entries().next().value;
       const [col, id] = splitPath(path);
-      const { id: _drop, _own, _by, ...data } = body;
+      const { id: _drop, _own, _by, _share, ...data } = body;
       const { error } = await Cloud.sb.from(col).upsert({ id, data });
       if (error && netErr(error)) { markOffline(); return; }   // pemeriksa sinyal akan mengirim ulang saat server terjangkau
       Store.queue.delete(path); persistQueue();
@@ -4022,6 +4031,54 @@ async function inviteSave(mail, team) {
 
 { const _rtm = renderTagMain; renderTagMain = function () { const r = _rtm.apply(this, arguments); if (Collab.role === 'host') collabBroadcast(); return r; }; }
 { const _g = go; go = function () { const r = _g.apply(this, arguments); setTimeout(() => { if (S.view === 'tag') collabJoin(); else if (Collab.ch) collabLeave(); }, 0); return r; }; }
+/* ---------- Tautan hasil: orang tua, manajer, pelatih (tanpa akun) ----------
+   Server hanya mengirim data bila pertandingan sudah selesai (data.done), lihat migrasi-bagikan-hasil.sql.
+   Pemantauan live tetap khusus rekan yang diundang. */
+const shareUrl = tok => location.origin + location.pathname + '#lihat/' + tok;
+function shareModal() {
+  const m = S.m, tok = m._share, done = !!S.st.winner;
+  modal(`<h2>Bagikan hasil pertandingan</h2>
+    <p class="note">Untuk <b>orang tua, manajer, dan pelatih</b>. Mereka membuka tautan tanpa akun dan <b>hanya bisa melihat hasil setelah pertandingan selesai</b>. Selama pertandingan berlangsung, tautan menampilkan "masih berlangsung". Pemantauan live tetap khusus rekan yang Anda undang.</p>
+    ${tok ? `<label class="f">Tautan hasil<input class="inp" id="shareLink" readonly value="${esc(shareUrl(tok))}"></label>
+      <p class="muted small">${done ? 'Pertandingan sudah selesai: hasil langsung bisa dilihat.' : 'Pertandingan belum selesai: hasil terbuka otomatis begitu pertandingan selesai.'}</p>
+      <div class="row"><button class="btn primary" data-act="shareCopy">Salin tautan</button><a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent('Hasil pertandingan ' + (m.meta.title || '') + ' (TAKRA): ' + shareUrl(tok))}">Kirim via WhatsApp</a><span class="spacer"></span><button class="btn ghost danger" data-act="shareRevoke">Cabut tautan</button></div>`
+    : `<div class="row"><button class="btn primary" data-act="shareMake">Buat tautan</button><button class="btn ghost" data-act="closeModal">Batal</button></div>`}`);
+}
+async function shareSet(on) {
+  const m = S.m; if (on) { m.done = !!S.st.winner; Store.save(m); await cloudFlush(); }
+  const { data, error } = await Cloud.sb.rpc('set_share', { mid: m.id, aktif: on });
+  if (error) return toast(/set_share/.test(error.message) ? 'Fitur tautan hasil belum aktif: jalankan migrasi-bagikan-hasil.sql di Supabase.' : 'Gagal: ' + error.message);
+  const tok = on ? data : null;
+  [m, Store.get(m.id)].forEach(x => { if (!x) return; if (tok) x._share = tok; else delete x._share; });
+  toast(on ? 'Tautan hasil dibuat' : 'Tautan dicabut. Tautan lama tidak bisa dibuka lagi.');
+  if (on) shareModal(); else closeModal();
+}
+async function openShared(tok) {
+  S.shared = { tok }; document.body.classList.add('sharedview');
+  $('#tagView').hidden = true; $('#view').hidden = false;
+  $('#view').innerHTML = '<div class="panel empty"><p class="muted">Memuat hasil pertandingan…</p></div>';
+  if (!Cloud.sb) { try { if (!window.supabase) await loadScript(CLOUD.lib); cloudClient(); } catch {} }
+  let res;
+  try { res = await Cloud.sb.rpc('view_shared', { tok }); } catch (e) { res = { error: e }; }
+  if (!S.shared || S.shared.tok !== tok) return;
+  const d = res?.data;
+  if (res?.error || !d) { $('#view').innerHTML = '<div class="panel empty"><h2>Hasil belum bisa dimuat</h2><p>Periksa sinyal, lalu muat ulang halaman.</p></div>'; return; }
+  if (!d.ok) {
+    clearTimeout(S.shared.t);
+    const live = d.why === 'berlangsung';
+    $('#view').innerHTML = `<div class="login-wrap"><div class="panel login">
+      <svg class="ball big" aria-hidden="true"><use href="#takraw"/></svg>
+      <h1>${live ? 'Pertandingan masih berlangsung' : 'Tautan tidak berlaku'}</h1>
+      ${live ? `<p><b>${esc(d.title || '')}</b>${d.event ? '<br><span class="muted">' + esc(d.event) + (d.date ? ' · ' + esc(d.date) : '') + '</span>' : ''}</p><p class="muted">Hasil dan statistik bisa dilihat di halaman ini setelah pertandingan selesai. Halaman memeriksa ulang otomatis setiap menit.</p><div class="row"><button class="btn primary" data-act="shareRecheck">Periksa sekarang</button></div>`
+        : '<p class="muted">Tautan ini sudah dicabut pemilik pertandingan atau salah ketik. Minta tautan baru kepada pencatat pertandingan.</p>'}
+      <div class="row"><button class="btn ghost" data-act="go" data-v="home">Ke beranda TAKRA</button></div></div></div>`;
+    if (live) S.shared.t = setTimeout(() => openShared(tok), 60000);
+    return;
+  }
+  S.m = { ...d.data, id: 'shared-' + tok.slice(0, 8), _shared: 1 }; S.st = derive(S.m); S.statSet = 'all'; S.areaSel = null;
+  _go('stats');
+}
+function leaveShared() { if (!S.shared) return; clearTimeout(S.shared.t); S.shared = null; S.m = null; document.body.classList.remove('sharedview'); try { history.replaceState(null, '', location.pathname); } catch {} }
 /* Status akun dibaca ulang dari server: saat tombol Periksa status ditekan, setiap 20 detik selama menunggu ACC,
    dan setiap kali aplikasi kembali dibuka. Begitu disetujui, hasil & statistik langsung terbuka tanpa muat ulang. */
 async function syncRole(silent) {
@@ -4063,6 +4120,7 @@ async function refreshPendingCount() {
 }
 const _go = go;
 go = function (view) {
+  if (S.shared) { if (view === 'stats') return _go('stats'); leaveShared(); }
   if (Store.mode !== 'cloud') return _go(view);
   document.body.classList.remove('auth');
   if (S.view === 'tag' && view !== 'tag' && Cloud.lock) releaseLock();
@@ -4779,10 +4837,11 @@ Store.onChange = () => {
   const r = { home: renderHome, list: renderList, athletes: renderAthletes, events: S.evDraft ? null : renderEvents, live: isAdmin() ? renderLive : null }[S.view];
   if (r) r();
 };
+const BOOT_SHARE = /^#lihat\/([\w-]{16,})$/.exec(location.hash || '')?.[1] || null;   // tautan hasil dibuka saat awal
 {
   const h = (location.hash || '').slice(1);
   S.view = ['home', 'list', 'athletes', 'events', 'rules'].includes(h) ? h : 'home';
-  go(S.view);
+  if (BOOT_SHARE) { S.view = 'home'; $('#view').innerHTML = '<div class="panel empty"><p class="muted">Memuat hasil pertandingan…</p></div>'; } else go(S.view);
 }
 Store.init();
 
