@@ -716,6 +716,32 @@ body.guestmode #tagMain .nextp { display: none !important; }
 body.sharedview [data-act=exportCsv], body.sharedview [data-act=exportJson], body.sharedview [data-act=go][data-v=tag] { display: none !important; }
 .privacy { display: grid; gap: 12px; max-width: 860px; }
 .privacy p, .privacy li { line-height: 1.6; } .privacy ul { padding-left: 20px; margin: 6px 0; }
+table.dt.rel-t td:first-child { white-space: normal; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin: 6px 0 10px; }
+.kpi { background: var(--surface2); border-radius: 10px; padding: 10px 12px; }
+.kpi-v { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); }
+.kpi-l { font-size: 12px; color: var(--muted); }
+.scout-notes { margin: 4px 0 0; padding-left: 20px; line-height: 1.6; }
+.zg-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 250px)); gap: 18px; }
+.zg { margin: 0; display: grid; gap: 6px; }
+.zg figcaption { font-size: 13px; }
+.zg-net { height: 4px; background: var(--ink2); border-radius: 2px; font-size: 0; }
+.zg-g { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; aspect-ratio: 1 / 1.05; }
+.zg-c { position: relative; display: grid; place-content: center; text-align: center; border-radius: 4px; color: var(--ink);
+  background: color-mix(in srgb, var(--q1) calc(var(--a) * 85%), var(--surface2)); }
+.zg-c b { font-size: 15px; } .zg-c span { font-size: 11px; color: var(--ink2); }
+.zg-c[style*="--a:1.00"], .zg-c[style*="--a:0.9"], .zg-c[style*="--a:0.8"], .zg-c[style*="--a:0.7"] { color: #fff; }
+.zg-c[style*="--a:1.00"] span, .zg-c[style*="--a:0.9"] span, .zg-c[style*="--a:0.8"] span, .zg-c[style*="--a:0.7"] span { color: rgba(255,255,255,.85); }
+.ath-open { color: inherit; text-decoration: underline dotted; text-underline-offset: 3px; }
+button.linkish { border: 0; background: none; padding: 0; font: inherit; cursor: pointer; text-align: left; }
+svg.trend { width: 100%; max-width: 720px; height: auto; display: block; }
+.tr-grid { stroke: var(--line); stroke-width: 1; }
+.tr-ax { fill: var(--muted); font-size: 11px; }
+.tr-line { fill: none; stroke: var(--q1); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.tr-dot { fill: var(--q1); stroke: var(--surface); stroke-width: 2; }
+.tr-hit { fill: transparent; } .tr-pt:hover .tr-dot { r: 6; }
+.tr-lab { fill: var(--ink); font-size: 12px; font-weight: 700; }
+table.dt.clip-t td { white-space: nowrap; }
 table.dt.qdef-t td, table.dt.qdef-t th { vertical-align: top; white-space: normal; text-align: left; font-family: var(--f-body); line-height: 1.45; } table.dt.qdef-t td.qc { width: 46px; text-align: center; } table.dt.qdef-t td:nth-child(3) { white-space: nowrap; }
 .qchip { display: inline-grid; place-items: center; min-width: 26px; height: 24px; border-radius: 6px; color: #fff; font-weight: 700; }
 .chip.collabchip { background: #E8F3FF; color: #0F4C8A; border-color: #9CC3EC; }
@@ -1617,7 +1643,7 @@ function go(view) {
   $('#view').hidden = view === 'tag';
   $('#tagView').hidden = view !== 'tag';
   renderTabs();
-  ({ home: renderHome, list: renderList, athletes: renderAthletes, events: renderEvents, rules: renderRules, privacy: renderPrivacy, setup: renderSetup, tag: renderTag, stats: renderStats })[view]?.();
+  ({ home: renderHome, list: renderList, athletes: renderAthletes, events: renderEvents, rules: renderRules, privacy: renderPrivacy, reliab: renderReliab, scout: renderScout, athlete: renderAthlete, clips: renderClips, setup: renderSetup, tag: renderTag, stats: renderStats })[view]?.();
   try { if (['home', 'list', 'athletes', 'events', 'rules', 'privacy'].includes(view)) history.replaceState(null, '', '#' + view); } catch {}
   window.scrollTo({ top: 0 });
 }
@@ -2733,7 +2759,7 @@ function renderStats() {
       <h1><span class="win-A">${esc(M.A.name)}</span> <span class="num">${st.wA}–${st.wB}</span> <span class="win-B">${esc(M.B.name)}</span></h1>
       <div class="rp-meta">${metaBits.map(esc).join(' · ')}</div>
       <div class="print-only pdf-set">Cakupan data: ${esc(scope)} · ${X.R.length} rally · rata-rata ${X.avgTouches.toFixed(1)} sentuhan per rally</div></div><span class="spacer"></span>
-      ${S.shared ? '' : Store.mode === 'cloud' && (isOwnMatch(m) || isAdmin()) && !isGuestMatch(m) && !m.sample ? '<button class="btn" data-act="shareOpen" title="Tautan hasil untuk orang tua, manajer, dan pelatih">Bagikan hasil</button>' : ''}<button class="btn primary" data-act="exportPdf">Ekspor PDF</button><button class="btn" data-act="exportCsv">Ekspor CSV</button><button class="btn" data-act="exportJson">Cadangan JSON</button><button class="btn" data-act="copySummary">Salin ringkasan</button></div>
+      ${S.shared ? '' : Store.mode === 'cloud' && (isOwnMatch(m) || isAdmin()) && !isGuestMatch(m) && !m.sample ? '<button class="btn" data-act="shareOpen" title="Tautan hasil untuk orang tua, manajer, dan pelatih">Bagikan hasil</button>' : ''}${S.shared ? '' : '<button class="btn" data-act="go" data-v="clips" title="Daftar sentuhan dengan waktu video, dapat difilter per pemain dan aksi">Daftar klip</button>'}${S.shared ? '' : '<button class="btn" data-act="go" data-v="reliab" title="Bandingkan dengan catatan analis lain untuk pertandingan yang sama">Uji reliabilitas</button>'}<button class="btn primary" data-act="exportPdf">Ekspor PDF</button><button class="btn" data-act="exportCsv">Ekspor CSV</button><button class="btn" data-act="exportJson">Cadangan JSON</button><button class="btn" data-act="copySummary">Salin ringkasan</button></div>
     <div class="filters"><span class="lbl">Cakupan</span><div class="tabs">${setBtns.map(s => `<button class="${S.statSet === s ? 'on' : ''}" data-act="statSet" data-s="${s}">${s === 'all' ? 'Semua set' : 'Set ' + s}</button>`).join('')}${tieTabs.map(([f, n]) => `<button class="${tf === f ? 'on' : ''}" data-act="statSet" data-s="tie:${f}">Gabungan ${fmtShort(f)} (${n} partai)</button>`).join('')}</div>
       <span class="muted small">${X.R.length} rally · rata-rata ${X.avgTouches.toFixed(1)} sentuhan per rally</span></div>
     ${X.T.A.liteN ? `<div class="banner warn">${X.T.A.liteN} rally dicatat dalam mode Ringkas. Poin, ace, serangan poin, blok poin, dan error sudah dihitung; persentase per aksi hanya dihitung dari rally yang lengkap. <button class="btn sm" data-act="go" data-v="tag">Lengkapi di Input</button></div>` : ''}
@@ -3221,6 +3247,11 @@ const ACT = {
   },
   editById: d => { openMatch(d.id, 'tag'); ACT.editMatch(); },
   renameOpen: () => renameModal(),
+  relCsv: () => relCsv(),
+  athOpen: d => { S.athKey = d.k; go('athlete'); },
+  trK: d => { S.trK = d.k; renderAthlete(); },
+  clipCsv: () => clipCsv(),
+  clipSeek: d => { const t = +d.t; go('tag'); setTimeout(() => { seekTo(Math.max(0, t - 2)); if (S.vkind === 'yt') ytCmd('playVideo'); else $('#vid')?.play().catch(() => {}); }, 80); },
   srvIstaf: () => { if (S.cur.touches.length) return toast('Selesaikan rally yang sedang dicatat dulu.'); S.m.meta.rules.srvWin = ''; S.cur.ovr = false; persist(); resetCur(); renderTag(); toast('Giliran servis kini bergantian setiap poin (ISTAF 2024). Rally yang sudah tercatat tidak berubah.'); },
   shareOpen: () => shareModal(),
   shareMake: () => shareSet(true),
@@ -3371,6 +3402,9 @@ document.addEventListener('input', e => {
 document.addEventListener('change', e => {
   const el = e.target;
   if (el.id === 'rSrvWin') { renderSetup(); return; }
+  if (el.dataset.actChange === 'scoutPick') { S.scoutT = el.value; renderScout(); return; }
+  if (el.dataset.actChange === 'clipF') { const k = { clipTm: 'tm', clipP: 'p', clipS: 's', clipQ: 'q' }[el.id]; S.clipF = { ...(S.clipF || {}), [k]: el.value || null }; if (k === 's') S.clipF.q = null; renderClips(); return; }
+  if (el.dataset.actChange === 'relPick') { S.relB = el.value || null; renderReliab(); return; }
   if (el.dataset.actChange === 'memberTeam') { const r = matchMembers(S.m.id).find(x => x.user_id === el.dataset.u); if (r) inviteSave(r.email, el.value); return; }
   if (el.dataset.actChange === 'format') {
     const fmt = el.value, M = S.draft.meta; M.format = fmt; M.rules = defaultRules(fmt);
@@ -3885,7 +3919,7 @@ document.addEventListener('change', e => {
 });
 
 /* ---------- Navigasi & peran ---------- */
-const DATA_VIEWS = ['list', 'athletes', 'stats', 'tag', 'setup'];
+const DATA_VIEWS = ['list', 'athletes', 'stats', 'tag', 'setup', 'reliab', 'scout', 'athlete', 'clips'];
 /* Akun yang belum di-ACC: hasil & statistik terkunci, mencatat tetap jalan. */
 /* ---------- Kolaborasi live: dua akun mencatat satu pertandingan ----------
    Pemilik pertandingan memegang skor: hanya perangkatnya yang menulis ke database.
@@ -4136,7 +4170,7 @@ go = function (view) {
   if (DATA_VIEWS.includes(view)) {
     if (!Cloud.user) { Cloud.msg = 'Masuk untuk mengakses hasil pertandingan, statistik, dan database atlet.'; return showLogin(); }
     if (Cloud.role === 'nonaktif') { toast('Akun Anda dinonaktifkan pemilik platform.'); view = 'home'; }
-    else if ((view === 'stats' || view === 'athletes') && !canView()) return showPending(view);
+    else if (['stats', 'athletes', 'reliab', 'scout', 'athlete', 'clips'].includes(view) && !canView()) return showPending(view);
   }
   if (view === 'tag' && S.m && isGuestMatch(S.m)) { if (S.mode === 'lite') S.mode = 'area'; return _go('tag'); }
   if (view === 'tag' && S.m && Store.get(S.m.id)) {
@@ -4705,10 +4739,10 @@ function renderAthletes() {
   const cols = [['matches', 'Main'], ['pts', 'Poin'], ['err', 'Err'], ['srv', 'Servis'], ['ace', 'Ace'], ['srvErr', 'S.Err'], ['rcv', 'Terima'], ['rcvPos', 'Pos%'], ['fd', 'Umpan'], ['atk', 'Serang'], ['kill', 'Poin'], ['killPct', 'Kill%'], ['eff', 'Eff'], ['blk', 'Blok poin']];
   const pctK = new Set(['rcvPos', 'killPct', 'eff']);
   $('#view').innerHTML = `
-    <div class="page-head"><div><h1>Database atlet</h1><div class="muted">Rekap dari ${statMatches().length} pertandingan${statMatches().some(m => m.sample) ? ' (data contoh)' : ''}. Atlet diidentifikasi dari nama tim dan nama pemain; gunakan ejaan yang konsisten.</div></div><span class="spacer"></span><button class="btn" data-act="exportPdf">Ekspor PDF</button></div>
+    <div class="page-head"><div><h1>Database atlet</h1><div class="muted">Rekap dari ${statMatches().length} pertandingan${statMatches().some(m => m.sample) ? ' (data contoh)' : ''}. Atlet diidentifikasi dari nama tim dan nama pemain; gunakan ejaan yang konsisten. Pilih nama atlet untuk melihat trennya.</div></div><span class="spacer"></span><button class="btn" data-act="go" data-v="scout" title="Pola tim lintas pertandingan">Profil lawan</button><button class="btn" data-act="exportPdf">Ekspor PDF</button></div>
     <div class="filters"><input class="inp" id="athQ" type="search" placeholder="Cari nama atlet atau tim" value="${esc(S.athQ || '')}" style="max-width:320px"><span class="muted small">${rows.length} atlet · pilih judul kolom untuk mengurutkan</span></div>
     <div class="panel tscroll"><table class="dt"><thead><tr><th>Atlet</th><th>Tim</th>${cols.map(([k, l]) => `<th><button class="th-sort ${sortK === k ? 'on' : ''}" data-act="athSort" data-k="${k}">${l}${sortK === k ? ' ↓' : ''}</button></th>`).join('')}</tr></thead>
-    <tbody>${rows.map(a => `<tr><td><b>${esc(a.name)}</b> <span class="muted small">${a.no ? '#' + esc(a.no) + ' · ' : ''}${esc(a.pos)}</span>${a.sample ? ' <span class="chip sample">Contoh</span>' : ''}</td><td>${esc(a.team)}</td>${cols.map(([k]) => `<td>${pctK.has(k) ? f0(a[k]) : a[k]}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${cols.length + 2}" class="muted">Belum ada atlet dengan sentuhan tercatat.</td></tr>`}</tbody></table></div>`;
+    <tbody>${rows.map(a => `<tr><td><button class="linkish ath-open" data-act="athOpen" data-k="${esc(a.key)}" title="Lihat tren per pertandingan"><b>${esc(a.name)}</b></button> <span class="muted small">${a.no ? '#' + esc(a.no) + ' · ' : ''}${esc(a.pos)}</span>${a.sample ? ' <span class="chip sample">Contoh</span>' : ''}</td><td>${esc(a.team)}</td>${cols.map(([k]) => `<td>${pctK.has(k) ? f0(a[k]) : a[k]}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${cols.length + 2}" class="muted">Belum ada atlet dengan sentuhan tercatat.</td></tr>`}</tbody></table></div>`;
 }
 
 /* ---------- Agenda ---------- */
@@ -4751,6 +4785,269 @@ function qdefHtml() {
     ${['S', 'R', 'F', 'A', 'B', 'D'].map(s => Object.keys(QDEF[s]).map((q, i) => `<tr>${i ? '' : `<td rowspan="${Object.keys(QDEF[s]).length}"><b>${SKILLS[s].name}</b></td>`}<td class="qc"><span class="qchip" style="background:${QCOL[q] || 'var(--q3)'}">${q === '-' ? '−' : q}</span></td><td>${esc(QL[s][q])}</td><td>${esc(QDEF[s][q])}</td></tr>`).join('')).join('')}
     </tbody></table></div></section>`;
 }
+/* ---------- Uji reliabilitas antar-pencatat ----------
+   Dua analis mencatat pertandingan yang sama secara terpisah. Rally dipasangkan per set menurut urutan;
+   sentuhan dipasangkan menurut urutan di dalam rally. Kesepakatan dihitung sebagai persentase dan Cohen's kappa. */
+function kappa(pairs) {
+  const n = pairs.length; if (!n) return { n: 0, po: null, k: null };
+  const cats = [...new Set(pairs.flat())], ca = {}, cb = {}; let agree = 0;
+  pairs.forEach(([a, b]) => { ca[a] = (ca[a] || 0) + 1; cb[b] = (cb[b] || 0) + 1; if (a === b) agree++; });
+  const po = agree / n, pe = cats.reduce((s, c) => s + ((ca[c] || 0) / n) * ((cb[c] || 0) / n), 0);
+  return { n, po, k: pe >= 1 ? (po === 1 ? 1 : 0) : (po - pe) / (1 - pe) };
+}
+const kappaLabel = k => (k == null ? '–' : k > 0.8 ? 'Hampir sempurna' : k > 0.6 ? 'Substansial' : k > 0.4 ? 'Sedang' : k > 0.2 ? 'Cukup' : k > 0 ? 'Lemah' : 'Buruk');
+function reliability(m1, m2) {
+  const c1 = clone(m1), c2 = clone(m2), d1 = derive(c1), d2 = derive(c2);
+  const bySet = m => { const g = {}; m.rallies.filter(r => !r.extra).forEach(r => (g[r.set] ||= []).push(r)); return g; };
+  const g1 = bySet(c1), g2 = bySet(c2);
+  const sets = [...new Set([...Object.keys(g1), ...Object.keys(g2)])].sort((a, b) => a - b);
+  const P = { win: [], end: [], skill: [], player: [] }, Q = { S: [], R: [], F: [], A: [], B: [], D: [] }, diffs = [];
+  let rA = 0, rB = 0, nr = 0, tA = 0, tB = 0, nUnpaired = 0;
+  const pl = (m, id) => { for (const t of ['A', 'B']) { const p = m.meta[t].players.find(x => x.id === id); if (p) return t + '#' + (p.no || p.name); } return '?'; };
+  sets.forEach(s => {
+    const a = g1[s] || [], b = g2[s] || []; rA += a.length; rB += b.length;
+    for (let i = 0; i < Math.max(a.length, b.length); i++) {
+      const x = a[i], y = b[i];
+      if (!x || !y) { nUnpaired++; diffs.push({ set: s, no: i + 1, what: 'Jumlah rally berbeda', a: x ? 'ada' : '—', b: y ? 'ada' : '—' }); continue; }
+      nr++;
+      P.win.push([x.win, y.win]); P.end.push([x.end, y.end]);
+      if (x.win !== y.win) diffs.push({ set: s, no: i + 1, what: 'Pemenang rally', a: x.win, b: y.win });
+      else if (x.end !== y.end) diffs.push({ set: s, no: i + 1, what: 'Cara poin', a: END_LABEL[x.end] || x.end, b: END_LABEL[y.end] || y.end });
+      if (x.lite || y.lite) continue;
+      const ta = x.tc.filter(t => t.s !== 'X'), tb = y.tc.filter(t => t.s !== 'X'); tA += ta.length; tB += tb.length;
+      for (let j = 0; j < Math.max(ta.length, tb.length); j++) {
+        const u = ta[j], v = tb[j];
+        if (!u || !v) { P.skill.push([u ? u.s : '∅', v ? v.s : '∅']); continue; }
+        P.skill.push([u.tm + u.s, v.tm + v.s]);
+        P.player.push([pl(m1, u.p), pl(m2, v.p)]);
+        if (u.s === v.s && u.tm === v.tm && Q[u.s]) Q[u.s].push([u.q, v.q]);
+        if (u.s !== v.s || u.tm !== v.tm) diffs.push({ set: s, no: i + 1, what: 'Aksi sentuhan ke-' + (j + 1), a: tname(u.tm) + ' ' + SKILLS[u.s].name, b: tname(v.tm) + ' ' + SKILLS[v.s].name });
+        else if (u.q !== v.q) diffs.push({ set: s, no: i + 1, what: SKILLS[u.s].name + ' sentuhan ke-' + (j + 1), a: QL[u.s][u.q] || u.q, b: QL[v.s][v.q] || v.q });
+      }
+    }
+  });
+  return { rA, rB, nr, nUnpaired, tA, tB, P, Q, diffs, score1: d1, score2: d2 };
+}
+function renderReliab() {
+  const a = S.m, others = Store.list.filter(x => x.id !== a.id && !x.sample).sort((x, y) => (x.meta.title === a.meta.title ? -1 : 0) - (y.meta.title === a.meta.title ? -1 : 0) || (y.updatedAt || 0) - (x.updatedAt || 0));
+  const b = S.relB ? Store.get(S.relB) : null;
+  const pick = `<label class="f" style="max-width:520px">Catatan analis kedua (pertandingan yang sama)<select class="inp" id="relB" data-act-change="relPick"><option value="">— pilih —</option>${others.map(x => `<option value="${x.id}" ${x.id === S.relB ? 'selected' : ''}>${esc(x.meta.title || '')} · ${esc(x.meta.date || '')}${x._by ? ' · ' + esc(x._by) : ''}</option>`).join('')}</select></label>`;
+  let body = `<div class="panel"><p class="note">Pilih catatan analis lain untuk pertandingan yang sama. Catatan rekan dapat dimasukkan melalui <b>Impor JSON</b> di menu Pertandingan. Rally dipasangkan per set menurut urutan, dan sentuhan menurut urutan di dalam rally.</p>${pick}</div>`;
+  if (b) {
+    const R = reliability(a, b);
+    const row = (label, pairs, note) => { const k = kappa(pairs); return `<tr><td>${label}${note ? `<div class="muted small">${note}</div>` : ''}</td><td>${k.n}</td><td>${k.po == null ? '–' : f0(100 * k.po)}</td><td><b>${k.k == null ? '–' : k.k.toFixed(2)}</b></td><td>${kappaLabel(k.k)}</td></tr>`; };
+    const allQ = Object.values(R.Q).flat();
+    body += `<div class="st-grid">
+      <section class="panel st-wide"><h3>Ringkasan</h3>
+        <div class="tscroll"><table class="dt"><thead><tr><th>Catatan</th><th>Hasil</th><th>Rally</th><th>Sentuhan</th></tr></thead><tbody>
+          <tr><td><b>A</b> · ${esc(a._by || 'catatan ini')}</td><td>${R.score1.wA}–${R.score1.wB}</td><td>${R.rA}</td><td>${R.tA}</td></tr>
+          <tr><td><b>B</b> · ${esc(b._by || 'catatan pembanding')}</td><td>${R.score2.wA}–${R.score2.wB}</td><td>${R.rB}</td><td>${R.tB}</td></tr></tbody></table></div>
+        ${R.nUnpaired ? `<div class="banner warn">${R.nUnpaired} rally tidak berpasangan karena jumlah rally per set berbeda. Periksa daftar perbedaan di bawah.</div>` : ''}</section>
+      <section class="panel st-wide"><h3>Kesepakatan antar-pencatat</h3>
+        <div class="tscroll"><table class="dt rel-t"><thead><tr><th>Variabel</th><th>n</th><th>Kesepakatan</th><th>Kappa (κ)</th><th>Interpretasi</th></tr></thead><tbody>
+          ${row('Pemenang rally', R.P.win)}${row('Cara poin', R.P.end)}${row('Aksi dan tim per sentuhan', R.P.skill, 'Urutan sentuhan di dalam rally')}${row('Pemain per sentuhan', R.P.player)}
+          ${row('Kualitas (semua aksi)', allQ, 'Dihitung bila aksi dan tim sama')}
+          ${['S', 'R', 'F', 'A', 'B', 'D'].filter(s => R.Q[s].length).map(s => row('Kualitas ' + SKILLS[s].name.toLowerCase(), R.Q[s])).join('')}
+        </tbody></table></div>
+        <p class="note">Kappa Cohen: &gt;0,80 hampir sempurna · 0,61–0,80 substansial · 0,41–0,60 sedang · 0,21–0,40 cukup · ≤0,20 lemah (Landis &amp; Koch, 1977). Untuk penelitian notational analysis, κ ≥ 0,80 umumnya dianggap reliabel.</p>
+        <div class="row"><button class="btn" data-act="relCsv">Ekspor CSV</button></div></section>
+      <section class="panel st-wide"><h3>Daftar perbedaan (${R.diffs.length})</h3>
+        ${R.diffs.length ? `<div class="tscroll"><table class="dt"><thead><tr><th>Set</th><th>Rally</th><th>Perbedaan</th><th>A</th><th>B</th></tr></thead><tbody>${R.diffs.slice(0, 300).map(x => `<tr><td>${x.set}</td><td>${x.no}</td><td>${esc(x.what)}</td><td>${esc(x.a)}</td><td>${esc(x.b)}</td></tr>`).join('')}</tbody></table></div>${R.diffs.length > 300 ? '<p class="muted small">Menampilkan 300 perbedaan pertama; daftar lengkap ada di Ekspor CSV.</p>' : ''}` : '<p class="muted">Tidak ada perbedaan. Kedua catatan identik.</p>'}</section></div>`;
+    S._rel = R;
+  }
+  $('#view').innerHTML = `<div class="page-head"><div><div class="rp-kicker">Uji reliabilitas antar-pencatat</div><h1>${esc(a.meta.title || '')}</h1><div class="rp-meta">${[a.meta.event, a.meta.date].filter(Boolean).map(esc).join(' · ')}</div></div><span class="spacer"></span><button class="btn ghost" data-act="go" data-v="stats">← Statistik</button></div>${body}`;
+}
+function relCsv() {
+  const R = S._rel; if (!R) return;
+  const q = v => { const s = String(v ?? ''); return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const rows = [['variabel', 'n', 'kesepakatan_persen', 'kappa', 'interpretasi']];
+  const add = (l, p) => { const k = kappa(p); rows.push([l, k.n, k.po == null ? '' : (100 * k.po).toFixed(1), k.k == null ? '' : k.k.toFixed(3), kappaLabel(k.k)]); };
+  add('pemenang_rally', R.P.win); add('cara_poin', R.P.end); add('aksi_tim', R.P.skill); add('pemain', R.P.player); add('kualitas_semua', Object.values(R.Q).flat());
+  Object.keys(R.Q).forEach(s => R.Q[s].length && add('kualitas_' + SKILLS[s].name.toLowerCase(), R.Q[s]));
+  rows.push([]); rows.push(['set', 'rally', 'perbedaan', 'A', 'B']); R.diffs.forEach(x => rows.push([x.set, x.no, x.what, x.a, x.b]));
+  offer(fileSafe('Reliabilitas ' + (S.m.meta.title || '')) + '.csv', '﻿' + rows.map(r => r.map(q).join(',')).join('\n'));
+}
+
+/* ---------- Profil lawan (scouting), tren atlet, daftar klip video ---------- */
+const athKey = (team, p) => (team + '|' + (p.name || '#' + p.no)).toLowerCase().trim();
+const byDate = (a, b) => (a.meta.date || '').localeCompare(b.meta.date || '') || (a.createdAt || a.updatedAt || 0) - (b.createdAt || b.updatedAt || 0);
+/* Peta 3x3 sederhana: baris Depan→Belakang, kolom Kiri→Kanan. Isi = jumlah, intensitas = porsi. */
+function zgrid(cnt, title, sub) {
+  const tot = Object.values(cnt).reduce((s, o) => s + o.n, 0);
+  const max = Math.max(1, ...Object.values(cnt).map(o => o.n));
+  let cells = '';
+  for (let z = 1; z <= 9; z++) {
+    const o = cnt[z] || { n: 0, k: 0, e: 0 }, a = o.n / max;
+    cells += `<div class="zg-c" style="--a:${a.toFixed(2)}" title="${zoneName(z)}: ${o.n}${o.n ? ` (${f0(100 * o.n / tot)}), poin ${o.k}, error ${o.e}` : ''}"><b>${o.n || ''}</b>${o.n ? `<span>${f0(100 * o.n / tot)}</span>` : ''}</div>`;
+  }
+  return `<figure class="zg"><figcaption><b>${title}</b>${sub ? `<span class="muted small"> · ${sub}</span>` : ''}</figcaption><div class="zg-net">net</div><div class="zg-g">${cells}</div><div class="muted small">${tot} catatan berzona</div></figure>`;
+}
+function scoutData(name) {
+  const ms = statMatches().filter(m => ['A', 'B'].some(t => (m.meta[t].name || '').trim() === name)).sort(byDate);
+  const acc = { pts: 0, sk: {}, ends: {}, lite: {}, liteN: 0, srvW: 0, srvN: 0, rcvW: 0, rcvN: 0, given: 0, streak: 0 };
+  const lost = {}, srvZ = {}, atkO = {}, atkZ = {}, pl = {}, games = [], tech = {};
+  let W = 0, L = 0, sW = 0, sL = 0;
+  const add = (o, z, q) => { if (!z) return; const c = (o[z] ||= { n: 0, k: 0, e: 0 }); c.n++; if (q === '#') c.k++; if (q === '=') c.e++; };
+  for (const m of ms) {
+    const t = (m.meta.A.name || '').trim() === name ? 'A' : 'B', o = opp(t);
+    const X = computeStats(clone(m), 'all'), T = X.T[t], st = X.st;
+    const mySets = st.sets.filter(s => s.win === t).length, opSets = st.sets.filter(s => s.win === o).length;
+    sW += mySets; sL += opSets;
+    if (st.winner === t) W++; else if (st.winner === o) L++;
+    games.push({ id: m.id, date: m.meta.date, opp: m.meta[o].name, res: st.winner ? (st.winner === t ? 'M' : 'K') : '–', sets: mySets + '–' + opSets, ev: m.meta.event || '' });
+    ['pts', 'srvW', 'srvN', 'rcvW', 'rcvN', 'given', 'liteN'].forEach(k => acc[k] += T[k] || 0);
+    acc.streak = Math.max(acc.streak, T.streak || 0);
+    for (const [k, v] of Object.entries(T.ends)) acc.ends[k] = (acc.ends[k] || 0) + v;
+    for (const [k, v] of Object.entries(T.lite || {})) acc.lite[k] = (acc.lite[k] || 0) + v;
+    for (const [k, v] of Object.entries(X.T[o].ends)) lost[k] = (lost[k] || 0) + v;
+    for (const [s, x] of Object.entries(T.sk)) { const k = (acc.sk[s] ||= { n: 0, q: {} }); k.n += x.n; for (const [q, v] of Object.entries(x.q)) k.q[q] = (k.q[q] || 0) + v; }
+    for (const [k, v] of Object.entries(T.tech)) { const x = (tech[k] ||= { n: 0, k: 0, e: 0, b: 0 }); x.n += v.n; x.k += v.k; x.e += v.e; x.b += v.b; }
+    T.ev.forEach(e => { if (e.s === 'S') add(srvZ, e.z, e.q); if (e.s === 'A') { add(atkO, e.o || e.loc, e.q); add(atkZ, e.z, e.q); } });
+    m.meta[t].players.forEach(p => {
+      const r = X.P[p.id]; if (!r) return;
+      const k = athKey(name, p), a = (pl[k] ||= { key: k, name: p.name || '#' + p.no, no: p.no, pos: p.pos, n: 0, pts: 0, err: 0, sk: {} });
+      a.n++; a.pts += r.pts; a.err += r.err; if (p.pos && p.pos !== 'Cadangan') a.pos = p.pos;
+      for (const [s, x] of Object.entries(r.sk)) { const kk = (a.sk[s] ||= { n: 0, q: {} }); kk.n += x.n; for (const [q, v] of Object.entries(x.q)) kk.q[q] = (kk.q[q] || 0) + v; }
+    });
+  }
+  return { ms, W, L, sW, sL, K: teamKpi(acc), acc, lost, srvZ, atkO, atkZ, pl: Object.values(pl), games, tech };
+}
+function renderScout() {
+  const names = teamNameIndex();
+  if (!S.scoutT || !names.some(x => x.name === S.scoutT)) S.scoutT = names[0]?.name || '';
+  const head = `<div class="page-head"><div><div class="rp-kicker">Profil tim lintas pertandingan</div><h1>Profil lawan</h1><div class="muted">Pola servis, serangan, penerimaan, dan pencetak poin dari semua pertandingan tim yang tercatat.</div></div><span class="spacer"></span><button class="btn ghost" data-act="go" data-v="athletes">← Atlet</button>${S.scoutT ? '<button class="btn primary" data-act="exportPdf">Ekspor PDF</button>' : ''}</div>
+    <div class="filters"><label class="lbl" for="scoutT">Tim</label><select class="inp" id="scoutT" data-act-change="scoutPick" style="max-width:320px">${names.map(x => `<option value="${esc(x.name)}" ${x.name === S.scoutT ? 'selected' : ''}>${esc(x.name)} (${x.n})</option>`).join('')}</select></div>`;
+  if (!S.scoutT) { $('#view').innerHTML = head + '<div class="panel muted">Belum ada pertandingan tercatat.</div>'; return; }
+  const D = scoutData(S.scoutT), K = D.K;
+  const g = (a, s, q) => a.sk[s]?.q[q] || 0, n = (a, s) => a.sk[s]?.n || 0;
+  const endRows = (o, err) => { const tot = Object.values(o).reduce((s, v) => s + v, 0); return Object.entries(o).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<tr><td>${esc(END_LABEL[k] || k)}${ERR_ENDS.has(k) ? ` <span class="muted small">(${err})</span>` : ''}</td><td>${v}</td><td>${f0(100 * v / tot)}</td></tr>`).join('') || '<tr><td colspan="3" class="muted">–</td></tr>'; };
+  const rcv = D.pl.filter(p => n(p, 'R')).sort((a, b) => n(b, 'R') - n(a, 'R'));
+  const top = [...D.pl].sort((a, b) => b.pts - a.pts).slice(0, 8);
+  const weak = rcv.filter(p => n(p, 'R') >= 3).map(p => ({ p, v: (100 * (g(p, 'R', '#') + g(p, 'R', '+'))) / n(p, 'R') })).sort((a, b) => a.v - b.v)[0];
+  const topSrv = Object.entries(D.srvZ).sort((a, b) => b[1].n - a[1].n)[0], topAtk = Object.entries(D.atkZ).sort((a, b) => b[1].n - a[1].n)[0];
+  const tech = Object.entries(D.tech).filter(([k]) => k !== 'Tidak dicatat').sort((a, b) => b[1].n - a[1].n);
+  const notes = [
+    topSrv ? `Servis paling sering diarahkan ke <b>${zoneName(+topSrv[0])}</b> (${f0(100 * topSrv[1].n / Object.values(D.srvZ).reduce((s, o) => s + o.n, 0))} servis berzona).` : '',
+    topAtk ? `Sasaran smash terbanyak: <b>${zoneName(+topAtk[0])}</b>.` : '',
+    tech[0] ? `Teknik serangan utama: <b>${esc(tech[0][0])}</b> (${tech[0][1].n}×, ${f0(100 * tech[0][1].k / tech[0][1].n)} poin).` : '',
+    weak ? `Penerimaan terlemah: <b>${esc(weak.p.name)}</b>${weak.p.no ? ' #' + esc(weak.p.no) : ''}, ${f0(weak.v)} penerimaan positif dari ${n(weak.p, 'R')}. Kandidat sasaran servis.` : '',
+    top[0] ? `Pencetak poin utama: <b>${esc(top[0].name)}</b> (${top[0].pts} poin dalam ${top[0].n} pertandingan).` : '',
+  ].filter(Boolean);
+  $('#view').innerHTML = head + `<div class="st-grid">
+    <section class="panel st-wide"><h3>Ringkasan</h3>
+      <div class="kpis">${[['Pertandingan', D.ms.length], ['Menang–kalah', D.W + '–' + D.L], ['Set', D.sW + '–' + D.sL], ['Kill%', f0(K.killPct)], ['Efisiensi serangan', f0(K.atkEff)], ['Terima positif', f0(K.rcvPosPct)], ['Ace', K.ace], ['Error servis', K.srvErr], ['Blok poin', K.blk]].map(([l, v]) => `<div class="kpi"><div class="kpi-v">${v}</div><div class="kpi-l">${l}</div></div>`).join('')}</div>
+      ${notes.length ? `<ul class="scout-notes">${notes.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}
+      ${D.acc.liteN ? '<p class="note">Sebagian rally dicatat dalam mode Ringkas; persentase per aksi hanya dihitung dari rally lengkap.</p>' : ''}</section>
+    <section class="panel st-wide"><h3>Peta area</h3><p class="note">Dilihat dari belakang lapangan lawan; baris atas paling dekat ke net. Angka kecil = porsi dari catatan berzona.</p>
+      <div class="zg-row">${zgrid(D.srvZ, 'Sasaran servis', 'di lapangan lawan')}${zgrid(D.atkO, 'Asal smash', 'di lapangan sendiri')}${zgrid(D.atkZ, 'Sasaran smash', 'di lapangan lawan')}</div></section>
+    <section class="panel"><h3>Cara mendapat poin</h3><div class="tscroll"><table class="dt"><thead><tr><th>Cara</th><th>n</th><th>%</th></tr></thead><tbody>${endRows(D.acc.ends, 'error lawan')}</tbody></table></div></section>
+    <section class="panel"><h3>Cara kehilangan poin</h3><div class="tscroll"><table class="dt"><thead><tr><th>Cara</th><th>n</th><th>%</th></tr></thead><tbody>${endRows(D.lost, 'error sendiri')}</tbody></table></div></section>
+    <section class="panel"><h3>Penerimaan per pemain</h3><div class="tscroll"><table class="dt"><thead><tr><th>Pemain</th><th>Terima</th><th>Positif</th><th>Gagal</th></tr></thead><tbody>${rcv.map(p => `<tr><td>${esc(p.name)} <span class="muted small">${p.no ? '#' + esc(p.no) : ''}</span></td><td>${n(p, 'R')}</td><td>${f0((100 * (g(p, 'R', '#') + g(p, 'R', '+'))) / n(p, 'R'))}</td><td>${g(p, 'R', '=')}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">–</td></tr>'}</tbody></table></div></section>
+    <section class="panel"><h3>Pencetak poin</h3><div class="tscroll"><table class="dt"><thead><tr><th>Pemain</th><th>Main</th><th>Poin</th><th>Kill%</th><th>Error</th></tr></thead><tbody>${top.map(p => `<tr><td><button class="linkish" data-act="athOpen" data-k="${esc(p.key)}">${esc(p.name)}</button> <span class="muted small">${p.no ? '#' + esc(p.no) : ''}</span></td><td>${p.n}</td><td>${p.pts}</td><td>${f0(n(p, 'A') ? 100 * g(p, 'A', '#') / n(p, 'A') : null)}</td><td>${p.err}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">–</td></tr>'}</tbody></table></div></section>
+    ${tech.length ? `<section class="panel"><h3>Teknik serangan</h3><div class="tscroll"><table class="dt"><thead><tr><th>Teknik</th><th>n</th><th>Poin</th><th>Error</th></tr></thead><tbody>${tech.map(([k, v]) => `<tr><td>${esc(k)}</td><td>${v.n}</td><td>${f0(100 * v.k / v.n)}</td><td>${v.e}</td></tr>`).join('')}</tbody></table></div></section>` : ''}
+    <section class="panel st-wide"><h3>Riwayat pertandingan</h3><div class="tscroll"><table class="dt"><thead><tr><th>Tanggal</th><th>Lawan</th><th>Hasil</th><th>Set</th><th>Kejuaraan</th></tr></thead><tbody>${[...D.games].reverse().map(x => `<tr><td>${esc(x.date || '')}</td><td>${esc(x.opp)}</td><td><b class="${x.res === 'M' ? 'win-A' : x.res === 'K' ? 'win-B' : ''}">${x.res === 'M' ? 'Menang' : x.res === 'K' ? 'Kalah' : 'Belum selesai'}</b></td><td>${x.sets}</td><td>${esc(x.ev)}</td></tr>`).join('')}</tbody></table></div></section>
+  </div>`;
+}
+
+/* Tren atlet: satu titik per pertandingan, urut tanggal. */
+const TREND_K = { pts: ['Poin', false], killPct: ['Kill%', true], eff: ['Efisiensi serangan', true], rcvPos: ['Terima positif', true], err: ['Error', false] };
+function athleteSeries(key) {
+  const out = []; let info = null;
+  for (const m of [...statMatches()].sort(byDate)) for (const t of ['A', 'B']) for (const p of m.meta[t].players) {
+    if (athKey(m.meta[t].name, p) !== key) continue;
+    const X = computeStats(clone(m), 'all'), r = X.P[p.id]; if (!r) continue;
+    info = { name: p.name || '#' + p.no, no: p.no, team: m.meta[t].name, pos: p.pos && p.pos !== 'Cadangan' ? p.pos : info?.pos || p.pos };
+    const g = (s, q) => r.sk[s]?.q[q] || 0, n = s => r.sk[s]?.n || 0;
+    out.push({ id: m.id, date: m.meta.date || '', opp: m.meta[opp(t)].name, pts: r.pts, err: r.err, atk: n('A'), rcv: n('R'),
+      killPct: n('A') ? 100 * g('A', '#') / n('A') : null, eff: n('A') ? 100 * (g('A', '#') - g('A', '=') - g('A', '/')) / n('A') : null,
+      rcvPos: n('R') ? 100 * (g('R', '#') + g('R', '+')) / n('R') : null });
+  }
+  return { info, out };
+}
+function trendSvg(pts, k) {
+  const [label, isPct] = TREND_K[k], v = pts.map(p => p[k]);
+  const W = Math.round(Math.min(720, Math.max(300, ((document.querySelector('#view')?.clientWidth) || 640) - 64))), H = W < 480 ? 190 : 220, L = 40, R = 16, T = 16, B = 28;
+  const ok = v.filter(x => x != null); if (!ok.length) return `<p class="muted">Belum ada data ${label.toLowerCase()} untuk atlet ini.</p>`;
+  let lo = isPct ? Math.min(0, ...ok) : 0, hi = isPct ? Math.max(100, ...ok) : Math.max(1, ...ok);
+  if (!isPct) hi = Math.ceil(hi * 1.15);
+  const x = i => L + (pts.length < 2 ? (W - L - R) / 2 : (i * (W - L - R)) / (pts.length - 1)), y = val => T + (H - T - B) * (1 - (val - lo) / (hi - lo || 1));
+  const ticks = isPct ? [lo, lo < 0 ? 0 : 50, 100].filter((t, i, a) => a.indexOf(t) === i) : [0, Math.round(hi / 2), hi];
+  let path = '', seg = false;
+  v.forEach((val, i) => { if (val == null) { seg = false; return; } path += (seg ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(val).toFixed(1) + ' '; seg = true; });
+  const fmt = val => (val == null ? '–' : isPct ? Math.round(val) + '%' : String(val));
+  return `<svg class="trend" viewBox="0 0 ${W} ${H}" role="img" aria-label="${label} per pertandingan">
+    ${ticks.map(t => `<line class="tr-grid" x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}"/><text class="tr-ax" x="${L - 6}" y="${y(t) + 4}" text-anchor="end">${fmt(t)}</text>`).join('')}
+    <path class="tr-line" d="${path}"/>
+    ${pts.map((p, i) => p[k] == null ? '' : `<g class="tr-pt"><circle cx="${x(i)}" cy="${y(p[k])}" r="10" class="tr-hit"/><circle cx="${x(i)}" cy="${y(p[k])}" r="4.5" class="tr-dot"/><title>${esc(p.date)} vs ${esc(p.opp)}: ${label} ${fmt(p[k])}</title></g>`).join('')}
+    ${pts.length ? `<text class="tr-ax" x="${x(0)}" y="${H - 8}" text-anchor="${pts.length < 2 ? 'middle' : 'start'}">${esc(pts[0].date)}</text>` : ''}${pts.length > 1 ? `<text class="tr-ax" x="${x(pts.length - 1)}" y="${H - 8}" text-anchor="end">${esc(pts[pts.length - 1].date)}</text>` : ''}
+    ${v[v.length - 1] != null ? `<text class="tr-lab" x="${x(pts.length - 1) - 8}" y="${y(v[v.length - 1]) - 10}" text-anchor="end">${fmt(v[v.length - 1])}</text>` : ''}
+  </svg>`;
+}
+function renderAthlete() {
+  const { info, out } = athleteSeries(S.athKey || '');
+  if (!info) { go('athletes'); return; }
+  const k = TREND_K[S.trK] ? S.trK : 'pts';
+  const half = Math.floor(out.length / 2), avg = (a, kk) => { const v = a.map(p => p[kk]).filter(x => x != null); return v.length ? v.reduce((s, x) => s + x, 0) / v.length : null; };
+  const early = avg(out.slice(0, half), k), late = avg(out.slice(half), k);
+  const fmt = (val, kk) => (val == null ? '–' : TREND_K[kk][1] ? f0(val) : (Math.round(val * 10) / 10).toString().replace('.', ','));
+  $('#view').innerHTML = `<div class="page-head"><div><div class="rp-kicker">Tren atlet</div><h1>${esc(info.name)}${info.no ? ` <span class="muted">#${esc(info.no)}</span>` : ''}</h1><div class="rp-meta">${esc(info.team)}${info.pos ? ' · ' + esc(info.pos) : ''} · ${out.length} pertandingan</div></div><span class="spacer"></span><button class="btn ghost" data-act="go" data-v="athletes">← Database atlet</button><button class="btn primary" data-act="exportPdf">Ekspor PDF</button></div>
+    <div class="st-grid">
+      <section class="panel st-wide"><div class="filters"><div class="tabs">${Object.entries(TREND_K).map(([kk, [l]]) => `<button class="${kk === k ? 'on' : ''}" data-act="trK" data-k="${kk}">${l}</button>`).join('')}</div></div>
+        ${trendSvg(out, k)}
+        ${out.length >= 4 ? `<p class="note">Rata-rata ${TREND_K[k][0].toLowerCase()}: ${fmt(early, k)} pada ${half} pertandingan pertama, ${fmt(late, k)} pada ${out.length - half} pertandingan terakhir.</p>` : '<p class="note">Tren lebih bermakna setelah minimal 4 pertandingan.</p>'}</section>
+      <section class="panel st-wide"><h3>Per pertandingan</h3><div class="tscroll"><table class="dt"><thead><tr><th>Tanggal</th><th>Lawan</th><th>Poin</th><th>Error</th><th>Serang</th><th>Kill%</th><th>Eff</th><th>Terima</th><th>Pos%</th></tr></thead>
+        <tbody>${[...out].reverse().map(p => `<tr><td>${esc(p.date)}</td><td>${esc(p.opp)}</td><td>${p.pts}</td><td>${p.err}</td><td>${p.atk}</td><td>${f0(p.killPct)}</td><td>${f0(p.eff)}</td><td>${p.rcv}</td><td>${f0(p.rcvPos)}</td></tr>`).join('')}</tbody></table></div></section>
+    </div>`;
+}
+
+/* Daftar klip: setiap sentuhan yang punya waktu video, bisa difilter dan diekspor. */
+function clipRows(m) {
+  const out = [], yt = ytId(m.meta.video);
+  derive(m);
+  m.rallies.forEach((r, i) => {
+    if (r.extra) return;
+    (r.tc || []).forEach((t, j) => {
+      const vt = t.vt != null ? t.vt : r.vt0; if (vt == null) return;
+      out.push({ i, j, set: r.set, no: i + 1, score: (r.sA ?? '') + '–' + (r.sB ?? ''), tm: t.tm, p: t.p, s: t.s, q: t.q, vt, exact: t.vt != null, win: r.win, end: r.end, yt });
+    });
+    if (!(r.tc || []).length && r.vt0 != null) out.push({ i, j: -1, set: r.set, no: i + 1, score: (r.sA ?? '') + '–' + (r.sB ?? ''), tm: r.win, p: null, s: null, q: null, vt: r.vt0, exact: false, win: r.win, end: r.end, yt });
+  });
+  return out;
+}
+function clipFilter(rows) {
+  const F = S.clipF || {};
+  return rows.filter(c => (!F.p || c.p === F.p) && (!F.s || c.s === F.s) && (!F.q || c.q === F.q) && (!F.tm || c.tm === F.tm));
+}
+function renderClips() {
+  const m = S.m; if (!m) return go('list');
+  const all = clipRows(clone(m)), rows = clipFilter(all), F = S.clipF || {}, M = m.meta, yt = ytId(M.video);
+  const pls = ['A', 'B'].flatMap(t => M[t].players.filter(p => all.some(c => c.p === p.id)).map(p => [p.id, M[t].name + ' · ' + (p.no ? '#' + p.no + ' ' : '') + (p.name || '')]));
+  const sel = (id, label, opts, v) => `<label class="f" style="min-width:150px">${label}<select class="inp" id="${id}" data-act-change="clipF">${['<option value="">Semua</option>', ...opts.map(([k, l]) => `<option value="${esc(k)}" ${k === v ? 'selected' : ''}>${esc(l)}</option>`)].join('')}</select></label>`;
+  const qopts = F.s ? Object.entries(QL[F.s] || {}).map(([k, l]) => [k, (k === '-' ? '−' : k) + ' ' + l]) : [['#', '# terbaik'], ['+', '+ baik'], ['!', '! cukup'], ['-', '− kurang'], ['=', '= gagal']];
+  const link = c => S.video ? `<button class="btn sm" data-act="clipSeek" data-t="${c.vt}">▶ Putar</button>` : yt ? `<a class="btn sm" target="_blank" rel="noopener" href="https://youtu.be/${yt}?t=${Math.max(0, Math.floor(c.vt - 2))}">▶ YouTube</a>` : '';
+  $('#view').innerHTML = `<div class="page-head"><div><div class="rp-kicker">Daftar klip video</div><h1><span class="win-A">${esc(M.A.name)}</span> vs <span class="win-B">${esc(M.B.name)}</span></h1><div class="rp-meta">${[M.event, M.date].filter(Boolean).map(esc).join(' · ')}</div></div><span class="spacer"></span><button class="btn ghost" data-act="go" data-v="stats">← Statistik</button><button class="btn" data-act="clipCsv" ${rows.length ? '' : 'disabled'}>Ekspor CSV</button></div>
+    <div class="panel">
+      ${all.length ? '' : '<div class="banner warn">Pertandingan ini belum memiliki waktu video. Waktu tercatat otomatis bila video atau YouTube diputar di halaman Input saat mencatat, atau isi waktu manual per rally.</div>'}
+      ${all.length && !yt && !S.video ? '<p class="note">Tautan putar muncul bila link YouTube diisi di data pertandingan, atau video diputar di halaman Input. Ekspor CSV tetap dapat dipakai di aplikasi penyunting video.</p>' : ''}
+      <div class="row wrap" style="gap:10px;align-items:end">
+        ${sel('clipTm', 'Tim', [['A', M.A.name], ['B', M.B.name]], F.tm)}
+        ${sel('clipP', 'Pemain', pls, F.p)}
+        ${sel('clipS', 'Aksi', Object.entries(SKILLS).filter(([k]) => k !== 'X').map(([k, v]) => [k, v.name]), F.s)}
+        ${sel('clipQ', 'Kualitas', qopts, F.q)}
+        <span class="muted small">${rows.length} dari ${all.length} klip</span></div></div>
+    <div class="panel tscroll"><table class="dt clip-t"><thead><tr><th>Waktu</th><th>Set</th><th>Rally</th><th>Skor</th><th>Tim</th><th>Pemain</th><th>Aksi</th><th>Kualitas</th><th>Hasil rally</th><th></th></tr></thead>
+      <tbody>${rows.slice(0, 500).map(c => `<tr><td class="num">${fmtVT(c.vt)}${c.exact ? '' : '<span class="muted small" title="Waktu awal rally"> r</span>'}</td><td>${c.set}</td><td>${c.no}</td><td>${c.score}</td><td><b class="win-${c.tm}">${esc(M[c.tm].short || M[c.tm].name)}</b></td><td>${c.p ? esc(pLabel(c.p)) : ''}</td><td>${c.s ? esc(SKILLS[c.s].name) : '<span class="muted">rally</span>'}</td><td>${c.q ? `<span class="qchip" style="background:${QCOL[c.q] || 'var(--q3)'}">${c.q === '-' ? '−' : c.q}</span> ${esc(QL[c.s]?.[c.q] || '')}` : ''}</td><td>${esc(M[c.win].short || M[c.win].name)} · ${esc(END_LABEL[c.end] || '')}</td><td>${link(c)}</td></tr>`).join('') || `<tr><td colspan="10" class="muted">Tidak ada klip untuk filter ini.</td></tr>`}</tbody></table>
+      ${rows.length > 500 ? '<p class="muted small">Menampilkan 500 klip pertama; daftar lengkap ada di Ekspor CSV.</p>' : ''}</div>`;
+}
+function clipCsv() {
+  const m = S.m, M = m.meta, rows = clipFilter(clipRows(clone(m))), yt = ytId(M.video);
+  const q = v => { const s = String(v ?? ''); return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const lines = [['mulai_detik', 'mulai', 'selesai_detik', 'set', 'rally', 'skor', 'tim', 'pemain', 'aksi', 'kualitas', 'label_kualitas', 'pemenang_rally', 'cara_poin', 'tautan'].join(',')];
+  rows.forEach(c => { const a = Math.max(0, Math.floor(c.vt - 2)), b = Math.floor(c.vt + 4);
+    lines.push([a, fmtVT(a), b, c.set, c.no, c.score, M[c.tm].name, c.p ? pLabel(c.p) : '', c.s ? SKILLS[c.s].name : 'rally', c.q || '', c.s ? QL[c.s]?.[c.q] || '' : '', M[c.win].name, END_LABEL[c.end] || '', yt ? `https://youtu.be/${yt}?t=${a}` : ''].map(q).join(',')); });
+  offer(fileSafe('Klip ' + M.A.name + ' vs ' + M.B.name) + '.csv', '﻿' + lines.join('\n'));
+}
+
 function renderPrivacy() {
   const sec = (t, b) => `<section class="panel"><h3>${t}</h3>${b}</section>`;
   $('#view').innerHTML = `<div class="page-head"><div><h1>Kebijakan Privasi</h1><div class="muted">Berlaku sejak 6 November 2026 · disusun mengacu pada UU No. 27 Tahun 2022 tentang Pelindungan Data Pribadi</div></div></div>
