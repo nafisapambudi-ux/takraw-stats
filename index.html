@@ -1232,7 +1232,7 @@ function zoneName(z) { if (!z) return ''; const d = Math.floor((z - 1) / 3), l =
 const opp = t => (t === 'A' ? 'B' : 'A');
 
 function defaultRules(fmt) {
-  return { pts: 15, deuce: 14, cap: 17, sets: 3, rot: FORMATS[fmt || 'regu'].rot, swap: 8, srvWin: 'win' };
+  return { pts: 15, deuce: 14, cap: 17, sets: 3, rot: FORMATS[fmt || 'regu'].rot, swap: 8, srvWin: '' };   // ISTAF 2024 pasal 10.3
 }
 
 /* Set dimenangkan saat mencapai 15 (sebelum 14-14) atau 17 setelah 14-14 (Law 12.2-12.3). */
@@ -1254,7 +1254,8 @@ function srvTeamFor(first, a, b, r) {
 }
 
 /* Tim yang servis setelah rally terakhir set ini.
-   rules.srvWin = 'win': tim pemenang poin servis berikutnya; selain itu bergantian menurut rules.rot (ISTAF 2024). */
+   Bawaan (ISTAF 2024 pasal 10.3–10.6): bergantian setiap rules.rot poin siapa pun pemenangnya; saat deuce bergantian tiap poin.
+   rules.srvWin = 'win': aturan non-ISTAF, tim pemenang poin servis berikutnya (untuk event lokal yang memakainya). */
 function srvNext(set, r) {
   if (r.srvWin === 'win') return set.rallies?.length ? set.rallies[set.rallies.length - 1].win : set.first;
   return srvTeamFor(set.first, set.a, set.b, r);
@@ -1854,10 +1855,11 @@ function renderSetup() {
         <label class="f">Deuce pada<input class="inp num" type="number" id="rDeuce" data-f="rules.deuce" data-num value="${r.deuce}"></label>
         <label class="f">Batas setelah deuce<input class="inp num" type="number" id="rCap" data-f="rules.cap" data-num value="${r.cap}"></label>
         <label class="f">Jumlah set (best of)<input class="inp num" type="number" id="rSets" data-f="rules.sets" data-num value="${r.sets}"></label>
-        <label class="f">Giliran servis<select class="inp" id="rSrvWin" data-f="rules.srvWin"><option value="" ${r.srvWin === 'win' ? '' : 'selected'}>Bergantian (ISTAF 2024)</option><option value="win" ${r.srvWin === 'win' ? 'selected' : ''}>Tim pemenang poin servis</option></select></label>
+        <label class="f">Giliran servis<select class="inp" id="rSrvWin" data-f="rules.srvWin"><option value="" ${r.srvWin === 'win' ? '' : 'selected'}>Bergantian tiap poin (ISTAF 2024)</option><option value="win" ${r.srvWin === 'win' ? 'selected' : ''}>Pemenang poin servis (bukan ISTAF)</option></select></label>
         <label class="f">Servis berganti tiap … poin <span class="muted small">(bila bergantian)</span><input class="inp num" type="number" min="1" id="rRot" data-f="rules.rot" data-num value="${r.rot}" ${r.srvWin === 'win' ? 'disabled' : ''}></label>
         <label class="f">Pindah tempat set akhir pada<input class="inp num" type="number" id="rSwap" data-f="rules.swap" data-num value="${r.swap}"></label>
       </div>
+      ${r.srvWin === 'win' ? '<p class="note warn">Aturan <b>pemenang poin servis</b> tidak sesuai ISTAF Law of the Game 2024 (pasal 10.3: servis bergantian setiap poin, siapa pun yang mendapat poin). Pakai hanya bila event memang memakai aturan ini.</p>' : ''}
       ${M.format === 'quad' ? '<p class="note">Quadrant: Law 10.3 menetapkan rotasi servis tiap 1 poin, Law 10.4 tiap 3 poin. Sesuaikan dengan keputusan technical meeting.</p>' : ''}
     </details>
     <label class="f" style="margin-top:14px">Catatan<textarea class="inp" id="mNotes" data-f="notes" rows="2">${esc(M.notes)}</textarea></label>
@@ -2556,7 +2558,7 @@ function renderTagMain() {
     </div>
     <div class="tag-grid m-${S.mode}${locked() ? ' done' : ''}${wide || kil ? ' wide' : ''}">
       ${wide || kil ? '' : teamPanel(sideLeft())}
-      <div class="center panel">${collabBarHtml()}${kil ? kilatHtml() : S.mode === 'lite' && S.editIdx == null ? liteHtml() : `${S.editIdx != null ? ` <div class="banner editb">${S.m.rallies[S.editIdx]?.lite ? 'Melengkapi' : 'Mengubah'} rally #${S.editIdx + 1} dari video — sentuhan lama diganti setelah rally ini selesai dicatat · <button class="btn sm ghost" data-act="cancelEdit">Batal</button></div>` : ''}
+      <div class="center panel">${M.rules?.srvWin === 'win' && !isGuestMatch(m) ? '<div class="banner warn srvwarn">Giliran servis pertandingan ini memakai aturan <b>pemenang poin servis</b>, bukan ISTAF 2024 (servis bergantian setiap poin). <button class="btn sm" data-act="srvIstaf">Pakai aturan ISTAF</button></div>' : ''}${collabBarHtml()}${kil ? kilatHtml() : S.mode === 'lite' && S.editIdx == null ? liteHtml() : `${S.editIdx != null ? ` <div class="banner editb">${S.m.rallies[S.editIdx]?.lite ? 'Melengkapi' : 'Mengubah'} rally #${S.editIdx + 1} dari video — sentuhan lama diganti setelah rally ini selesai dicatat · <button class="btn sm ghost" data-act="cancelEdit">Batal</button></div>` : ''}
         ${flowHtml()}
         ${pad}
         <div class="hint" aria-live="polite">${esc(hint)}</div>
@@ -3215,6 +3217,7 @@ const ACT = {
   },
   editById: d => { openMatch(d.id, 'tag'); ACT.editMatch(); },
   renameOpen: () => renameModal(),
+  srvIstaf: () => { if (S.cur.touches.length) return toast('Selesaikan rally yang sedang dicatat dulu.'); S.m.meta.rules.srvWin = ''; S.cur.ovr = false; persist(); resetCur(); renderTag(); toast('Giliran servis kini bergantian setiap poin (ISTAF 2024). Rally yang sudah tercatat tidak berubah.'); },
   shareOpen: () => shareModal(),
   shareMake: () => shareSet(true),
   shareRevoke: () => shareSet(false),
