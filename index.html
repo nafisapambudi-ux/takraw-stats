@@ -714,6 +714,10 @@ body.guestmode #tagMain [data-act=camFlip],
 body.guestmode #tagMain .tabs.mode [data-m=lite],
 body.guestmode #tagMain .nextp { display: none !important; }
 body.sharedview [data-act=exportCsv], body.sharedview [data-act=exportJson], body.sharedview [data-act=go][data-v=tag] { display: none !important; }
+.privacy { display: grid; gap: 12px; max-width: 860px; }
+.privacy p, .privacy li { line-height: 1.6; } .privacy ul { padding-left: 20px; margin: 6px 0; }
+table.dt.qdef-t td, table.dt.qdef-t th { vertical-align: top; white-space: normal; text-align: left; font-family: var(--f-body); line-height: 1.45; } table.dt.qdef-t td.qc { width: 46px; text-align: center; } table.dt.qdef-t td:nth-child(3) { white-space: nowrap; }
+.qchip { display: inline-grid; place-items: center; min-width: 26px; height: 24px; border-radius: 6px; color: #fff; font-weight: 700; }
 .chip.collabchip { background: #E8F3FF; color: #0F4C8A; border-color: #9CC3EC; }
 .lite { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0; }
 .litecol { border: 1px solid var(--line); border-radius: var(--r); padding: 10px; display: grid; gap: 8px; align-content: start; }
@@ -1184,7 +1188,7 @@ dl.roles dt { font-weight: 700; } dl.roles dd { margin: 0; color: var(--ink2); }
     <div><h4>TAKRA</h4><p style="margin:0;max-width:52ch">Platform notational analysis sepak takraw: pencatatan per sentuhan, statistik tim dan atlet, serta agenda kejuaraan untuk analis, pelatih, dan pembina.</p></div>
     <div><h4>Menu</h4><ul><li><button class="linkish" data-act="go" data-v="list">Pertandingan</button></li><li><button class="linkish" data-act="go" data-v="athletes">Database atlet</button></li><li><button class="linkish" data-act="go" data-v="events">Agenda</button></li><li><button class="linkish" data-act="go" data-v="rules">Regulasi</button></li><li><button class="linkish" id="installBtn" data-act="installApp" hidden>Pasang aplikasi TAKRA ↓</button></li></ul></div>
     <div><h4>Rujukan</h4><ul><li><a href="https://sepaktakraw.one/" target="_blank" rel="noopener">ISTAF — situs resmi ↗</a></li><li><a href="https://sepaktakraw.one/istaf-events-2025%2F26" target="_blank" rel="noopener">Kalender ISTAF 2025/26 ↗</a></li></ul></div>
-    <div class="fine">Bukan situs resmi ISTAF maupun PSTI. Regulasi diringkas dari ISTAF Law of the Game 2024; dokumen resmi tetap menjadi acuan.</div>
+    <div class="fine"><button class="linkish" data-act="go" data-v="privacy">Kebijakan Privasi</button> · Bukan situs resmi ISTAF maupun PSTI. Regulasi diringkas dari ISTAF Law of the Game 2024; dokumen resmi tetap menjadi acuan.</div>
   </div>
 </footer>
 <div class="tip" id="tip" hidden></div>
@@ -1613,8 +1617,8 @@ function go(view) {
   $('#view').hidden = view === 'tag';
   $('#tagView').hidden = view !== 'tag';
   renderTabs();
-  ({ home: renderHome, list: renderList, athletes: renderAthletes, events: renderEvents, rules: renderRules, setup: renderSetup, tag: renderTag, stats: renderStats })[view]?.();
-  try { if (['home', 'list', 'athletes', 'events', 'rules'].includes(view)) history.replaceState(null, '', '#' + view); } catch {}
+  ({ home: renderHome, list: renderList, athletes: renderAthletes, events: renderEvents, rules: renderRules, privacy: renderPrivacy, setup: renderSetup, tag: renderTag, stats: renderStats })[view]?.();
+  try { if (['home', 'list', 'athletes', 'events', 'rules', 'privacy'].includes(view)) history.replaceState(null, '', '#' + view); } catch {}
   window.scrollTo({ top: 0 });
 }
 /* Selama mencatat, layar HP dijaga tetap menyala (Screen Wake Lock); dilepas saat keluar dari halaman Input. */
@@ -3540,7 +3544,7 @@ function cloudRoute() {
   const h = (location.hash || '').slice(1);
   if (h.startsWith('lihat/')) return openShared(h.slice(6));
   if (BOOT_SHARE && !cloudRoute.done) { cloudRoute.done = 1; return openShared(BOOT_SHARE); }
-  const v = ['home', 'list', 'athletes', 'events', 'rules', 'users', 'live', 'login'].includes(h) ? h : (S.view === 'login' ? 'home' : S.view);
+  const v = ['home', 'list', 'athletes', 'events', 'rules', 'privacy', 'users', 'live', 'login'].includes(h) ? h : (S.view === 'login' ? 'home' : S.view);
   go(Cloud.user && v === 'login' ? 'home' : v);
 }
 function cloudSubscribe() {
@@ -3789,6 +3793,7 @@ function showLogin() {
 `}
     <div class="lg-msg" id="lgMsg" role="status">${esc(Cloud.msg)}</div>
     <ol class="lg-steps"><li><b>Daftar</b> dengan email dan kata sandi.</li><li><b>Mulai mencatat</b> pertandingan.</li><li><b>Akses hasil &amp; statistik</b> setelah akun disetujui.</li></ol>
+    <p class="muted small" style="margin:0">Dengan mendaftar, Anda menyetujui <button class="linkbtn" data-act="go" data-v="privacy" style="font-size:inherit">Kebijakan Privasi</button> TAKRA.</p>
     <p class="note">Data pertandingan tersimpan di server.</p>
     <button class="linkbtn" data-act="go" data-v="home">← Kembali ke beranda</button>
   </div></div>`;
@@ -4730,6 +4735,36 @@ function renderEvents() {
 }
 
 /* ---------- Regulasi ---------- */
+/* Definisi operasional: acuan kalibrasi agar analis berbeda memberi kode yang sama. */
+const QDEF = {
+  S: { '#': 'Bola masuk dan lawan tidak dapat mengembalikannya (poin langsung).', '+': 'Penerima terpaksa bergerak jauh atau menerima dengan buruk; lawan tidak dapat membangun serangan terencana.', '!': 'Lawan dapat menerima dan membangun serangan dengan normal.', '-': 'Servis lemah atau mudah; lawan menerima sempurna dan bebas memilih serangan.', '=': 'Servis keluar, tersangkut net, atau terjadi pelanggaran saat servis.' },
+  R: { '#': 'Bola tiba di pengumpan pada posisi ideal (depan-tengah, ±1–2 m dari net); semua pilihan serangan terbuka.', '+': 'Pengumpan perlu bergerak sedikit, tetapi smash tetap dapat dilakukan.', '!': 'Bola dapat dimainkan, namun pilihan serangan terbatas.', '-': 'Bola sulit dimainkan; tim hanya dapat mengembalikan bola tanpa serangan.', '=': 'Gagal menerima; lawan mendapat poin.' },
+  F: { '#': 'Tinggi dan posisi umpan ideal; penyerang bebas memilih teknik.', '+': 'Umpan dapat diserang dengan smash meski tidak ideal.', '!': 'Hanya memungkinkan serangan sederhana atau bola pengembalian.', '-': 'Umpan tidak dapat diserang.', '=': 'Umpan gagal; bola mati atau keluar, lawan mendapat poin.' },
+  A: { '#': 'Serangan langsung menghasilkan poin.', '+': 'Lawan kesulitan mengcover dan tidak dapat menyerang balik secara terencana.', '!': 'Lawan dapat mengcover dan membangun serangan balik.', '/': 'Serangan terhalang blok lawan.', '=': 'Serangan keluar, tersangkut net, atau pelanggaran; lawan mendapat poin.' },
+  B: { '#': 'Blok menghasilkan poin langsung.', '+': 'Bola memantul kembali ke lapangan penyerang dan sulit diselamatkan.', '!': 'Bola tersentuh blok dan dapat dimainkan tim sendiri.', '-': 'Blok ditembus; bola lolos tanpa hambatan berarti.', '=': 'Pelanggaran saat blok (mis. menyentuh net); lawan mendapat poin.' },
+  D: { '#': 'Cover menghasilkan bola ideal untuk diumpan.', '+': 'Cover dapat dilanjutkan dengan serangan.', '!': 'Bola selamat, serangan terbatas.', '-': 'Bola selamat tanpa kemungkinan serangan.', '=': 'Gagal mengcover; lawan mendapat poin.' },
+};
+function qdefHtml() {
+  return `<section class="panel st-wide qdef"><h3>Definisi operasional kode kualitas</h3>
+    <p class="note">Acuan bersama agar dua analis yang menonton sentuhan yang sama memberi kode yang sama. Sebelum kejuaraan, dua analis disarankan mencatat 20–30 rally yang sama lalu membandingkan hasilnya di <b>Uji reliabilitas</b>.</p>
+    <div class="tscroll"><table class="dt qdef-t"><thead><tr><th>Aksi</th><th>Kode</th><th>Label</th><th>Kriteria</th></tr></thead><tbody>
+    ${['S', 'R', 'F', 'A', 'B', 'D'].map(s => Object.keys(QDEF[s]).map((q, i) => `<tr>${i ? '' : `<td rowspan="${Object.keys(QDEF[s]).length}"><b>${SKILLS[s].name}</b></td>`}<td class="qc"><span class="qchip" style="background:${QCOL[q] || 'var(--q3)'}">${q === '-' ? '−' : q}</span></td><td>${esc(QL[s][q])}</td><td>${esc(QDEF[s][q])}</td></tr>`).join('')).join('')}
+    </tbody></table></div></section>`;
+}
+function renderPrivacy() {
+  const sec = (t, b) => `<section class="panel"><h3>${t}</h3>${b}</section>`;
+  $('#view').innerHTML = `<div class="page-head"><div><h1>Kebijakan Privasi</h1><div class="muted">Berlaku sejak 6 November 2026 · disusun mengacu pada UU No. 27 Tahun 2022 tentang Pelindungan Data Pribadi</div></div></div>
+    <div class="privacy">
+    ${sec('1. Pengelola data', '<p>TAKRA dikelola oleh tim pengembang TAKRA (selanjutnya “pengelola”). Pertanyaan atau permintaan terkait data pribadi dapat disampaikan kepada pengelola melalui admin TAKRA.</p>')}
+    ${sec('2. Data yang dikumpulkan', '<ul><li><b>Data akun:</b> nama, alamat email, dan kata sandi (tersimpan terenkripsi; pengelola tidak dapat membacanya).</li><li><b>Data pertandingan:</b> nama tim, nama dan nomor punggung atlet, posisi, catatan setiap sentuhan, skor, serta waktu video bila dicatat.</li><li><b>Data penggunaan:</b> status aplikasi seperti halaman yang dibuka, pertandingan yang sedang dicatat, dan waktu terakhir aktif.</li></ul>')}
+    ${sec('3. Tujuan penggunaan', '<ul><li>Menyediakan pencatatan dan laporan statistik pertandingan.</li><li>Menyimpan, menyinkronkan, dan mencadangkan data agar tidak hilang.</li><li>Dukungan teknis, kendali mutu data, dan pengembangan aplikasi.</li><li>Pengolahan statistik agregat untuk kepentingan pembinaan dan penelitian, tanpa menampilkan identitas pengguna.</li></ul>')}
+    ${sec('4. Siapa yang dapat mengakses', '<ul><li><b>Anda</b> sebagai pencatat: semua pertandingan yang Anda catat.</li><li><b>Rekan yang Anda undang:</b> pertandingan tempat ia diundang saja.</li><li><b>Penerima tautan hasil:</b> hasil pertandingan tersebut setelah selesai.</li><li><b>Pengelola TAKRA:</b> data yang tersimpan di server, untuk keperluan pada butir 3.</li></ul><p>TAKRA tidak menjual data dan tidak membagikannya kepada pihak ketiga untuk kepentingan komersial.</p>')}
+    ${sec('5. Data atlet dan atlet di bawah umur', '<p>Pencatat bertanggung jawab memastikan pencatatan dilakukan dengan sepengetahuan tim, ofisial, atau penyelenggara kejuaraan. Untuk atlet di bawah 18 tahun, persetujuan orang tua atau wali dapat diwakili oleh tim atau sekolah yang menaunginya. Gunakan nama sesuai daftar resmi dan hindari mencatat data lain yang tidak diperlukan.</p>')}
+    ${sec('6. Penyimpanan dan keamanan', '<p>Data disimpan di server penyedia basis data dengan akses terbatas per akun (Row Level Security) dan koneksi terenkripsi (HTTPS). Salinan sementara dapat tersimpan di perangkat Anda agar aplikasi tetap berjalan tanpa internet.</p>')}
+    ${sec('7. Hak Anda', '<ul><li>Mengakses dan mengunduh data Anda (Cadangkan semua).</li><li>Memperbaiki data yang keliru (Ubah data pertandingan).</li><li>Menghapus pertandingan, atau meminta penghapusan akun beserta datanya melalui admin.</li><li>Menarik persetujuan dengan berhenti menggunakan TAKRA dan meminta penghapusan akun.</li></ul>')}
+    ${sec('8. Perubahan kebijakan', '<p>Kebijakan ini dapat diperbarui mengikuti perkembangan aplikasi. Tanggal berlaku di atas menunjukkan versi terbaru.</p>')}
+    </div>`;
+}
 function renderRules() {
   const qrow = s => SKILLS[s].q.map(q => `<span class="tk"><b>${q === '-' ? '−' : q}</b> ${QL[s][q]}</span>`).join(' ');
   $('#view').innerHTML = `
@@ -4760,6 +4795,7 @@ function renderRules() {
       <section class="panel"><h3>Kode kualitas pencatatan</h3><div style="display:grid;gap:8px;margin-top:8px">
         ${SKILL_ORDER.map(s => `<div><div class="lbl">${SKILLS[s].name}</div><div class="tks" style="display:flex;flex-wrap:wrap;gap:4px">${qrow(s)}</div></div>`).join('')}</div>
         <p class="note">Poin otomatis: ace servis, serangan poin, dan blok poin untuk tim pelaku; kode = dan pelanggaran untuk tim lawan.</p></section>
+      ${qdefHtml()}
     </div>`;
 }
 
@@ -4843,7 +4879,7 @@ Store.onChange = () => {
 const BOOT_SHARE = /^#lihat\/([\w-]{16,})$/.exec(location.hash || '')?.[1] || null;   // tautan hasil dibuka saat awal
 {
   const h = (location.hash || '').slice(1);
-  S.view = ['home', 'list', 'athletes', 'events', 'rules'].includes(h) ? h : 'home';
+  S.view = ['home', 'list', 'athletes', 'events', 'rules', 'privacy'].includes(h) ? h : 'home';
   if (BOOT_SHARE) { S.view = 'home'; $('#view').innerHTML = '<div class="panel empty"><p class="muted">Memuat hasil pertandingan…</p></div>'; } else go(S.view);
 }
 Store.init();
