@@ -1800,7 +1800,7 @@ function renderList() {
     const conf = S.confirm === 'del:' + m.id;
     return tieHead + `<article class="panel mcard${tk ? ' intie' : ''}">
       <div style="min-width:0">
-        <div class="row" style="margin-bottom:4px">${m.sample ? '<span class="chip sample">Contoh</span>' : ''}${isGuestMatch(m) ? '<span class="chip collabchip" title="Anda diundang sebagai rekan pencatat">Rekan · fokus ' + (myMember(m.id).team === 'AB' ? 'kedua tim' : esc(m.meta[myMember(m.id).team]?.name || 'Tim ' + myMember(m.id).team)) + '</span>' : ''}<span class="chip">${esc(FORMATS[m.meta.format]?.label || m.meta.format)}</span><span class="chip">${esc(m.meta.gender || '')}</span>${tieKey(m) ? `<span class="chip">Partai ${esc(m.meta.tie.no)}</span>` : ''}<span class="muted small">${esc(m.meta.date || '')} · ${esc(m.meta.event || '')} ${m.meta.round ? '· ' + esc(m.meta.round) : ''}</span></div>
+        <div class="row" style="margin-bottom:4px">${m.sample ? '<span class="chip sample">Contoh</span>' : ''}${m.meta.compareOnly ? '<span class="chip" title="Catatan analis kedua untuk uji reliabilitas; tidak dihitung di database atlet">Pembanding</span>' : ''}${isGuestMatch(m) ? '<span class="chip collabchip" title="Anda diundang sebagai rekan pencatat">Rekan · fokus ' + (myMember(m.id).team === 'AB' ? 'kedua tim' : esc(m.meta[myMember(m.id).team]?.name || 'Tim ' + myMember(m.id).team)) + '</span>' : ''}<span class="chip">${esc(FORMATS[m.meta.format]?.label || m.meta.format)}</span><span class="chip">${esc(m.meta.gender || '')}</span>${tieKey(m) ? `<span class="chip">Partai ${esc(m.meta.tie.no)}</span>` : ''}<span class="muted small">${esc(m.meta.date || '')} · ${esc(m.meta.event || '')} ${m.meta.round ? '· ' + esc(m.meta.round) : ''}</span></div>
         <div class="sc"><span class="sw A"></span>${esc(m.meta.A.name)} <span class="num">${st.wA}–${st.wB}</span> ${esc(m.meta.B.name)}<span class="sw B"></span></div>
         <div class="muted small">${sets ? 'Set: ' + sets + ' · ' : ''}${m.rallies.length} rally${st.winner ? ' · Selesai' : m.rallies.length ? ' · Berlangsung' : ' · Belum dimulai'}</div>
       </div>
@@ -3252,6 +3252,7 @@ const ACT = {
   editById: d => { openMatch(d.id, 'tag'); ACT.editMatch(); },
   renameOpen: () => renameModal(),
   relCsv: () => relCsv(),
+  relMark: () => { const b = S.relB && Store.get(S.relB); if (!b) return; b.meta.compareOnly = true; Store.save(b); toast('Ditandai sebagai catatan pembanding'); renderReliab(); },
   athOpen: d => { S.athKey = d.k; go('athlete'); },
   trK: d => { S.trK = d.k; renderAthlete(); },
   clipCsv: () => clipCsv(),
@@ -4446,7 +4447,7 @@ setInterval(() => {
 
 /* Rekap atlet lintas pertandingan. Kunci: nama tim + nama pemain (atau nomor bila nama kosong). */
 /* Data contoh hanya dipakai untuk rekap selama belum ada pertandingan sungguhan yang punya rally. */
-function statMatches() { const real = Store.list.filter(m => !m.sample && m.rallies?.length); return real.length ? real : Store.list; }
+function statMatches() { const real = Store.list.filter(m => !m.sample && !m.meta?.compareOnly && m.rallies?.length); return real.length ? real : Store.list.filter(m => !m.meta?.compareOnly); }
 function aggregateAthletes() {
   const map = new Map();
   for (const m of statMatches()) {
@@ -4833,19 +4834,21 @@ function reliability(m1, m2) {
   return { rA, rB, nr, nUnpaired, tA, tB, P, Q, diffs, score1: d1, score2: d2 };
 }
 function renderReliab() {
-  const a = S.m, others = Store.list.filter(x => x.id !== a.id && !x.sample).sort((x, y) => (x.meta.title === a.meta.title ? -1 : 0) - (y.meta.title === a.meta.title ? -1 : 0) || (y.updatedAt || 0) - (x.updatedAt || 0));
+  const a = S.m, vsName = m => `${m.meta.A.name} vs ${m.meta.B.name}`, same = x => vsName(x) === vsName(a) && (x.meta.date || '') === (a.meta.date || '');
+  const others = Store.list.filter(x => x.id !== a.id && !x.sample).sort((x, y) => same(y) - same(x) || (y.updatedAt || 0) - (x.updatedAt || 0));
   const b = S.relB ? Store.get(S.relB) : null;
-  const pick = `<label class="f" style="max-width:520px">Catatan analis kedua (pertandingan yang sama)<select class="inp" id="relB" data-act-change="relPick"><option value="">— pilih —</option>${others.map(x => `<option value="${x.id}" ${x.id === S.relB ? 'selected' : ''}>${esc(x.meta.title || '')} · ${esc(x.meta.date || '')}${x._by ? ' · ' + esc(x._by) : ''}</option>`).join('')}</select></label>`;
+  const pick = `<label class="f" style="max-width:520px">Catatan analis kedua (pertandingan yang sama)<select class="inp" id="relB" data-act-change="relPick"><option value="">— pilih —</option>${others.map(x => `<option value="${x.id}" ${x.id === S.relB ? 'selected' : ''}>${esc(vsName(x))} · ${esc(x.meta.date || '')}${x._by ? ' · ' + esc(x._by) : ''}${x.meta.compareOnly ? ' · pembanding' : ''}</option>`).join('')}</select></label>`;
   let body = `<div class="panel"><p class="note">Pilih catatan analis lain untuk pertandingan yang sama. Catatan rekan dapat dimasukkan melalui <b>Impor JSON</b> di menu Pertandingan. Rally dipasangkan per set menurut urutan, dan sentuhan menurut urutan di dalam rally.</p>${pick}</div>`;
   if (b) {
     const R = reliability(a, b);
-    const row = (label, pairs, note) => { const k = kappa(pairs); return `<tr><td>${label}${note ? `<div class="muted small">${note}</div>` : ''}</td><td>${k.n}</td><td>${k.po == null ? '–' : f0(100 * k.po)}</td><td><b>${k.k == null ? '–' : k.k.toFixed(2)}</b></td><td>${kappaLabel(k.k)}</td></tr>`; };
+    const row = (label, pairs, note) => { const k = kappa(pairs); return `<tr><td>${label}${note ? `<div class="muted small">${note}</div>` : ''}</td><td>${k.n}</td><td>${k.po == null ? '–' : f0(100 * k.po)}</td><td><b>${k.k == null ? '–' : k.k.toFixed(2)}</b></td><td>${k.n && k.n < 10 ? '<span class="muted">n &lt; 10, belum dapat ditafsirkan</span>' : kappaLabel(k.k)}</td></tr>`; };
     const allQ = Object.values(R.Q).flat();
     body += `<div class="st-grid">
       <section class="panel st-wide"><h3>Ringkasan</h3>
         <div class="tscroll"><table class="dt"><thead><tr><th>Catatan</th><th>Hasil</th><th>Rally</th><th>Sentuhan</th></tr></thead><tbody>
           <tr><td><b>A</b> · ${esc(a._by || 'catatan ini')}</td><td>${R.score1.wA}–${R.score1.wB}</td><td>${R.rA}</td><td>${R.tA}</td></tr>
           <tr><td><b>B</b> · ${esc(b._by || 'catatan pembanding')}</td><td>${R.score2.wA}–${R.score2.wB}</td><td>${R.rB}</td><td>${R.tB}</td></tr></tbody></table></div>
+        ${b.meta.compareOnly ? '<p class="note">Catatan B ditandai sebagai <b>pembanding</b>: tidak dihitung di database atlet dan profil lawan.</p>' : `<div class="banner">Catatan B adalah pertandingan yang sama, sehingga statistiknya akan terhitung dua kali di database atlet. <button class="btn sm" data-act="relMark">Tandai sebagai catatan pembanding</button></div>`}
         ${R.nUnpaired ? `<div class="banner warn">${R.nUnpaired} rally tidak berpasangan karena jumlah rally per set berbeda. Periksa daftar perbedaan di bawah.</div>` : ''}</section>
       <section class="panel st-wide"><h3>Kesepakatan antar-pencatat</h3>
         <div class="tscroll"><table class="dt rel-t"><thead><tr><th>Variabel</th><th>n</th><th>Kesepakatan</th><th>Kappa (κ)</th><th>Interpretasi</th></tr></thead><tbody>
@@ -4859,13 +4862,13 @@ function renderReliab() {
         ${R.diffs.length ? `<div class="tscroll"><table class="dt"><thead><tr><th>Set</th><th>Rally</th><th>Perbedaan</th><th>A</th><th>B</th></tr></thead><tbody>${R.diffs.slice(0, 300).map(x => `<tr><td>${x.set}</td><td>${x.no}</td><td>${esc(x.what)}</td><td>${esc(x.a)}</td><td>${esc(x.b)}</td></tr>`).join('')}</tbody></table></div>${R.diffs.length > 300 ? '<p class="muted small">Menampilkan 300 perbedaan pertama; daftar lengkap ada di Ekspor CSV.</p>' : ''}` : '<p class="muted">Tidak ada perbedaan. Kedua catatan identik.</p>'}</section></div>`;
     S._rel = R;
   }
-  $('#view').innerHTML = `<div class="page-head"><div><div class="rp-kicker">Uji reliabilitas antar-pencatat</div><h1>${esc(a.meta.title || '')}</h1><div class="rp-meta">${[a.meta.event, a.meta.date].filter(Boolean).map(esc).join(' · ')}</div></div><span class="spacer"></span><button class="btn ghost" data-act="go" data-v="stats">← Statistik</button></div>${body}`;
+  $('#view').innerHTML = `<div class="page-head"><div><div class="rp-kicker">Uji reliabilitas antar-pencatat</div><h1><span class="win-A">${esc(a.meta.A.name)}</span> vs <span class="win-B">${esc(a.meta.B.name)}</span></h1><div class="rp-meta">${[a.meta.event, a.meta.date].filter(Boolean).map(esc).join(' · ')}</div></div><span class="spacer"></span><button class="btn ghost" data-act="go" data-v="stats">← Statistik</button></div>${body}`;
 }
 function relCsv() {
   const R = S._rel; if (!R) return;
   const q = v => { const s = String(v ?? ''); return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
   const rows = [['variabel', 'n', 'kesepakatan_persen', 'kappa', 'interpretasi']];
-  const add = (l, p) => { const k = kappa(p); rows.push([l, k.n, k.po == null ? '' : (100 * k.po).toFixed(1), k.k == null ? '' : k.k.toFixed(3), kappaLabel(k.k)]); };
+  const add = (l, p) => { const k = kappa(p); rows.push([l, k.n, k.po == null ? '' : (100 * k.po).toFixed(1), k.k == null ? '' : k.k.toFixed(3), k.n && k.n < 10 ? 'n<10' : kappaLabel(k.k)]); };
   add('pemenang_rally', R.P.win); add('cara_poin', R.P.end); add('aksi_tim', R.P.skill); add('pemain', R.P.player); add('kualitas_semua', Object.values(R.Q).flat());
   Object.keys(R.Q).forEach(s => R.Q[s].length && add('kualitas_' + SKILLS[s].name.toLowerCase(), R.Q[s]));
   rows.push([]); rows.push(['set', 'rally', 'perbedaan', 'A', 'B']); R.diffs.forEach(x => rows.push([x.set, x.no, x.what, x.a, x.b]));
@@ -5284,7 +5287,9 @@ Object.assign(I18N_EN, {
   'Indeks servis': 'Serve index', 'Indeks umpan': 'Set index', 'Penerimaan servis': 'Serve reception', 'Umpan paling sering dari:': 'Sets most often from:', 'Titik smash terbanyak:': 'Most frequent smash point:',
   'Rute smash terbanyak:': 'Most frequent smash route:', 'Paling sering diserang:': 'Most often attacked:', 'Paling mematikan:': 'Most lethal:', 'Jumlah': 'Count', 'saat input agar tercatat tepat.': 'during input for exact locations.',
   'Titik servis': 'Serve point', 'Servis paling sering ke:': 'Serves most often to:', 'Total tim': 'Team total', 'Belum ada servis tercatat.': 'No serves recorded yet.', 'Belum ada smash tercatat.': 'No smashes recorded yet.',
-  'Area tersering': 'Most frequent area', 'Catat ulang sentuhan rally ini (rally lain tidak berubah)': "Re-record this rally's touches (other rallies unchanged)", 'Catat detail sentuhan rally ini dari video': "Record this rally's touch details from video",
+  'Area tersering': 'Most frequent area', 'Kappa Cohen: >0,80 hampir sempurna · 0,61–0,80 substansial · 0,41–0,60 sedang · 0,21–0,40 cukup · ≤0,20 lemah (Landis & Koch, 1977). Untuk penelitian notational analysis, κ ≥ 0,80 umumnya dianggap reliabel.': "Cohen's kappa: >0.80 almost perfect · 0.61–0.80 substantial · 0.41–0.60 moderate · 0.21–0.40 fair · ≤0.20 slight (Landis & Koch, 1977). In notational analysis research, κ ≥ 0.80 is generally considered reliable.", 'ace servis': 'service aces', 'blok poin': 'block points', 'poin dari error lawan': 'points from opponent errors', 'Efisiensi serangan': 'Attack efficiency', 'n < 10, belum dapat ditafsirkan': 'n < 10, not interpretable yet', 'Tandai sebagai catatan pembanding': 'Mark as comparison record',
+  'Catatan B adalah pertandingan yang sama, sehingga statistiknya akan terhitung dua kali di database atlet.': 'Record B is the same match, so its statistics would be counted twice in the athlete database.',
+  'Ditandai sebagai catatan pembanding': 'Marked as comparison record', 'Pembanding': 'Comparison', 'Catatan analis kedua untuk uji reliabilitas; tidak dihitung di database atlet': 'Second analyst record for the reliability test; not counted in the athlete database', 'Catatan B ditandai sebagai': 'Record B is marked as a', 'pembanding': 'comparison record', ': tidak dihitung di database atlet dan profil lawan.': ': not counted in the athlete database or opponent profiles.', 'Catat ulang sentuhan rally ini (rally lain tidak berubah)': "Re-record this rally's touches (other rallies unchanged)", 'Catat detail sentuhan rally ini dari video': "Record this rally's touch details from video",
   'Servis paling sering diarahkan ke': 'Serves most often go to', 'Sasaran smash terbanyak:': 'Most frequent smash target:', 'Teknik serangan utama:': 'Main attack technique:', 'Penerimaan terlemah:': 'Weakest reception:', 'Pencetak poin utama:': 'Top scorer:',
   'Pertandingan': 'Matches', 'Serangan': 'Attacks', 'Penerimaan': 'Reception',
 });
@@ -5294,6 +5299,14 @@ const trSkill = s => I18N_EN[s] || s;
 const trx = s => tr(s) ?? s;
 /* Pola berangka atau berisi nama tim. $1, $2 … diterjemahkan lagi lewat tr() bila perlu (fungsi). */
 const I18N_RX = [
+  [/^· (catatan ini|catatan pembanding)$/, (m, x) => '· ' + (x === 'catatan ini' ? 'this record' : 'comparison record')],
+  [/^(.+) per pertandingan$/, (m, k) => `${trx(k)} per match`],
+  [/^(\d+) pertandingan$/, '$1 matches'],
+  [/^Pertandingan selesai\. (.+) menang (.+)\. Tekan Batal \(⌫\) untuk membuka rally terakhir\.$/, 'Match finished. $1 won $2. Press Undo (⌫) to reopen the last rally.'],
+  [/^menang (\d+)–(\d+) set dengan total poin (.+)\.$/, 'won $1–$2 in sets with total points $3.'],
+  [/^unggul (.+) poin pada cakupan ini\.$/, 'leads $1 in points in this scope.'],
+  [/^(\S+) dari (\d+) serangan, lawan (\S+) dari (\d+)\.$/, '$1 from $2 attacks, opponent $3 from $4.'],
+  [/^(\d+) dari (\d+) rally dicatat ringkas; persentase per aksi hanya memakai (\d+) rally lengkap\.$/, '$1 of $2 rallies were recorded in Summary mode; per-action percentages use only the $3 complete rallies.'],
   [/^Poin (.+): (.+)$/, (m, t, e) => `${t} point: ${trx(e)}`],
   [/^(\S+) vs (.+): (Poin|Kill%|Efisiensi serangan|Terima positif|Error) (.+)$/, (m, d, o, k, v) => `${d} vs ${o}: ${trx(k)} ${v}`],
   [/^\((.+); selisih (\d+)\)\.$/, '($1; margin $2).'],
@@ -5324,7 +5337,7 @@ const I18N_RX = [
   [/^Servis: (.+)\. Tekan S lalu kualitas, atau pilih pemain\.$/, 'Serve: $1. Press S then quality, or choose a player.'],
   [/^klik sisi (.+)$/, 'click the $1 side'],
   [/^Mode Kilat · servis (.+)$/, 'Quick mode · serve $1'], [/^Mode Ringkas · servis (.+)$/, 'Summary mode · serve $1'],
-  [/^\+ Poin (.+) \(lainnya\)$/, '+ $1 point (other)'], [/^Poin (.+)$/, (m, t) => (/^\d/.test(t) ? null : `${t} point`)], [/^karena kesalahan (.+):$/, 'from $1 errors:'],
+  [/^\+ Poin (.+) \(lainnya\)$/, '+ $1 point (other)'], [/^Poin ([A-Z].*)$/, (m, t) => `${t} point`], [/^karena kesalahan (.+):$/, 'from $1 errors:'],
   [/^· servis (.+) · (\d+) sentuhan$/, '· serve $1 · $2 touches'],
   [/^Cakupan data: (.+) · (\d+) rally · rata-rata ([\d.,]+) sentuhan per rally$/, (m, s, n, a) => `Data scope: ${trx(s)} · ${n} rallies · average ${a} touches per rally`],
   [/^(\d+) rally · rata-rata ([\d.,]+) sentuhan per rally$/, '$1 rallies · average $2 touches per rally'],
