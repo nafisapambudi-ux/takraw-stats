@@ -664,6 +664,13 @@ body.tabletui .aguide { display: none; }
   body.tabletui.on-tag .step { padding: 4px 8px 5px; } body.tabletui.on-tag .step .st-r { display: none; }
   body.tabletui.on-tag .courthd .lbl { display: none; }
   body.tabletui.on-tag .courtrow.pitchrow > .courtcol { width: 100%; max-width: max(360px, calc((100vh - 520px) * 2)); justify-self: center; }
+}
+@media (orientation: landscape) and (max-height: 560px) {
+  body.tabletui.on-tag .courtrow.pitchrow > .courtcol { max-width: 340px; }
+  body.tabletui.on-tag .courtrow.pitchrow { grid-template-columns: minmax(120px, 170px) minmax(0, 1fr) minmax(120px, 170px); }
+  body.tabletui.on-tag .courtrow.pitchrow > .sidecol.aksi .sk { min-height: 40px; font-size: 13px; }
+  body.tabletui.on-tag .courtrow.pitchrow > .sidecol.kual .qb { min-height: 44px; }
+  body.tabletui.on-tag .pcard { min-height: 48px; }
   body.tabletui.on-tag .courtrow.pitchrow > .sidecol.aksi .sk { min-height: 46px; }
   body.tabletui.on-tag .courtrow.pitchrow > .sidecol.kual .qb { min-height: 50px; }
 }
@@ -1090,6 +1097,78 @@ dl.roles dt { font-weight: 700; } dl.roles dd { margin: 0; color: var(--ink2); }
   #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > .flowwrap { max-height: calc(100vh - 56px); position: sticky; top: calc(env(safe-area-inset-top, 0px) + 44px); }
 }
 
+/* ---------- HP tegak: pemain tim kiri & kanan mengapit lapangan, Aksi + Kualitas di bawah lapangan ---------- */
+@media (max-width: 600px) {
+  body.phonepitch.on-tag .scoreboard { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); grid-template-areas: "a m b"; padding: 6px 10px; margin-block: 8px 8px; gap: 6px; }
+  body.phonepitch.on-tag .sb-name { font-size: 14px; }
+  body.phonepitch.on-tag .sb-score { font-size: 34px; gap: 8px; } body.phonepitch.on-tag .sb-score .sep { font-size: 20px; }
+  body.phonepitch.on-tag .sb-team .srv-ball { width: 14px; height: 14px; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center { display: flex; flex-direction: column; gap: 8px; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > * { margin-bottom: 0; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > .flowwrap { order: 10; max-height: none; overflow: visible; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > .ctxbar { order: 11; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > .aguide, body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > .aksirow { display: none; }
+  #tagMain .flowwrap .flow { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; }
+  body.phonepitch #tagMain .flowwrap .flow { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; gap: 4px; }
+  body.phonepitch #tagMain .flowwrap .step { min-width: 104px; width: auto; flex: 0 0 auto; }
+  body.phonepitch #tagMain .flowwrap .farrow { transform: none; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > .courtrow.pitchrow { display: grid; grid-template-columns: minmax(66px, 23%) minmax(0, 1fr) minmax(66px, 23%); grid-template-areas: "pa court pb" "aksi aksi aksi" "kual kual kual"; gap: 8px 6px; align-items: start; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courtrow.pitchrow > .pside:nth-child(1) { grid-area: pa; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courtrow.pitchrow > .pside:nth-child(4) { grid-area: pb; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courtrow.pitchrow > .courtcol { grid-area: court; margin-bottom: 0; min-width: 0; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courtrow.pitchrow > .sidecol.aksi { display: block; grid-area: aksi; margin-bottom: 0; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courtrow.pitchrow > .sidecol.kual { display: block; grid-area: kual; position: static; box-shadow: none; border-top: 0; padding: 0; background: none; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courtrow.pitchrow > .sidecol .lbl { font-size: 10px; margin-bottom: 3px; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courtrow.pitchrow > .sidecol.aksi .vseg { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courtrow.pitchrow > .sidecol.aksi .vseg .sk { min-height: 42px; padding: 4px 2px; font-size: 13px; justify-content: center; text-align: center; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courtrow.pitchrow > .sidecol.aksi .sk kbd { display: none; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courtrow.pitchrow > .sidecol.kual .vseg { display: grid; grid-template-columns: repeat(auto-fit, minmax(48px, 1fr)); gap: 5px; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courtrow.pitchrow > .sidecol.kual .qb { min-height: 50px; flex-direction: column; justify-content: center; text-align: center; gap: 0; padding: 4px 2px; font-size: 10.5px; line-height: 1.1; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courtrow.pitchrow > .sidecol.kual .qb .sym { font-size: 18px; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courtrow.pitchrow > .sidecol.kual .qb .end { display: none; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courtrow.pitchrow > .sidecol.kual .qundo { display: flex; background: var(--surface2); color: var(--ink); border: 1px solid var(--line); }
+  /* kolom pemain ringkas: nomor besar + nama */
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .pside { padding: 4px; gap: 4px; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .ps-hd { font-size: 11px; gap: 4px; flex-wrap: wrap; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .ps-hd .ps-ball { margin-left: 0; font-size: 9px; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .pcard { grid-template-columns: minmax(0, 1fr); gap: 0; min-height: 52px; padding: 4px 4px 5px; text-align: center; justify-items: center; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .pcard > kbd, body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .pcard > .nok, body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .pcard .pr, body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .pcard .srv-ball { display: none; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .pcard .no { font-size: 22px; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .pcard .pc-t { justify-items: center; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .pcard .pnm { font-size: 11px; max-width: 100%; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .ps-bench .lbl { display: none; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .ps-bench .pb { padding: 2px 5px; font-size: 11px; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .ps-act { min-height: 34px; font-size: 11px; padding: 4px 2px; white-space: normal; line-height: 1.15; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courthd { gap: 4px; }
+  body.phonepitch #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courthd .lbl { display: none; }
+  body.phonepitch #tagMain .court.vert { max-height: max(260px, calc(100vh - 480px)); }
+}
+/* HP landscape: susunan tablet (pemain kiri-kanan, aksi + kualitas di bawah lapangan) menggantikan grid alur-rally lama */
+@media (max-height: 560px) and (orientation: landscape) {
+  body.tabletui #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center { display: flex; flex-direction: column; gap: 8px; }
+  body.tabletui #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > * { margin-bottom: 0; }
+  body.tabletui #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > .courtrow.pitchrow { display: grid; }
+  body.tabletui #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > .flowwrap { order: 10; max-height: none; position: static; overflow: visible; }
+  body.tabletui #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > .ctxbar { order: 11; }
+  body.tabletui #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > .aguide, body.tabletui #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .center > .aksirow { display: none; }
+  body.tabletui #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courtrow.pitchrow > .courtcol { margin-bottom: 0; }
+  body.tabletui #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courtrow.pitchrow > .sidecol.aksi { display: block; margin-bottom: 0; }
+  body.tabletui #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courtrow.pitchrow > .sidecol.kual { display: block; position: static; box-shadow: none; border-top: 0; padding: 0; background: none; }
+  body.tabletui #tagMain .flowwrap .flow { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; gap: 4px; }
+  body.tabletui #tagMain .flowwrap .step { min-width: 104px; width: auto; flex: 0 0 auto; }
+  body.tabletui #tagMain .flowwrap .farrow { transform: none; }
+  body.tabletui #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courtrow.pitchrow { grid-template-columns: minmax(96px, 15%) minmax(0, 1fr) minmax(96px, 15%); }
+  body.tabletui #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courtrow.pitchrow > .sidecol.kual .vseg, body.tabletui #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courtrow.pitchrow > .sidecol.kual .vseg.qseg { display: grid; grid-template-columns: repeat(auto-fit, minmax(56px, 1fr)); gap: 5px; }
+  body.tabletui #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courtrow.pitchrow > .sidecol.kual .qb { min-height: 44px; flex-direction: column; justify-content: center; text-align: center; gap: 0; padding: 3px 2px; font-size: 11px; line-height: 1.1; }
+  body.tabletui #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .courtrow.pitchrow > .sidecol.kual .qb .end { display: none; }
+  body.tabletui #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .pcard { grid-template-columns: minmax(0, 1fr); gap: 0; min-height: 46px; padding: 3px 4px 4px; text-align: center; justify-items: center; }
+  body.tabletui #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .pcard > kbd, body.tabletui #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .pcard > .nok, body.tabletui #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .pcard .pr { display: none; }
+  body.tabletui #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .pcard .no { font-size: 20px; }
+  body.tabletui #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .pcard .pc-t { justify-items: center; }
+  body.tabletui #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .pcard .pnm { font-size: 11px; max-width: 100%; }
+  body.tabletui #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .ps-bench .lbl { display: none; }
+  body.tabletui #tagMain .tag-grid:not(.m-lite):not(.m-kilat):not(.done) .ps-act { min-height: 32px; font-size: 11px; padding: 3px 2px; white-space: normal; line-height: 1.15; }
+}
 /* ---------- Ekspor PDF (cetak → Simpan sebagai PDF) ---------- */
 @page { size: A4 portrait; margin: 12mm 11mm 14mm;
   @bottom-left { content: "TAKRA · Laporan statistik pertandingan"; font-size: 8px; color: #5E6C67; }
@@ -2553,8 +2632,10 @@ function renderTagMain() {
   };
   // Laptop & tablet (bukan HP, bukan mode Ringkas): pemain tiap tim tepat di samping setengah lapangannya.
   const kil = S.mode === 'kilat' && S.editIdx == null;
-  const wide = !matchMedia('(max-width: 600px)').matches && !(S.mode === 'lite' && S.editIdx == null) && !kil;
+  const phoneP = matchMedia('(max-width: 600px)').matches;
+  const wide = !(S.mode === 'lite' && S.editIdx == null) && !kil;
   document.body.classList.toggle('tabletui', isTabletUI());
+  document.body.classList.toggle('phonepitch', phoneP && wide);
   const tTouch = targetTouch();
   const causeFor = tTouch && tTouch.q === '=' && ERR_CAUSE[tTouch.s] ? tTouch : null;
   const techSkill = S.sel.pid ? sk : tTouch?.s;
@@ -2603,7 +2684,7 @@ function renderTagMain() {
     return `<button class="qb ${term ? 'term' : ''}" data-act="q" data-q="${q}" ${S.sel.pid ? '' : 'disabled style="opacity:.5"'}><span class="sym">${q === '-' ? '−' : q}</span>${sk ? QL[sk][q] : ''}${term ? `<span class="end">poin ${term === 'A' ? 'tim ini' : 'lawan'}</span>` : ''}</button>`;
   }).join('') + `<button class="qb qundo" data-act="undo" aria-label="Batal sentuhan terakhir"><span class="sym">⌫</span>Batal</button>`;
   /* Dok HP: pemain di kiri, kualitas di kanan — dua ketukan jempol per sentuhan tanpa menggulir. Tampil hanya di HP (CSS). */
-  const dock = locked() || kil || (S.mode === 'lite' && S.editIdx == null) ? '' : `<div class="mdock" role="group" aria-label="Pilih pemain dan kualitas">
+  const dock = locked() || kil || phoneP || isTabletUI() || (S.mode === 'lite' && S.editIdx == null) ? '' : `<div class="mdock" role="group" aria-label="Pilih pemain dan kualitas">
       <div class="md-l"><div class="lbl">${S.blk ? 'Pemblok' : 'Pemain'} · <span class="win-${padTeam}">${esc(tname(padTeam))}</span></div>
         ${posPlayers(padTeam).map((p, i) => { const role = p.pos === 'Pemain' ? 'Posisi ' + (i + 1) : p.pos; return `<button class="mdp ${padTeam} ${S.sel.pid === p.id || S.blk?.pid === p.id ? 'on' : ''}" data-act="pos" data-i="${i}"><b>${esc(p.no || i + 1)}</b><span>${esc(p.name && p.name !== '—' ? p.name : role)}${p.name && p.name !== '—' ? `<small>${esc(role)}</small>` : ''}</span></button>`; }).join('')}
         ${S.blk ? '' : `<button class="mdp flip" data-act="flipTeam">⇄ Tim lain · ${esc(tname(opp(padTeam)))}</button>`}
